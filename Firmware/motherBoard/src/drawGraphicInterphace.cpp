@@ -189,6 +189,9 @@ int16_t drawString(char *string, int16_t poX, int16_t poY, int16_t size) {
 
 void drawHeading(int UI_page, int UI_serialNumber) {
   tft.fillRect(0, 0, tft.width(), height_heading, COLOR_HEADING);
+  if(UKRAINE_MODE){
+  tft.fillRect(0, height_heading/2, tft.width(), height_heading/2, YELLOW);
+  }
   if (UI_page != mainMenuPage) {
     drawBack();
   }
@@ -613,8 +616,16 @@ void drawTemperatureUnits() {
 
 void loadlogo() {
   tft.setTextSize(1);
+  if(UKRAINE_MODE){
+  tft.fillScreen(BLUE);
+  tft.fillRect(0, tft.height()/2, tft.width(), tft.height()/2, YELLOW);
+  setTextColor(WHITE);
+  }
+  else{
   tft.fillScreen(introBackColor);
+   tft.fillScreen(introBackColor);
   setTextColor(introTextColor);
+ }
   drawIntroMessage();
 }
 

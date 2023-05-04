@@ -23,25 +23,31 @@
 
 */
 
-#define HW_NUM 9
+#define HW_NUM 12
 #define HW_REVISION 'A'
 #define HWversion String(HW_NUM) + "." + String(HW_REVISION)
-#define FWversion "11.1"
+#define FWversion "11.4"
 #define WIFI_NAME "In3_v" + String(FWversion) + "/" + String(HWversion)
 #define CURRENT_FIRMWARE_TITLE "in3ator"
 
+#define DEFAULT_WIFI_EN ON
+
 #if (HW_NUM <= 8)
-#define DISPLAY_SPI_CLK SPI_CLOCK_DIV128
+  #define DISPLAY_SPI_CLK SPI_CLOCK_DIV16
 #elif (HW_NUM == 9)
 #define DISPLAY_SPI_CLK SPI_CLOCK_DIV16
 #elif (HW_NUM >= 10)
 #define DISPLAY_SPI_CLK SPI_CLOCK_DIV16
 #endif
 
+#if (HW_NUM <= 8)
+#define ANALOG_TO_AMP_FACTOR 0.2
+#define CURRENT_MEASURES_AMOUNT 20
+#endif
 #if (HW_NUM <= 6)
 #define HUMIDIFIER_INTERFACE HUMIDIFIER_BINARY
-#define ANALOG_TO_AMP_FACTOR 0.0045
-#define CURRENT_MEASURES_AMOUNT 20
+#elif (HW_NUM <= 8)
+#define HUMIDIFIER_INTERFACE HUMIDIFIER_PWM
 #else
 // Hardware
 #define HUMIDIFIER_INTERFACE HUMIDIFIER_I2C
@@ -68,6 +74,28 @@
 #define BABY_NTC_PIN 39
 #define DISPLAY_CONTROLLER_IC ST7789V_CONTROLLER
 #define ON_OFF_SWITCH 34
+
+#elif (HW_NUM == 8)
+#define TFT_DC 0
+#define ENC_SWITCH 4
+#define BUZZER 5
+#define FAN 12
+#define PHOTOTHERAPY 13
+#define HUMIDIFIER_CTL 14
+#define TFT_CS 15
+#define I2C_SDA 21
+#define I2C_SCL 22
+#define ENC_A 25
+#define GPRS_PWRKEY 26
+#define HEATER 27
+#define ENC_B 32
+#define SCREENBACKLIGHT 33
+#define ACTUATORS_EN 34 //fake pin
+#define SYSTEM_CURRENT_SENSOR 36
+#define BABY_NTC_PIN 39
+
+#define DISPLAY_CONTROLLER_IC ST7789V_CONTROLLER
+
 #else
 // Hardware
 // PINOUT
@@ -112,7 +140,7 @@
 #define GPRS_EN GPIO_EXP_1
 #define SD_CS GPIO_EXP_2
 #define FAN GPIO_EXP_3
-#define HUMIDIFIER GPIO_EXP_6
+#define HUMIDIFIER_CTL GPIO_EXP_6
 #define PHOTOTHERAPY GPIO_EXP_7
 #define GPRS_PWRKEY GPIO_EXP_8
 #define TFT_CS_EXP GPIO_EXP_9
@@ -132,16 +160,14 @@
 #define digitalTempHumSensor 1
 #define numSensors 2  // number of total temperature sensors in system
 
-#define DEFAULT_WIFI_EN ON
 #else
 // number assignment of each environmental sensor for later call in variable
 #define skinSensor 0
 #define airSensor 1
-#define numNTC 2  // number of NTC
-#define digitalTempHumSensor 2
-#define numSensors 3  // number of total temperature sensors in system
+#define numNTC 1  // number of NTC
+#define digitalTempHumSensor 1
+#define numSensors 2  // number of total temperature sensors in system
 
-#define DEFAULT_WIFI_EN OFF
 #endif
 
 #define SYSTEM_SHUNT_CHANNEL INA3221_CH1
@@ -160,22 +186,29 @@
 #define SCREENBACKLIGHT_PWM_CHANNEL 0
 #define HEATER_PWM_CHANNEL 1
 #define BUZZER_PWM_CHANNEL 2
+#define HUMIDIFIER_PWM_CHANNEL 4
 #define DEFAULT_PWM_RESOLUTION 8
 #define DEFAULT_PWM_FREQUENCY 2000
+#define HUMIDIFIER_PWM_FREQUENCY 109000
 
 #define maxADCvalue 4095
 #define maxDACvalue 4095
 // #define PWM_MAX_VALUE maxADCvalue
 #define PWM_MAX_VALUE (pow(2, DEFAULT_PWM_RESOLUTION) - 1)
 
-#define minimumAllowedNTCMeasurement maxADCvalue / 5
-#define maximumAllowedNTCMeasurement maxADCvalue * 4 / 5
+#if (ADC_READ_FUNCTION==MILLIVOTSREAD_ADC)
+#define ADC_TO_DISCARD_MIN 500 //in mV
+#define ADC_TO_DISCARD_MAX 2500 //in mV
+#else
+#define ADC_TO_DISCARD_MIN maxADCvalue / 5 //in ADC points
+#define ADC_TO_DISCARD_MAX maxADCvalue * 4 / 5 //in ADC points
+#endif
+
+#define DIG_TEMP_TO_DISCARD_MAX 60
+#define DIG_TEMP_TO_DISCARD_MIN 5
 
 #define BL_NORMAL 0
 #define BL_POWERSAVE 1
-
-#define maxTempToDiscard 60
-#define minTempToDiscard 5
 
 #define HEATER_MAX_PWM PWM_MAX_VALUE
 #define HEATER_HALF_PWR PWM_MAX_VALUE / 2

@@ -166,10 +166,10 @@ void voltageMonitor()
 
 double measureMeanConsumption(int shunt)
 {
-#if (HW_NUM == 6)
+#if (HW_NUM >= 6 && HW_NUM <=8)
   for (int i = 0; i < CURRENT_MEASURES_AMOUNT; i++)
   {
-    previousCurrent[0] = analogRead(SYSTEM_CURRENT_SENSOR) * ANALOG_TO_AMP_FACTOR;
+    previousCurrent[0] = analogReadMilliVolts(SYSTEM_CURRENT_SENSOR) * ANALOG_TO_AMP_FACTOR;
     in3.system_current = butterworth2(instantCurrent[1], instantCurrent[2], previousCurrent[0], previousCurrent[1], previousCurrent[2]);
     instantCurrent[0] = in3.system_current;
     for (int i = 1; i >= 0; i--)
@@ -197,7 +197,7 @@ float measureMeanVoltage(int shunt)
   return (false);
 }
 
-float adcToCelsius(float adcReading, int maxAdcReading)
+float adcToCelsius(float adcReading)
 {
   // Valores fijos del circuito
   float rAux = 10000.0;
@@ -211,16 +211,21 @@ float adcToCelsius(float adcReading, int maxAdcReading)
   // Variables used in calculus
   float vm = 0.0;
   float rntc = 0.0;
-  if (maxAdcReading && adcReading && (adcReading != maxAdcReading) && (adcReading + adcReadingCorrection < maxAdcReading))
+  if (adcReading)
   {
-    vm = (vcc) * ((adcReading + adcReadingCorrection) / maxAdcReading); // Calcular tensión en la entrada
-    rntc = rAux / ((vcc / vm) - 1);                                     // Calcular la resistencia de la NTC
-  }
+        if(ADC_READ_FUNCTION == MILLIVOTSREAD_ADC){
+    rntc = rAux / ((vcc / (adcReading/1000)) - 1);  // Calcular la resistencia de la NTC
+        }
+    else if (ADC_READ_FUNCTION == ANALOGREAD_ADC){
+   vm = (vcc) * ((adcReading) / maxADCvalue); // Calcular tensión en la entrada
+    rntc = rAux / ((vcc / vm) - 1);    
+    }
+      }
   else
   {
     return false;
   }
-  return (beta / (log(rntc / r0) + (beta / temp0)) - 273); // Calcular la temperatura en Celsius
+  return (beta / (log(rntc / r0) + (beta / temp0)) - 273.15); // Calcular la temperatura en Celsius
 }
 
 bool measureNTCTemperature(uint8_t NTC)
@@ -228,11 +233,16 @@ bool measureNTCTemperature(uint8_t NTC)
   int NTCmeasurement;
   if (millis() - lastNTCmeasurement[NTC] > NTC_MEASUREMENT_PERIOD)
   {
-    NTCmeasurement = analogRead(NTC_PIN[NTC]);
-    if (NTCmeasurement > minimumAllowedNTCMeasurement && NTCmeasurement < maximumAllowedNTCMeasurement)
+    if(ADC_READ_FUNCTION == MILLIVOTSREAD_ADC){
+    NTCmeasurement = analogReadMilliVolts(NTC_PIN[NTC]);
+    }
+    else if (ADC_READ_FUNCTION == ANALOGREAD_ADC){
+          NTCmeasurement = analogRead(NTC_PIN[NTC]);
+    }
+    if (NTCmeasurement > ADC_TO_DISCARD_MIN && NTCmeasurement < ADC_TO_DISCARD_MAX)
     {
       lastSuccesfullSensorUpdate[NTC] = millis();
-      previousTemperature[NTC][0] = adcToCelsius(NTCmeasurement, maxADCvalue);
+      previousTemperature[NTC][0] = adcToCelsius(NTCmeasurement);
       in3.temperature[NTC] = butterworth2(instantTemperature[NTC][1], instantTemperature[NTC][2], previousTemperature[NTC][0], previousTemperature[NTC][1], previousTemperature[NTC][2]);
       instantTemperature[NTC][0] = in3.temperature[NTC];
       for (int i = 1; i >= 0; i--)
@@ -283,7 +293,7 @@ bool updateRoomSensor()
     if (!sensorState)
     {
       sensedTemperature = mySHTC3.toDegC();
-      if (sensedTemperature > minTempToDiscard && sensedTemperature < maxTempToDiscard)
+      if (sensedTemperature > DIG_TEMP_TO_DISCARD_MIN && sensedTemperature < DIG_TEMP_TO_DISCARD_MAX)
       {
         lastSuccesfullSensorUpdate[digitalTempHumSensor] = millis();
         in3.temperature[digitalTempHumSensor] = sensedTemperature; // Add here measurement to temp array

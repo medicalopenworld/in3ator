@@ -26,9 +26,11 @@
 #define GPRS_SHUT OFF
 
 #define SIMCOM800_AT "AT\n"
+#define SIMCOM800_ASK_CPIN "AT+CPIN?\n"
 #define SIMCOM800_AT_CFUN "AT+CFUN=1\n"
 
 #define AT_OK "OK"
+#define AT_CPIN_READY "+CPIN: READY"
 #define AT_ERROR "ERROR"
 
 struct GPRSstruct

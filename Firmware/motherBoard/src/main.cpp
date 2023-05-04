@@ -43,11 +43,8 @@ int page;
 int temperature_filter = analog_temperature_filter;  // amount of temperature samples to filter
 long lastNTCmeasurement[numNTC];
 
-#if (HW_NUM <= 6)
-int NTC_PIN[numNTC] = {BABY_NTC_PIN, AIR_NTC_PIN};
-#else
+
 int NTC_PIN[numNTC] = {BABY_NTC_PIN};
-#endif
 double errorTemperature[numSensors], temperatureCalibrationPoint;
 double ReferenceTemperatureRange, ReferenceTemperatureLow;
 double provisionalReferenceTemperatureLow;
@@ -171,9 +168,6 @@ void Backlight_Task(void *pvParameters) {
 void sensors_Task(void *pvParameters) {
   for (;;) {
     measureNTCTemperature(skinSensor);
-#if (HW_NUM == 6)
-    measureNTCTemperature(airSensor);
-#endif
     if (millis() - lastRoomSensorUpdate > ROOM_SENSOR_UPDATE_PERIOD) {
       updateRoomSensor();
       lastRoomSensorUpdate = millis();
@@ -182,7 +176,7 @@ void sensors_Task(void *pvParameters) {
       powerMonitor();
       lastCurrentSensorUpdate = millis();
     }
-    if (ALARM_SYSTEM_ENABLED) {
+    if (ALARM_SYSTEM_ENABLED && in3.alarmsEnabled) {
       securityCheck();
     }
     vTaskDelay(SENSORS_TASK_PERIOD / portTICK_PERIOD_MS);

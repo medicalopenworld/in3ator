@@ -115,9 +115,8 @@ void GPRS_get_triangulation_location() {
 }
 
 void GPRS_get_SIM_info() {
-  GPRS.CCID = modem.getSimCCID();
 
-  GPRS.CCID.remove(GPRS.CCID.length() - 1);
+
 
   GPRS.IMEI = modem.getIMEI();
 
@@ -127,9 +126,7 @@ void GPRS_get_SIM_info() {
 
   GPRS.IP = modem.localIP();
 
-  GPRS_get_triangulation_location();
 
-  log("[GPRS] -> CCID is: " + GPRS.CCID);
   log("[GPRS] -> IMEI is: " + GPRS.IMEI);
   log("[GPRS] -> IMSI is: " + GPRS.IMSI);
   log("[GPRS] -> COP is: " + GPRS.COP);
@@ -183,10 +180,10 @@ void GPRSPowerUp() {
       if (millis() - GPRS.packetSentenceTime > 1000) {
         clearGPRSBuffer();
         log("[GPRS] -> Sending AT command");
-        Serial2.print(SIMCOM800_AT);
+        Serial2.print(SIMCOM800_ASK_CPIN);
         GPRS.packetSentenceTime = millis();
       }
-      checkSerial(AT_OK, AT_ERROR);
+      checkSerial(AT_CPIN_READY, AT_ERROR);
       break;
     case 3:
       GPRS.powerUp = false;
@@ -200,6 +197,9 @@ void GPRSPowerUp() {
 void GPRSStablishConnection() {
   switch (GPRS.process) {
     case 0:
+      GPRS.CCID = modem.getSimCCID();
+        GPRS.CCID.remove(GPRS.CCID.length() - 1);
+      log("[GPRS] -> CCID is: " + GPRS.CCID);
       log("[GPRS] -> Stablishing connection");
       GPRS.processTime = millis();
       GPRS.packetSentenceTime = millis();
@@ -251,7 +251,10 @@ void GPRSSetPostPeriod() {
       GPRS.sendPeriod = actuatingGPRSPostPeriod;
     } else if (in3.phototherapy) {
       GPRS.sendPeriod = phototherapyGPRSPostPeriod;
-    } else {
+    } else if (in3.phototherapy) {
+      GPRS.sendPeriod = phototherapyGPRSPostPeriod;
+    }
+    else {
       GPRS.sendPeriod = standByGPRSPostPeriod;
     }
   } else {
@@ -348,9 +351,6 @@ void addConfigTelemetriesToGPRSJSON() {
   addVariableToTelemetryGPRSJSON[BUZZER_CURR_TEST_KEY] = roundSignificantDigits(in3.buzzer_current_test, TELEMETRIES_DECIMALS);
   addVariableToTelemetryGPRSJSON[HW_TEST_KEY] = in3.HW_test_error_code;
 
-  addVariableToTelemetryGPRSJSON[LOCATION_LONGTITUD_KEY] = GPRS.longitud;
-  addVariableToTelemetryGPRSJSON[LOCATION_LATITUD_KEY] = GPRS.latitud;
-  addVariableToTelemetryGPRSJSON[TRI_ACCURACY_KEY] = GPRS.accuracy;
   addVariableToTelemetryGPRSJSON[UI_LANGUAGE_KEY] = in3.language;
   addVariableToTelemetryGPRSJSON[CALIBRATED_SENSOR_KEY] = !in3.calibrationError;
   addVariableToTelemetryGPRSJSON[GPRS_CONNECTIVITY_KEY] = true;
@@ -358,6 +358,13 @@ void addConfigTelemetriesToGPRSJSON() {
 }
 
 void addTelemetriesToGPRSJSON() {
+
+ if(GPRS.longitud||GPRS.latitud){
+  addVariableToTelemetryGPRSJSON[LOCATION_LONGTITUD_KEY] = GPRS.longitud;
+  addVariableToTelemetryGPRSJSON[LOCATION_LATITUD_KEY] = GPRS.latitud;
+  addVariableToTelemetryGPRSJSON[TRI_ACCURACY_KEY] = GPRS.accuracy;
+ }
+
   addVariableToTelemetryGPRSJSON[AIR_TEMPERATURE_KEY] = roundSignificantDigits(in3.temperature[airSensor], TELEMETRIES_DECIMALS);
   addVariableToTelemetryGPRSJSON[SKIN_TEMPERATURE_KEY] = roundSignificantDigits(in3.temperature[skinSensor], TELEMETRIES_DECIMALS);
   addVariableToTelemetryGPRSJSON[PHOTOTHERAPY_ACTIVE_KEY] = in3.phototherapy;
@@ -448,6 +455,7 @@ void GPRSPost() {
         }
         GPRS_JSON.clear();
       }
+      GPRS_get_triangulation_location();
       GPRSUpdateCSQ();
       addTelemetriesToGPRSJSON();
       if (tb.sendTelemetryJson(addVariableToTelemetryGPRSJSON, JSON_STRING_SIZE(measureJson(addVariableToTelemetryGPRSJSON)))) {

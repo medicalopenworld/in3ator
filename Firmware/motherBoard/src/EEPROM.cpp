@@ -103,7 +103,6 @@ void recapVariables()
   ReferenceTemperatureLow = EEPROM.readFloat(EEPROM_REFERENCE_TEMP_LOW);
   fineTuneSkinTemperature = EEPROM.readFloat(EEPROM_FINE_TUNE_TEMP_SKIN);
   fineTuneAirTemperature = EEPROM.readFloat(EEPROM_FINE_TUNE_TEMP_AIR);
-
   in3.standby_time = EEPROM.readFloat(EEPROM_STANDBY_TIME);
   in3.control_active_time = EEPROM.readFloat(EEPROM_CONTROL_ACTIVE_TIME);
   in3.heater_active_time = EEPROM.readFloat(EEPROM_HEATER_ACTIVE_TIME);

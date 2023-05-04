@@ -321,8 +321,9 @@ void updateData()
       log("[PID] -> Humidifier output is: " + String(100 * humidityControlPIDOutput / humidifierTimeCycle) + "%");
       log("[PID] -> Desired humditity is: " + String(in3.desiredControlHumidity) + "%");
     }
-#if (HW_NUM == 6)
+#if (HW_NUM >= 6 && HW_NUM <=8)
     log("[SENSORS] -> System current consumption is: " + String(in3.system_current) + " Amps");
+    Serial.println(analogReadMilliVolts(SYSTEM_CURRENT_SENSOR));
 #else
     if (digitalCurrentSensorPresent)
     {
@@ -335,6 +336,7 @@ void updateData()
     log("[SENSORS] -> Baby temperature: " + String(in3.temperature[skinSensor]) + "ºC, correction error is " + String(errorTemperature[skinSensor]));
     log("[SENSORS] -> Air temperature: " + String(in3.temperature[airSensor]) + "ºC, correction error is " + String(errorTemperature[airSensor]));
     log("[SENSORS] -> Humidity: " + String(in3.humidity) + "%");
+    
     // log("[SENSORS] -> ON_OFF: " + String(GPIORead(ON_OFF_SWITCH)));
     if (millis() - lastDebugUpdate)
     {

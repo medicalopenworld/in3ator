@@ -89,6 +89,8 @@ void MAM_in3ator_Humidifier::turn(uint16_t mode)
 		GPIOWrite(controlPin, mode);
 		break;
 	case HUMIDIFIER_PWM:
+	//HUMIDIFIER_CTL to 115Khz
+	  ledcWrite(HUMIDIFIER_PWM_CHANNEL, (PWM_MAX_VALUE / 2)*mode);
 		break;
 	case HUMIDIFIER_I2C:
 	default:

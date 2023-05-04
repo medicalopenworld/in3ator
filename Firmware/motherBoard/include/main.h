@@ -34,6 +34,9 @@
 #define ENABLE_WIFI_OTA true  // enable wifi OTA
 #define ENABLE_GPRS_OTA true  // enable GPRS OTA
 #define ALARM_SYSTEM_ENABLED true
+#define FAN_MAX_CURRENT_OVERRIDE false
+
+#define UKRAINE_MODE false
 
 #define CORE_ID_FREERTOS 1
 
@@ -88,6 +91,11 @@
 #define HUMIDIFIER_ACTIVE_TIME_KEY "Humidifier_active_time"
 #define GPRS_CONNECTIVITY_KEY "GPRS_connection"
 #define WIFI_CONNECTIVITY_KEY "WIFI_connection"
+
+#define ANALOGREAD_ADC 0
+#define MILLIVOTSREAD_ADC 1
+
+#define ADC_READ_FUNCTION MILLIVOTSREAD_ADC
 
 #define ON true
 #define OFF false
@@ -180,8 +188,8 @@
 #define defaultCurrentSamples 30
 #define defaultTestingSamples 8000
 #define Rsense 3000  // 3 microohm as shunt resistor
-#define digitalCurrentSensor_i2c_address 65
-#define roomSensorAddress 112
+#define digitalCurrentSensor_i2c_address 0x41
+#define roomSensorAddress 0x70
 
 // #define system constants
 #define humidifierDutyCycleMax 100  // maximum humidity cycle in heater to be set
@@ -197,7 +205,11 @@
 
 // Encoder variables
 #define NUMENCODERS 1  // number of encoders in circuit
+#if (HW_NUM==6)
+#define ENCODER_TICKS_DIV 1
+#else
 #define ENCODER_TICKS_DIV 0
+#endif
 #define encPulseDebounce 50
 
 // User Interface display constants
@@ -395,6 +407,8 @@ typedef struct
   float fan_active_time = false;
   float phototherapy_active_time = false;
   float humidifier_active_time = false;
+
+  bool alarmsEnabled = true;
 
   byte language;
 

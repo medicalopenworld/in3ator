@@ -151,13 +151,14 @@ extern int ScreenBacklightMode;
 #define DIG_HUM_ROOM_MIN 1
 #define DIG_HUM_ROOM_MAX 100
 
+#if (HW_NUM!= 6)
 #define HEATER_CONSUMPTION_MIN 1.5
 #define FAN_CONSUMPTION_MIN 0.03
 #define PHOTOTHERAPY_CONSUMPTION_MIN 0.3
 #define HUMIDIFIER_CONSUMPTION_MIN 0.07
 
 #define HEATER_CONSUMPTION_MAX 15
-#define FAN_CONSUMPTION_MAX 1
+#define FAN_CONSUMPTION_MAX 0.8
 #define PHOTOTHERAPY_CONSUMPTION_MAX 3
 #define HUMIDIFIER_CONSUMPTION_MAX 0.8
 
@@ -168,6 +169,25 @@ extern int ScreenBacklightMode;
 #define SCREEN_CONSUMPTION_MAX 1
 
 #define BUZZER_CONSUMPTION_MIN 0
+#else
+#define HEATER_CONSUMPTION_MIN 0
+#define FAN_CONSUMPTION_MIN 0
+#define PHOTOTHERAPY_CONSUMPTION_MIN 0
+#define HUMIDIFIER_CONSUMPTION_MIN 0
+
+#define HEATER_CONSUMPTION_MAX 10000
+#define FAN_CONSUMPTION_MAX 10000
+#define PHOTOTHERAPY_CONSUMPTION_MAX 10000
+#define HUMIDIFIER_CONSUMPTION_MAX 10000
+
+#define STANDBY_CONSUMPTION_MIN 0
+#define STANDBY_CONSUMPTION_MAX 10
+
+#define SCREEN_CONSUMPTION_MIN 0
+#define SCREEN_CONSUMPTION_MAX 10
+
+#define BUZZER_CONSUMPTION_MIN 0
+#endif
 
 long HW_error = false;
 long lastTFTCheck;
@@ -194,6 +214,11 @@ void initPWMGPIO()
   ledcWrite(SCREENBACKLIGHT_PWM_CHANNEL, false);
   ledcWrite(HEATER_PWM_CHANNEL, false);
   ledcWrite(BUZZER_PWM_CHANNEL, false);
+  #if(HW_NUM ==8 )
+  ledcSetup(HUMIDIFIER_PWM_CHANNEL, HUMIDIFIER_PWM_FREQUENCY, DEFAULT_PWM_RESOLUTION);
+  ledcAttachPin(HUMIDIFIER_CTL, HUMIDIFIER_PWM_CHANNEL);
+  ledcWrite(HUMIDIFIER_CTL, false);
+  #endif
   log("[HW] -> PWM GPIOs initialized");
 }
 
@@ -206,7 +231,6 @@ void initGPIO()
   {
     TCA.setPolarity(pin, false);
   }
-  initPin(TFT_CS_EXP, OUTPUT);
   initPin(UNUSED_GPIO_EXP0, OUTPUT);
   initPin(UNUSED_GPIO_EXP1, OUTPUT);
   initPin(UNUSED_GPIO_EXP2, OUTPUT);
@@ -217,8 +241,10 @@ void initGPIO()
   GPIOWrite(UNUSED_GPIO_EXP3, HIGH);
   initPin(GPRS_EN, OUTPUT);
   GPIOWrite(GPRS_EN, HIGH);
-  initPin(HUMIDIFIER, OUTPUT);
-  GPIOWrite(HUMIDIFIER, LOW);
+  initPin(HUMIDIFIER_CTL, OUTPUT);
+  GPIOWrite(HUMIDIFIER_CTL, LOW);
+#elif (HW_NUM==8)
+  initPin(HUMIDIFIER_PWM, OUTPUT);
 #endif
 #if (HW_NUM >= 10)
   initPin(ON_OFF_SWITCH, INPUT);
@@ -238,6 +264,7 @@ void initGPIO()
   initPin(ACTUATORS_EN, OUTPUT);
   GPIOWrite(ACTUATORS_EN, HIGH);
   GPIOWrite(PHOTOTHERAPY, LOW);
+  GPIOWrite(FAN, LOW);
   // initPin(ON_OFF_SWITCH, INPUT);
   initPWMGPIO();
   log("[HW] -> GPIOs initilialized");
@@ -397,6 +424,16 @@ void initializeTFT()
   tft.setController(DISPLAY_CONTROLLER_IC);
   tft.begin(DISPLAY_SPI_CLK);
   tft.setRotation(DISPLAY_DEFAULT_ROTATION);
+    uint8_t x = tft.readcommand8(ILI9341_RDMODE);
+  Serial.print("Display Power Mode: 0x"); Serial.println(x, HEX);
+  x = tft.readcommand8(ILI9341_RDMADCTL);
+  Serial.print("MADCTL Mode: 0x"); Serial.println(x, HEX);
+  x = tft.readcommand8(ILI9341_RDPIXFMT);
+  Serial.print("Pixel Format: 0x"); Serial.println(x, HEX);
+  x = tft.readcommand8(ILI9341_RDIMGFMT);
+  Serial.print("Image Format: 0x"); Serial.println(x, HEX);
+  x = tft.readcommand8(ILI9341_RDSELFDIAG);
+  Serial.print("Self Diagnostic: 0x"); Serial.println(x, HEX); 
 }
 
 void initTFT()
@@ -410,6 +447,8 @@ void initTFT()
   initPin(TOUCH_CS, OUTPUT);
   initPin(SD_CS, OUTPUT);
   initPin(TFT_RST, OUTPUT);
+  initPin(TFT_CS_EXP, OUTPUT);
+  initPin(TFT_DC, OUTPUT);
   GPIOWrite(TOUCH_CS, HIGH);
   GPIOWrite(SD_CS, HIGH);
   GPIOWrite(TFT_CS_EXP, LOW);
@@ -568,7 +607,7 @@ bool actuatorsTest()
     log("[HW] -> Fail -> Fan current consumption is too low");
     return (true);
   }
-  if (testCurrent > FAN_CONSUMPTION_MAX)
+  if (testCurrent > FAN_CONSUMPTION_MAX && testCurrent > FAN_MAX_CURRENT_OVERRIDE*FAN_CONSUMPTION_MAX*2)
   {
     addErrorToVar(HW_error, FAN_CONSUMPTION_MAX_ERROR);
     log("[HW] -> Fail -> Fan current consumption is too high");
@@ -587,8 +626,10 @@ bool actuatorsTest()
 
 bool initActuators()
 {
-#if (HW_NUM == 6)
-  in3_hum.begin(HUMIDIFIER_BINARY, HUMIDIFIER);
+#if (HW_NUM <= 6)
+  in3_hum.begin(HUMIDIFIER_BINARY, HUMIDIFIER_CTL);
+  #elif (HW_NUM <= 8)
+  in3_hum.begin(HUMIDIFIER_PWM, HUMIDIFIER_CTL);
 #else
   in3_hum.begin();
 #endif
@@ -650,11 +691,7 @@ void initHardware(bool printOutputTest)
   initBuzzer();
   initInterrupts();
   PIDInit();
-#if (HW_NUM == 6)
-  initActuators();
-#else
   in3.HW_critical_error = initActuators();
-#endif
   if (WIFI_EN)
   {
     wifiInit();

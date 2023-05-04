@@ -144,6 +144,7 @@ extern in3ator_parameters in3;
 void autoCalibration()
 {
   bool exitCalibrationMenu = false;
+    in3.alarmsEnabled = false;
   byte numWords = 1;
   long lastTemperatureMeasurement = millis();
   int historyLengthPosition = false;
@@ -254,6 +255,7 @@ void autoCalibration()
       }
     }
   }
+  in3.alarmsEnabled = true;
   UI_mainMenu();
 }
 
