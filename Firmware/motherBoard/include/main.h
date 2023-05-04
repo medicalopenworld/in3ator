@@ -20,6 +20,7 @@
 #include "PID.h"
 #include "SPI.h"
 #include "SparkFun_SHTC3.h"
+#include "Adafruit_SHT4x.h"
 #include "TCA9555.h"
 #include "Wifi_OTA.h"
 #include "board.h"
@@ -190,6 +191,7 @@
 #define Rsense 3000  // 3 microohm as shunt resistor
 #define digitalCurrentSensor_i2c_address 0x41
 #define roomSensorAddress 0x70
+#define ambientSensorAddress 0x44
 
 // #define system constants
 #define humidifierDutyCycleMax 100  // maximum humidity cycle in heater to be set
@@ -484,6 +486,7 @@ void checkSetMessage(int UI_page);
 bool checkFan();
 
 bool updateRoomSensor();
+bool updateAmbientSensor();
 void updateDisplaySensors();
 
 void UI_settings();
@@ -509,6 +512,7 @@ void setSensorsGraphicPosition(int UI_page);
 void basicHumidityControl();
 bool checkStableTemperatures(double *referenceSensorHistory, double *sensorToCalibrateHistory, int historyLength, double stabilityError);
 void initRoomSensor();
+void initAmbientSensor();
 void powerMonitor();
 void currentMonitor();
 void voltageMonitor();

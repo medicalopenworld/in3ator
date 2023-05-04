@@ -29,6 +29,7 @@ extern TwoWire *wire;
 extern MAM_in3ator_Humidifier in3_hum;
 extern Adafruit_ILI9341 tft;
 extern SHTC3 mySHTC3; // Declare an instance of the SHTC3 class
+extern Adafruit_SHT4x sht4;
 extern RotaryEncoder encoder;
 extern Beastdevices_INA3221 digitalCurrentSensor;
 
@@ -67,6 +68,7 @@ extern volatile bool statusEncSwitch;
 extern bool WIFI_connection_status;
 
 extern bool roomSensorPresent;
+extern bool ambientSensorPresent;
 extern bool digitalCurrentSensorPresent;
 
 extern float instantTemperature[numNTC][secondOrder_filter];
@@ -295,16 +297,16 @@ bool updateRoomSensor()
       sensedTemperature = mySHTC3.toDegC();
       if (sensedTemperature > DIG_TEMP_TO_DISCARD_MIN && sensedTemperature < DIG_TEMP_TO_DISCARD_MAX)
       {
-        lastSuccesfullSensorUpdate[digitalTempHumSensor] = millis();
-        in3.temperature[digitalTempHumSensor] = sensedTemperature; // Add here measurement to temp array
+        lastSuccesfullSensorUpdate[room_digital_TempHum_Sensor] = millis();
+        in3.temperature[room_digital_TempHum_Sensor] = sensedTemperature; // Add here measurement to temp array
         in3.humidity = mySHTC3.toPercent();
-        if (in3.temperature[digitalTempHumSensor] > temperatureMax[digitalTempHumSensor])
+        if (in3.temperature[room_digital_TempHum_Sensor] > temperatureMax[room_digital_TempHum_Sensor])
         {
-          temperatureMax[digitalTempHumSensor] = in3.temperature[digitalTempHumSensor];
+          temperatureMax[room_digital_TempHum_Sensor] = in3.temperature[room_digital_TempHum_Sensor];
         }
-        if (in3.temperature[digitalTempHumSensor] < temperatureMin[digitalTempHumSensor])
+        if (in3.temperature[room_digital_TempHum_Sensor] < temperatureMin[room_digital_TempHum_Sensor])
         {
-          temperatureMin[digitalTempHumSensor] = in3.temperature[digitalTempHumSensor];
+          temperatureMin[room_digital_TempHum_Sensor] = in3.temperature[room_digital_TempHum_Sensor];
         }
         return true;
       }
@@ -318,5 +320,20 @@ bool updateRoomSensor()
   {
     initRoomSensor();
   }
+  return false;
+}
+
+bool updateAmbientSensor(){
+    if (ambientSensorPresent){
+  sensors_event_t humidity, temp;
+  sht4.getEvent(&humidity, &temp);// populate temp and humidity objects with fresh data
+  in3.temperature[ambient_digital_TempHum_Sensor] = temp.temperature;
+  //Serial.print("Ambient Temperature: "); Serial.print(temp.temperature); Serial.println(" degrees C");
+  //Serial.print("Ambient Humidity: "); Serial.print(humidity.relative_humidity); Serial.println("% rH");
+  return true;
+    }
+    else{
+      initAmbientSensor();
+    }
   return false;
 }

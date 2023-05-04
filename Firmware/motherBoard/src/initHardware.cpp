@@ -29,6 +29,7 @@ extern TwoWire *wire;
 extern MAM_in3ator_Humidifier in3_hum;
 extern Adafruit_ILI9341 tft;
 extern SHTC3 mySHTC3; // Declare an instance of the SHTC3 class
+extern Adafruit_SHT4x sht4;
 extern RotaryEncoder encoder;
 extern Beastdevices_INA3221 digitalCurrentSensor;
 
@@ -66,6 +67,7 @@ extern volatile bool statusEncSwitch;
 extern bool WIFI_connection_status;
 
 extern bool roomSensorPresent;
+extern bool ambientSensorPresent;
 extern bool digitalCurrentSensorPresent;
 
 extern float instantTemperature[secondOrder_filter];
@@ -289,9 +291,21 @@ void initRoomSensor()
   {
     log("[HW] -> Room sensor succesfully found, initializing...");
     mySHTC3.begin(Wire);
+    sht4.setPrecision(SHT4X_HIGH_PRECISION);
   }
 }
 
+void initAmbientSensor()
+{
+  ambientSensorPresent = false;
+  wire->beginTransmission(ambientSensorAddress);
+  ambientSensorPresent = !(wire->endTransmission());
+  if (ambientSensorPresent == true)
+  {
+    log("[HW] -> Ambient sensor succesfully found, initializing...");
+    sht4.begin(&Wire);
+  }
+}
 void initCurrentSensor()
 {
   log("[HW] -> Initialiting current sensor");
@@ -336,6 +350,7 @@ void initSensors()
   log("[HW] -> Initialiting sensors");
   initCurrentSensor();
   initRoomSensor();
+  initAmbientSensor();
   // sensors verification
   for (int i = 0; i <= NTC_SAMPLES_TEST; i++)
   {
@@ -354,12 +369,12 @@ void initSensors()
   }
   if (updateRoomSensor())
   {
-    if (in3.temperature[digitalTempHumSensor] < DIG_TEMP_ROOM_MIN)
+    if (in3.temperature[room_digital_TempHum_Sensor] < DIG_TEMP_ROOM_MIN)
     {
       log("[HW] -> Fail -> Room temperature is lower than expected");
       addErrorToVar(HW_error, DIG_TEMP_ROOM_MIN_ERROR);
     }
-    if (in3.temperature[digitalTempHumSensor] > DIG_TEMP_ROOM_MAX)
+    if (in3.temperature[room_digital_TempHum_Sensor] > DIG_TEMP_ROOM_MAX)
     {
       log("[HW] -> Fail -> Room temperature is higher than expected");
       addErrorToVar(HW_error, DIG_TEMP_ROOM_MAX_ERROR);

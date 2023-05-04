@@ -157,15 +157,16 @@
 #define skinSensor 0
 #define airSensor 1
 #define numNTC 1  // number of NTC
-#define digitalTempHumSensor 1
-#define numSensors 2  // number of total temperature sensors in system
+#define room_digital_TempHum_Sensor 1
+#define ambient_digital_TempHum_Sensor 2
+#define numSensors 3  // number of total temperature sensors in system
 
 #else
 // number assignment of each environmental sensor for later call in variable
 #define skinSensor 0
 #define airSensor 1
 #define numNTC 1  // number of NTC
-#define digitalTempHumSensor 1
+#define room_digital_TempHum_Sensor 1
 #define numSensors 2  // number of total temperature sensors in system
 
 #endif

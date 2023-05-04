@@ -336,6 +336,10 @@ void updateData()
     log("[SENSORS] -> Baby temperature: " + String(in3.temperature[skinSensor]) + "ºC, correction error is " + String(errorTemperature[skinSensor]));
     log("[SENSORS] -> Air temperature: " + String(in3.temperature[airSensor]) + "ºC, correction error is " + String(errorTemperature[airSensor]));
     log("[SENSORS] -> Humidity: " + String(in3.humidity) + "%");
+        if (digitalCurrentSensorPresent)
+    {
+      
+    }
     
     // log("[SENSORS] -> ON_OFF: " + String(GPIORead(ON_OFF_SWITCH)));
     if (millis() - lastDebugUpdate)

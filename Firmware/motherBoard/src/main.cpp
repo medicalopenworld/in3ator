@@ -33,6 +33,7 @@ TwoWire *wire;
 MAM_in3ator_Humidifier in3_hum(DEFAULT_ADDRESS);
 Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
 SHTC3 mySHTC3;  // Declare an instance of the SHTC3 class
+Adafruit_SHT4x sht4 = Adafruit_SHT4x();
 RotaryEncoder encoder(ENC_A, ENC_B, RotaryEncoder::LatchMode::TWO03);
 Beastdevices_INA3221 digitalCurrentSensor(INA3221_ADDR41_VCC);
 
@@ -69,6 +70,7 @@ volatile long lastEncPulse;
 volatile bool statusEncSwitch;
 
 bool roomSensorPresent = false;
+bool ambientSensorPresent = false;
 bool digitalCurrentSensorPresent = false;
 
 float instantTemperature[numNTC][secondOrder_filter];
@@ -170,6 +172,7 @@ void sensors_Task(void *pvParameters) {
     measureNTCTemperature(skinSensor);
     if (millis() - lastRoomSensorUpdate > ROOM_SENSOR_UPDATE_PERIOD) {
       updateRoomSensor();
+      updateAmbientSensor();
       lastRoomSensorUpdate = millis();
     }
     if (millis() - lastCurrentSensorUpdate > DIGITAL_CURRENT_SENSOR_PERIOD) {

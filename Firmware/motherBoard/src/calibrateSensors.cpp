@@ -150,7 +150,7 @@ void autoCalibration()
   int historyLengthPosition = false;
   double referenceSensorHistory[SAMPLES_WITHIN_ERROR];
   double sensorToCalibrateHistory[SAMPLES_WITHIN_ERROR];
-  referenceSensorHistory[0] = in3.temperature[digitalTempHumSensor];
+  referenceSensorHistory[0] = in3.temperature[room_digital_TempHum_Sensor];
   sensorToCalibrateHistory[0] = in3.temperature[skinSensor];
   page = autoCalibrationPage;
   print_text = true;
@@ -201,7 +201,7 @@ void autoCalibration()
     case firstAutoCalibrationPoint:
       if (!GPIORead(ENC_SWITCH) || checkStableTemperatures(referenceSensorHistory, sensorToCalibrateHistory, SAMPLES_WITHIN_ERROR, CALIBRATION_ERROR))
       {
-        provisionalReferenceTemperatureLow = in3.temperature[digitalTempHumSensor];
+        provisionalReferenceTemperatureLow = in3.temperature[room_digital_TempHum_Sensor];
         provisionalRawTemperatureLow[skinSensor] = in3.temperature[skinSensor];
         vTaskDelay(debounceTime / portTICK_PERIOD_MS);
         while (!GPIORead(ENC_SWITCH))
@@ -226,7 +226,7 @@ void autoCalibration()
         Serial.println("=================================================point 2");
         ReferenceTemperatureLow = provisionalReferenceTemperatureLow;
         RawTemperatureLow[skinSensor] = provisionalRawTemperatureLow[skinSensor];
-        ReferenceTemperatureRange = in3.temperature[digitalTempHumSensor] - ReferenceTemperatureLow;
+        ReferenceTemperatureRange = in3.temperature[room_digital_TempHum_Sensor] - ReferenceTemperatureLow;
         RawTemperatureRange[skinSensor] = (in3.temperature[skinSensor] - RawTemperatureLow[skinSensor]);
         log("calibration factors: " + String(RawTemperatureLow[skinSensor]) + "," + String(RawTemperatureRange[skinSensor]) + "," + String(ReferenceTemperatureRange) + "," + String(ReferenceTemperatureLow));
         saveCalibrationToEEPROM();
@@ -244,7 +244,7 @@ void autoCalibration()
       {
         historyLengthPosition = false;
       }
-      referenceSensorHistory[historyLengthPosition] = in3.temperature[digitalTempHumSensor];
+      referenceSensorHistory[historyLengthPosition] = in3.temperature[room_digital_TempHum_Sensor];
       sensorToCalibrateHistory[historyLengthPosition] = in3.temperature[skinSensor];
       historyLengthPosition++;
 
@@ -411,8 +411,8 @@ void clearCalibrationValues()
 {
   RawTemperatureLow[skinSensor] = false;
   RawTemperatureRange[skinSensor] = false;
-  RawTemperatureLow[digitalTempHumSensor] = false;
-  RawTemperatureRange[digitalTempHumSensor] = false;
+  RawTemperatureLow[room_digital_TempHum_Sensor] = false;
+  RawTemperatureRange[room_digital_TempHum_Sensor] = false;
   ReferenceTemperatureRange = false;
   ReferenceTemperatureLow = false;
 }
