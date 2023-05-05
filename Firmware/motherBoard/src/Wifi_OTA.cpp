@@ -292,10 +292,13 @@ void addConfigTelemetriesToWIFIJSON()
 
 void addTelemetriesToWIFIJSON()
 {
-  addVariableToTelemetryWIFIJSON[AIR_TEMPERATURE_KEY] = roundSignificantDigits(in3.temperature[airSensor], TELEMETRIES_DECIMALS);
-  addVariableToTelemetryWIFIJSON[SKIN_TEMPERATURE_KEY] = roundSignificantDigits(in3.temperature[skinSensor], TELEMETRIES_DECIMALS);
+  addVariableToTelemetryWIFIJSON[SKIN_TEMPERATURE_KEY] = roundSignificantDigits(in3.temperature[SKIN_SENSOR], TELEMETRIES_DECIMALS);
+  addVariableToTelemetryWIFIJSON[AIR_TEMPERATURE_KEY] = roundSignificantDigits(in3.temperature[ROOM_DIGITAL_TEMP_HUM_SENSOR], TELEMETRIES_DECIMALS);
+  if(in3.temperature[AMBIENT_DIGITAL_TEMP_HUM_SENSOR]){
+  addVariableToTelemetryWIFIJSON[AMBIENT_TEMPERATURE_KEY] = roundSignificantDigits(in3.temperature[AMBIENT_DIGITAL_TEMP_HUM_SENSOR], TELEMETRIES_DECIMALS);
+  }
   addVariableToTelemetryWIFIJSON[PHOTOTHERAPY_ACTIVE_KEY] = in3.phototherapy;
-  addVariableToTelemetryWIFIJSON[HUMIDITY_KEY] = roundSignificantDigits(in3.humidity, TELEMETRIES_DECIMALS);
+  addVariableToTelemetryWIFIJSON[HUMIDITY_KEY] = roundSignificantDigits(in3.humidity[ROOM_DIGITAL_TEMP_HUM_SENSOR], TELEMETRIES_DECIMALS);
   addVariableToTelemetryWIFIJSON[SYSTEM_CURRENT_KEY] = roundSignificantDigits(in3.system_current, TELEMETRIES_DECIMALS);
   addVariableToTelemetryWIFIJSON[SYSTEM_VOLTAGE_KEY] = roundSignificantDigits(in3.system_voltage, TELEMETRIES_DECIMALS);
 

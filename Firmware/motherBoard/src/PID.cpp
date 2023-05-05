@@ -43,7 +43,7 @@ double Kd[numPID] = {KD_SKIN, KD_AIR, KD_HUMIDITY};
 
 PID airControlPID(&airControlPIDInput, &HeaterPIDOutput, &in3.desiredControlTemperature, Kp[airPID], Ki[airPID], Kd[airPID], P_ON_E, DIRECT);
 PID skinControlPID(&skinControlPIDInput, &HeaterPIDOutput, &in3.desiredControlTemperature, Kp[skinPID], Ki[skinPID], Kd[skinPID], P_ON_E, DIRECT);
-PID humidityControlPID(&in3.humidity, &humidityControlPIDOutput, &in3.desiredControlHumidity, Kp[humidityPID], Ki[humidityPID], Kd[humidityPID], P_ON_E, DIRECT);
+PID humidityControlPID(&in3.humidity[ROOM_DIGITAL_TEMP_HUM_SENSOR], &humidityControlPIDOutput, &in3.desiredControlHumidity, Kp[humidityPID], Ki[humidityPID], Kd[humidityPID], P_ON_E, DIRECT);
 
 void PIDInit()
 {
@@ -56,13 +56,13 @@ void PIDHandler()
 {
   if (airControlPID.GetMode() == AUTOMATIC)
   {
-    airControlPIDInput = in3.temperature[airSensor];
+    airControlPIDInput = in3.temperature[ROOM_DIGITAL_TEMP_HUM_SENSOR];
     airControlPID.Compute();
     ledcWrite(HEATER_PWM_CHANNEL, HeaterPIDOutput * ongoingCriticalAlarm());
   }
   if (skinControlPID.GetMode() == AUTOMATIC)
   {
-    skinControlPIDInput = in3.temperature[skinSensor];
+    skinControlPIDInput = in3.temperature[SKIN_SENSOR];
     skinControlPID.Compute();
     ledcWrite(HEATER_PWM_CHANNEL, HeaterPIDOutput * ongoingCriticalAlarm());
   }

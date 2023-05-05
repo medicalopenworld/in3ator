@@ -152,24 +152,13 @@
 
 #endif
 
-#if (HW_NUM >= 8)
 // number assignment of each environmental sensor for later call in variable
-#define skinSensor 0
-#define airSensor 1
-#define numNTC 1  // number of NTC
-#define room_digital_TempHum_Sensor 1
-#define ambient_digital_TempHum_Sensor 2
-#define numSensors 3  // number of total temperature sensors in system
-
-#else
-// number assignment of each environmental sensor for later call in variable
-#define skinSensor 0
-#define airSensor 1
-#define numNTC 1  // number of NTC
-#define room_digital_TempHum_Sensor 1
-#define numSensors 2  // number of total temperature sensors in system
-
-#endif
+#define NTC_QTY 1  // number of NTC
+#define SKIN_SENSOR 0
+#define ROOM_DIGITAL_TEMP_HUM_SENSOR 1
+#define AMBIENT_DIGITAL_TEMP_HUM_SENSOR 2
+#define SENSOR_TEMP_QTY 3  // number of total temperature sensors in system
+#define SENSOR_HUM_QTY 2  // number of total humidity sensors in system
 
 #define SYSTEM_SHUNT_CHANNEL INA3221_CH1
 #define PHOTOTHERAPY_SHUNT_CHANNEL INA3221_CH2

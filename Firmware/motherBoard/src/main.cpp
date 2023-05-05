@@ -42,19 +42,19 @@ long lastDebugUpdate;
 long loopCounts;
 int page;
 int temperature_filter = analog_temperature_filter;  // amount of temperature samples to filter
-long lastNTCmeasurement[numNTC];
+long lastNTCmeasurement[NTC_QTY];
 
 
-int NTC_PIN[numNTC] = {BABY_NTC_PIN};
-double errorTemperature[numSensors], temperatureCalibrationPoint;
+int NTC_PIN[NTC_QTY] = {BABY_NTC_PIN};
+double errorTemperature[SENSOR_TEMP_QTY], temperatureCalibrationPoint;
 double ReferenceTemperatureRange, ReferenceTemperatureLow;
 double provisionalReferenceTemperatureLow;
 double fineTuneSkinTemperature, fineTuneAirTemperature;
 float diffSkinTemperature, diffAirTemperature;  // difference between measured temperature and user input real temperature
-double RawTemperatureLow[numSensors], RawTemperatureRange[numSensors];
-double provisionalRawTemperatureLow[numSensors];
-double temperatureMax[numSensors], temperatureMin[numSensors];
-int temperatureArray[numNTC][analog_temperature_filter];  // variable to handle each NTC with the array of last samples (only for NTC)
+double RawTemperatureLow[SENSOR_TEMP_QTY], RawTemperatureRange[SENSOR_TEMP_QTY];
+double provisionalRawTemperatureLow[SENSOR_TEMP_QTY];
+double temperatureMax[SENSOR_TEMP_QTY], temperatureMin[SENSOR_TEMP_QTY];
+int temperatureArray[NTC_QTY][analog_temperature_filter];  // variable to handle each NTC with the array of last samples (only for NTC)
 int temperature_array_pos;                                // temperature sensor number turn to measure
 bool humidifierState, humidifierStateChange;
 int previousHumidity;  // previous sampled humidity
@@ -73,8 +73,8 @@ bool roomSensorPresent = false;
 bool ambientSensorPresent = false;
 bool digitalCurrentSensorPresent = false;
 
-float instantTemperature[numNTC][secondOrder_filter];
-float previousTemperature[numNTC][secondOrder_filter];
+float instantTemperature[NTC_QTY][secondOrder_filter];
+float previousTemperature[NTC_QTY][secondOrder_filter];
 
 float instantCurrent[secondOrder_filter];
 float previousCurrent[secondOrder_filter];
@@ -135,7 +135,7 @@ bool state_blink;
 bool blinkSetMessageState;
 long lastBlinkSetMessage;
 
-long lastSuccesfullSensorUpdate[numSensors];
+long lastSuccesfullSensorUpdate[SENSOR_TEMP_QTY];
 
 int ScreenBacklightMode;
 long lastRoomSensorUpdate, lastCurrentSensorUpdate;
@@ -169,7 +169,7 @@ void Backlight_Task(void *pvParameters) {
 
 void sensors_Task(void *pvParameters) {
   for (;;) {
-    measureNTCTemperature(skinSensor);
+    measureNTCTemperature(SKIN_SENSOR);
     if (millis() - lastRoomSensorUpdate > ROOM_SENSOR_UPDATE_PERIOD) {
       updateRoomSensor();
       updateAmbientSensor();

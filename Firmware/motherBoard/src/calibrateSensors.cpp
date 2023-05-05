@@ -37,16 +37,16 @@ extern long lastDebugUpdate;
 extern long loopCounts;
 extern int page;
 extern int temperature_filter; // amount of temperature samples to filter
-extern long lastNTCmeasurement[numNTC];
+extern long lastNTCmeasurement[NTC_QTY];
 
-extern double errorTemperature[numSensors], temperatureCalibrationPoint;
+extern double errorTemperature[SENSOR_TEMP_QTY], temperatureCalibrationPoint;
 extern double ReferenceTemperatureRange, ReferenceTemperatureLow;
 extern double provisionalReferenceTemperatureLow;
 extern double fineTuneSkinTemperature, fineTuneAirTemperature;
-extern double RawTemperatureLow[numSensors], RawTemperatureRange[numSensors];
-extern double provisionalRawTemperatureLow[numSensors];
-extern double temperatureMax[numSensors], temperatureMin[numSensors];
-extern int temperatureArray[numNTC][analog_temperature_filter]; // variable to handle each NTC with the array of last samples (only for NTC)
+extern double RawTemperatureLow[SENSOR_TEMP_QTY], RawTemperatureRange[SENSOR_TEMP_QTY];
+extern double provisionalRawTemperatureLow[SENSOR_TEMP_QTY];
+extern double temperatureMax[SENSOR_TEMP_QTY], temperatureMin[SENSOR_TEMP_QTY];
+extern int temperatureArray[NTC_QTY][analog_temperature_filter]; // variable to handle each NTC with the array of last samples (only for NTC)
 extern int temperature_array_pos;                               // temperature sensor number turn to measure
 extern float diffSkinTemperature, diffAirTemperature;                                   // difference between measured temperature and user input real temperature
 extern bool humidifierState, humidifierStateChange;
@@ -150,8 +150,8 @@ void autoCalibration()
   int historyLengthPosition = false;
   double referenceSensorHistory[SAMPLES_WITHIN_ERROR];
   double sensorToCalibrateHistory[SAMPLES_WITHIN_ERROR];
-  referenceSensorHistory[0] = in3.temperature[room_digital_TempHum_Sensor];
-  sensorToCalibrateHistory[0] = in3.temperature[skinSensor];
+  referenceSensorHistory[0] = in3.temperature[ROOM_DIGITAL_TEMP_HUM_SENSOR];
+  sensorToCalibrateHistory[0] = in3.temperature[SKIN_SENSOR];
   page = autoCalibrationPage;
   print_text = true;
   tft.setTextSize(1);
@@ -201,8 +201,8 @@ void autoCalibration()
     case firstAutoCalibrationPoint:
       if (!GPIORead(ENC_SWITCH) || checkStableTemperatures(referenceSensorHistory, sensorToCalibrateHistory, SAMPLES_WITHIN_ERROR, CALIBRATION_ERROR))
       {
-        provisionalReferenceTemperatureLow = in3.temperature[room_digital_TempHum_Sensor];
-        provisionalRawTemperatureLow[skinSensor] = in3.temperature[skinSensor];
+        provisionalReferenceTemperatureLow = in3.temperature[ROOM_DIGITAL_TEMP_HUM_SENSOR];
+        provisionalRawTemperatureLow[SKIN_SENSOR] = in3.temperature[SKIN_SENSOR];
         vTaskDelay(debounceTime / portTICK_PERIOD_MS);
         while (!GPIORead(ENC_SWITCH))
         {
@@ -225,10 +225,10 @@ void autoCalibration()
       {
         Serial.println("=================================================point 2");
         ReferenceTemperatureLow = provisionalReferenceTemperatureLow;
-        RawTemperatureLow[skinSensor] = provisionalRawTemperatureLow[skinSensor];
-        ReferenceTemperatureRange = in3.temperature[room_digital_TempHum_Sensor] - ReferenceTemperatureLow;
-        RawTemperatureRange[skinSensor] = (in3.temperature[skinSensor] - RawTemperatureLow[skinSensor]);
-        log("calibration factors: " + String(RawTemperatureLow[skinSensor]) + "," + String(RawTemperatureRange[skinSensor]) + "," + String(ReferenceTemperatureRange) + "," + String(ReferenceTemperatureLow));
+        RawTemperatureLow[SKIN_SENSOR] = provisionalRawTemperatureLow[SKIN_SENSOR];
+        ReferenceTemperatureRange = in3.temperature[ROOM_DIGITAL_TEMP_HUM_SENSOR] - ReferenceTemperatureLow;
+        RawTemperatureRange[SKIN_SENSOR] = (in3.temperature[SKIN_SENSOR] - RawTemperatureLow[SKIN_SENSOR]);
+        log("calibration factors: " + String(RawTemperatureLow[SKIN_SENSOR]) + "," + String(RawTemperatureRange[SKIN_SENSOR]) + "," + String(ReferenceTemperatureRange) + "," + String(ReferenceTemperatureLow));
         saveCalibrationToEEPROM();
         ledcWrite(HEATER_PWM_CHANNEL, false);
         turnFans(OFF);
@@ -244,8 +244,8 @@ void autoCalibration()
       {
         historyLengthPosition = false;
       }
-      referenceSensorHistory[historyLengthPosition] = in3.temperature[room_digital_TempHum_Sensor];
-      sensorToCalibrateHistory[historyLengthPosition] = in3.temperature[skinSensor];
+      referenceSensorHistory[historyLengthPosition] = in3.temperature[ROOM_DIGITAL_TEMP_HUM_SENSOR];
+      sensorToCalibrateHistory[historyLengthPosition] = in3.temperature[SKIN_SENSOR];
       historyLengthPosition++;
 
       for (int i = 0; i < SAMPLES_WITHIN_ERROR; i++)
@@ -281,7 +281,7 @@ void fineTuneCalibration()
   bar_pos = true;
   ypos = graphicHeight(bar_pos - 1);
   setTextColor(COLOR_MENU_TEXT);
-  drawFloat(in3.temperature[skinSensor], 1, valuePosition, ypos, textFontSize);
+  drawFloat(in3.temperature[SKIN_SENSOR], 1, valuePosition, ypos, textFontSize);
   while (!GPIORead(ENC_SWITCH))
   {
     updateData();
@@ -326,7 +326,7 @@ void firstPointCalibration()
   bar_pos = true;
   ypos = graphicHeight(bar_pos - 1);
   setTextColor(COLOR_MENU_TEXT);
-  drawFloat(in3.temperature[skinSensor], 1, valuePosition, ypos, textFontSize);
+  drawFloat(in3.temperature[SKIN_SENSOR], 1, valuePosition, ypos, textFontSize);
   while (!GPIORead(ENC_SWITCH))
   {
     updateData();
@@ -371,7 +371,7 @@ void secondPointCalibration()
   bar_pos = true;
   ypos = graphicHeight(bar_pos - 1);
   setTextColor(COLOR_MENU_TEXT);
-  drawFloat(in3.temperature[skinSensor], 1, valuePosition, ypos, textFontSize);
+  drawFloat(in3.temperature[SKIN_SENSOR], 1, valuePosition, ypos, textFontSize);
   while (!GPIORead(ENC_SWITCH))
   {
     updateData();
@@ -409,10 +409,10 @@ bool checkStableCurrentConsumption(double *referenceSensorHistory, int historyLe
 
 void clearCalibrationValues()
 {
-  RawTemperatureLow[skinSensor] = false;
-  RawTemperatureRange[skinSensor] = false;
-  RawTemperatureLow[room_digital_TempHum_Sensor] = false;
-  RawTemperatureRange[room_digital_TempHum_Sensor] = false;
+  RawTemperatureLow[SKIN_SENSOR] = false;
+  RawTemperatureRange[SKIN_SENSOR] = false;
+  RawTemperatureLow[ROOM_DIGITAL_TEMP_HUM_SENSOR] = false;
+  RawTemperatureRange[ROOM_DIGITAL_TEMP_HUM_SENSOR] = false;
   ReferenceTemperatureRange = false;
   ReferenceTemperatureLow = false;
 }

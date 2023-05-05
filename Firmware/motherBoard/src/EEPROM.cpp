@@ -29,7 +29,7 @@ extern bool autoLock;
 extern bool WIFI_EN;
 bool firstTurnOn;
 extern int presetTemp[2]; // preset baby skin temperature
-extern double RawTemperatureLow[numSensors], RawTemperatureRange[numSensors];
+extern double RawTemperatureLow[SENSOR_TEMP_QTY], RawTemperatureRange[SENSOR_TEMP_QTY];
 extern double ReferenceTemperatureRange, ReferenceTemperatureLow;
 extern double fineTuneSkinTemperature, fineTuneAirTemperature;
 
@@ -97,8 +97,8 @@ void recapVariables()
 {
   autoLock = EEPROM.read(EEPROM_AUTO_LOCK);
   in3.language = EEPROM.read(EEPROM_LANGUAGE);
-  RawTemperatureLow[skinSensor] = EEPROM.readFloat(EEPROM_RAW_SKIN_TEMP_LOW_CORRECTION);
-  RawTemperatureRange[skinSensor] = EEPROM.readFloat(EEPROM_RAW_SKIN_TEMP_RANGE_CORRECTION);
+  RawTemperatureLow[SKIN_SENSOR] = EEPROM.readFloat(EEPROM_RAW_SKIN_TEMP_LOW_CORRECTION);
+  RawTemperatureRange[SKIN_SENSOR] = EEPROM.readFloat(EEPROM_RAW_SKIN_TEMP_RANGE_CORRECTION);
   ReferenceTemperatureRange = EEPROM.readFloat(EEPROM_REFERENCE_TEMP_RANGE);
   ReferenceTemperatureLow = EEPROM.readFloat(EEPROM_REFERENCE_TEMP_LOW);
   fineTuneSkinTemperature = EEPROM.readFloat(EEPROM_FINE_TUNE_TEMP_SKIN);
@@ -110,7 +110,7 @@ void recapVariables()
   in3.humidifier_active_time = EEPROM.readFloat(EEPROM_HUMIDIFIER_ACTIVE_TIME);
   in3.phototherapy_active_time = EEPROM.readFloat(EEPROM_PHOTOTHERAPY_ACTIVE_TIME);
 
-  for (int i = 0; i < numSensors; i++)
+  for (int i = 0; i < SENSOR_TEMP_QTY; i++)
   {
     log("calibration factors: " + String(RawTemperatureLow[i]) + "," + String(RawTemperatureRange[i]) + "," + String(ReferenceTemperatureRange) + "," + String(ReferenceTemperatureLow));
   }
@@ -121,7 +121,7 @@ void recapVariables()
     log("[HW] -> Fail -> temperature sensor is not calibrated");
   }
 
-  for (int i = 0; i < numSensors; i++)
+  for (int i = 0; i < SENSOR_TEMP_QTY; i++)
   {
     if (RawTemperatureLow[i] > 100)
     {
@@ -137,8 +137,8 @@ void recapVariables()
 
 void saveCalibrationToEEPROM()
 {
-  EEPROM.writeFloat(EEPROM_RAW_SKIN_TEMP_LOW_CORRECTION, RawTemperatureLow[skinSensor]);
-  EEPROM.writeFloat(EEPROM_RAW_SKIN_TEMP_RANGE_CORRECTION, RawTemperatureRange[skinSensor]);
+  EEPROM.writeFloat(EEPROM_RAW_SKIN_TEMP_LOW_CORRECTION, RawTemperatureLow[SKIN_SENSOR]);
+  EEPROM.writeFloat(EEPROM_RAW_SKIN_TEMP_RANGE_CORRECTION, RawTemperatureRange[SKIN_SENSOR]);
   EEPROM.writeFloat(EEPROM_REFERENCE_TEMP_RANGE, ReferenceTemperatureRange);
   EEPROM.writeFloat(EEPROM_REFERENCE_TEMP_LOW, ReferenceTemperatureLow);
   EEPROM.writeFloat(EEPROM_FINE_TUNE_TEMP_SKIN, fineTuneSkinTemperature);

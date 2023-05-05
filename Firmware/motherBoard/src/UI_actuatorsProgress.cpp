@@ -36,16 +36,16 @@ extern bool WIFI_EN;
 extern long loopCounts;
 extern int page;
 extern int temperature_filter; // amount of temperature samples to filter
-extern long lastNTCmeasurement[numNTC];
+extern long lastNTCmeasurement[NTC_QTY];
 
-extern double errorTemperature[numSensors], temperatureCalibrationPoint;
+extern double errorTemperature[SENSOR_TEMP_QTY], temperatureCalibrationPoint;
 extern double ReferenceTemperatureRange, ReferenceTemperatureLow;
 extern double provisionalReferenceTemperatureLow;
 extern double fineTuneSkinTemperature;
-extern double RawTemperatureLow[numSensors], RawTemperatureRange[numSensors];
-extern double provisionalRawTemperatureLow[numSensors];
-extern double temperatureMax[numSensors], temperatureMin[numSensors];
-extern int temperatureArray[numNTC][analog_temperature_filter]; // variable to handle each NTC with the array of last samples (only for NTC)
+extern double RawTemperatureLow[SENSOR_TEMP_QTY], RawTemperatureRange[SENSOR_TEMP_QTY];
+extern double provisionalRawTemperatureLow[SENSOR_TEMP_QTY];
+extern double temperatureMax[SENSOR_TEMP_QTY], temperatureMin[SENSOR_TEMP_QTY];
+extern int temperatureArray[NTC_QTY][analog_temperature_filter]; // variable to handle each NTC with the array of last samples (only for NTC)
 extern int temperature_array_pos;                               // temperature sensor number turn to measure
 extern float diffSkinTemperature, diffAirTemperature;           // difference between measured temperature and user input real temperature
 extern bool humidifierState, humidifierStateChange;
@@ -156,7 +156,7 @@ void basictemperatureControl()
 void basicHumidityControl()
 {
   /*
-  if (in3.humidity < in3.desiredControlHumidity)
+  if (in3.humidity [ROOM_DIGITAL_TEMP_HUM_SENSOR]< in3.desiredControlHumidity)
   {
     if (!humidifierState || humidifierStateChange)
     {
@@ -337,7 +337,7 @@ void UI_actuatorsProgress()
   {
     printLoadingHumidityBar(in3.desiredControlHumidity);
   }
-  humidityAtStart = in3.humidity;
+  humidityAtStart = in3.humidity[ROOM_DIGITAL_TEMP_HUM_SENSOR];
   turnFans(ON);
   while (!exitActuation)
   {

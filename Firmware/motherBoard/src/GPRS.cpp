@@ -45,6 +45,7 @@ StaticJsonDocument<JSON_OBJECT_SIZE(THINGSBOARD_FIELDS_AMOUNT)> GPRS_JSON;
 JsonObject addVariableToTelemetryGPRSJSON = GPRS_JSON.to<JsonObject>();
 
 unsigned long previous_processing_time;
+extern bool ambientSensorPresent;
 
 extern in3ator_parameters in3;
 GPRSstruct GPRS;
@@ -365,10 +366,13 @@ void addTelemetriesToGPRSJSON() {
   addVariableToTelemetryGPRSJSON[TRI_ACCURACY_KEY] = GPRS.accuracy;
  }
 
-  addVariableToTelemetryGPRSJSON[AIR_TEMPERATURE_KEY] = roundSignificantDigits(in3.temperature[airSensor], TELEMETRIES_DECIMALS);
-  addVariableToTelemetryGPRSJSON[SKIN_TEMPERATURE_KEY] = roundSignificantDigits(in3.temperature[skinSensor], TELEMETRIES_DECIMALS);
+  addVariableToTelemetryGPRSJSON[SKIN_TEMPERATURE_KEY] = roundSignificantDigits(in3.temperature[SKIN_SENSOR], TELEMETRIES_DECIMALS);
+  addVariableToTelemetryGPRSJSON[AIR_TEMPERATURE_KEY] = roundSignificantDigits(in3.temperature[ROOM_DIGITAL_TEMP_HUM_SENSOR], TELEMETRIES_DECIMALS);
+  if(in3.temperature[AMBIENT_DIGITAL_TEMP_HUM_SENSOR]){
+  addVariableToTelemetryGPRSJSON[AMBIENT_TEMPERATURE_KEY] = roundSignificantDigits(in3.temperature[AMBIENT_DIGITAL_TEMP_HUM_SENSOR], TELEMETRIES_DECIMALS);
+  }
   addVariableToTelemetryGPRSJSON[PHOTOTHERAPY_ACTIVE_KEY] = in3.phototherapy;
-  addVariableToTelemetryGPRSJSON[HUMIDITY_KEY] = roundSignificantDigits(in3.humidity, TELEMETRIES_DECIMALS);
+  addVariableToTelemetryGPRSJSON[HUMIDITY_KEY] = roundSignificantDigits(in3.humidity[ROOM_DIGITAL_TEMP_HUM_SENSOR], TELEMETRIES_DECIMALS);
   addVariableToTelemetryGPRSJSON[SYSTEM_CURRENT_KEY] = roundSignificantDigits(in3.system_current, TELEMETRIES_DECIMALS);
   addVariableToTelemetryGPRSJSON[SYSTEM_VOLTAGE_KEY] = roundSignificantDigits(in3.system_voltage, TELEMETRIES_DECIMALS);
   addVariableToTelemetryGPRSJSON[CELL_SIGNAL_QUALITY_KEY] = GPRS.CSQ;

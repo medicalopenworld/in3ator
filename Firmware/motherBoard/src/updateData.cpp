@@ -36,16 +36,16 @@ extern long lastDebugUpdate;
 extern long loopCounts;
 extern int page;
 extern int temperature_filter; // amount of temperature samples to filter
-extern long lastNTCmeasurement[numNTC];
+extern long lastNTCmeasurement[NTC_QTY];
 
-extern double errorTemperature[numSensors], temperatureCalibrationPoint;
+extern double errorTemperature[SENSOR_TEMP_QTY], temperatureCalibrationPoint;
 extern double ReferenceTemperatureRange, ReferenceTemperatureLow;
 extern double provisionalReferenceTemperatureLow;
 extern double fineTuneSkinTemperature;
-extern double RawTemperatureLow[numSensors], RawTemperatureRange[numSensors];
-extern double provisionalRawTemperatureLow[numSensors];
-extern double temperatureMax[numSensors], temperatureMin[numSensors];
-extern int temperatureArray[numNTC][analog_temperature_filter]; // variable to handle each NTC with the array of last samples (only for NTC)
+extern double RawTemperatureLow[SENSOR_TEMP_QTY], RawTemperatureRange[SENSOR_TEMP_QTY];
+extern double provisionalRawTemperatureLow[SENSOR_TEMP_QTY];
+extern double temperatureMax[SENSOR_TEMP_QTY], temperatureMin[SENSOR_TEMP_QTY];
+extern int temperatureArray[NTC_QTY][analog_temperature_filter]; // variable to handle each NTC with the array of last samples (only for NTC)
 extern int temperature_array_pos;                               // temperature sensor number turn to measure
 extern float diffSkinTemperature, diffAirTemperature;           // difference between measured temperature and user input real temperature
 extern bool humidifierState, humidifierStateChange;
@@ -152,8 +152,8 @@ void updateDisplaySensors()
   {
     drawSelectedTemperature(in3.temperature[in3.controlMode], previousTemperature[in3.controlMode]);
     previousTemperature[in3.controlMode] = in3.temperature[in3.controlMode];
-    drawHumidity(in3.humidity, previousHumidity);
-    previousHumidity = in3.humidity;
+    drawHumidity(in3.humidity[ROOM_DIGITAL_TEMP_HUM_SENSOR], previousHumidity);
+    previousHumidity = in3.humidity[ROOM_DIGITAL_TEMP_HUM_SENSOR];
   }
   if (page == actuatorsProgressPage)
   {
@@ -165,11 +165,11 @@ void updateDisplaySensors()
       float previousTemperaturePercentage = temperaturePercentage;
       if (in3.controlMode)
       {
-        temperatureToUpdate = in3.temperature[airSensor];
+        temperatureToUpdate = in3.temperature[ROOM_DIGITAL_TEMP_HUM_SENSOR];
       }
       else
       {
-        temperatureToUpdate = in3.temperature[skinSensor];
+        temperatureToUpdate = in3.temperature[SKIN_SENSOR];
       }
       if ((in3.desiredControlTemperature - temperatureAtStart))
       {
@@ -190,7 +190,7 @@ void updateDisplaySensors()
       float previousHumidityPercentage = humidityPercentage;
       if ((in3.desiredControlHumidity - humidityAtStart))
       {
-        humidityPercentage = 100 - ((in3.desiredControlHumidity - in3.humidity) * 100 / (in3.desiredControlHumidity - humidityAtStart));
+        humidityPercentage = 100 - ((in3.desiredControlHumidity - in3.humidity[ROOM_DIGITAL_TEMP_HUM_SENSOR]) * 100 / (in3.desiredControlHumidity - humidityAtStart));
       }
       if (humidityPercentage > 99)
       {
@@ -333,12 +333,12 @@ void updateData()
       log("[SENSORS] -> Fan current consumption is: " + String(in3.fan_current, 4) + " Amps");
     }
 #endif
-    log("[SENSORS] -> Baby temperature: " + String(in3.temperature[skinSensor]) + "ºC, correction error is " + String(errorTemperature[skinSensor]));
-    log("[SENSORS] -> Air temperature: " + String(in3.temperature[airSensor]) + "ºC, correction error is " + String(errorTemperature[airSensor]));
-    log("[SENSORS] -> Humidity: " + String(in3.humidity) + "%");
+    log("[SENSORS] -> Baby temperature: " + String(in3.temperature[SKIN_SENSOR]) + "ºC, correction error is " + String(errorTemperature[SKIN_SENSOR]));
+    log("[SENSORS] -> Air temperature: " + String(in3.temperature[ROOM_DIGITAL_TEMP_HUM_SENSOR]) + "ºC, correction error is " + String(errorTemperature[ROOM_DIGITAL_TEMP_HUM_SENSOR]));
+    log("[SENSORS] -> Humidity: " + String(in3.humidity[ROOM_DIGITAL_TEMP_HUM_SENSOR]) + "%");
         if (digitalCurrentSensorPresent)
     {
-      
+
     }
     
     // log("[SENSORS] -> ON_OFF: " + String(GPIORead(ON_OFF_SWITCH)));

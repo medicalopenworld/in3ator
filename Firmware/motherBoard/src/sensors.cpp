@@ -38,17 +38,17 @@ extern long lastDebugUpdate;
 extern long loopCounts;
 extern int page;
 extern int temperature_filter; // amount of temperature samples to filter
-extern long lastNTCmeasurement[numNTC];
+extern long lastNTCmeasurement[NTC_QTY];
 
-extern int NTC_PIN[numNTC];
-extern double errorTemperature[numSensors], temperatureCalibrationPoint;
+extern int NTC_PIN[NTC_QTY];
+extern double errorTemperature[SENSOR_TEMP_QTY], temperatureCalibrationPoint;
 extern double ReferenceTemperatureRange, ReferenceTemperatureLow;
 extern double provisionalReferenceTemperatureLow;
 extern double fineTuneSkinTemperature, fineTuneAirTemperature;
-extern double RawTemperatureLow[numSensors], RawTemperatureRange[numSensors];
-extern double provisionalRawTemperatureLow[numSensors];
-extern double temperatureMax[numSensors], temperatureMin[numSensors];
-extern int temperatureArray[numNTC][analog_temperature_filter]; // variable to handle each NTC with the array of last samples (only for NTC)
+extern double RawTemperatureLow[SENSOR_TEMP_QTY], RawTemperatureRange[SENSOR_TEMP_QTY];
+extern double provisionalRawTemperatureLow[SENSOR_TEMP_QTY];
+extern double temperatureMax[SENSOR_TEMP_QTY], temperatureMin[SENSOR_TEMP_QTY];
+extern int temperatureArray[NTC_QTY][analog_temperature_filter]; // variable to handle each NTC with the array of last samples (only for NTC)
 extern int temperature_array_pos;                               // temperature sensor number turn to measure
 extern float diffSkinTemperature, diffAirTemperature;           // difference between measured temperature and user input real temperature
 extern bool humidifierState, humidifierStateChange;
@@ -71,8 +71,8 @@ extern bool roomSensorPresent;
 extern bool ambientSensorPresent;
 extern bool digitalCurrentSensorPresent;
 
-extern float instantTemperature[numNTC][secondOrder_filter];
-extern float previousTemperature[numNTC][secondOrder_filter];
+extern float instantTemperature[NTC_QTY][secondOrder_filter];
+extern float previousTemperature[NTC_QTY][secondOrder_filter];
 
 extern float instantCurrent[secondOrder_filter];
 extern float previousCurrent[secondOrder_filter];
@@ -128,7 +128,7 @@ extern bool state_blink;
 extern bool blinkSetMessageState;
 extern long lastBlinkSetMessage;
 
-extern long lastSuccesfullSensorUpdate[numSensors];
+extern long lastSuccesfullSensorUpdate[SENSOR_TEMP_QTY];
 
 extern double HeaterPIDOutput;
 extern double skinControlPIDInput;
@@ -257,7 +257,7 @@ bool measureNTCTemperature(uint8_t NTC)
       {
         in3.temperature[NTC] = (((in3.temperature[NTC] - RawTemperatureLow[NTC]) * ReferenceTemperatureRange) / RawTemperatureRange[NTC]) + ReferenceTemperatureLow;
       }
-      if (NTC == skinSensor)
+      if (NTC == SKIN_SENSOR)
       {
         in3.temperature[NTC] += fineTuneSkinTemperature;
       }
@@ -297,16 +297,16 @@ bool updateRoomSensor()
       sensedTemperature = mySHTC3.toDegC();
       if (sensedTemperature > DIG_TEMP_TO_DISCARD_MIN && sensedTemperature < DIG_TEMP_TO_DISCARD_MAX)
       {
-        lastSuccesfullSensorUpdate[room_digital_TempHum_Sensor] = millis();
-        in3.temperature[room_digital_TempHum_Sensor] = sensedTemperature; // Add here measurement to temp array
-        in3.humidity = mySHTC3.toPercent();
-        if (in3.temperature[room_digital_TempHum_Sensor] > temperatureMax[room_digital_TempHum_Sensor])
+        lastSuccesfullSensorUpdate[ROOM_DIGITAL_TEMP_HUM_SENSOR] = millis();
+        in3.temperature[ROOM_DIGITAL_TEMP_HUM_SENSOR] = sensedTemperature; // Add here measurement to temp array
+        in3.humidity [ROOM_DIGITAL_TEMP_HUM_SENSOR]= mySHTC3.toPercent();
+        if (in3.temperature[ROOM_DIGITAL_TEMP_HUM_SENSOR] > temperatureMax[ROOM_DIGITAL_TEMP_HUM_SENSOR])
         {
-          temperatureMax[room_digital_TempHum_Sensor] = in3.temperature[room_digital_TempHum_Sensor];
+          temperatureMax[ROOM_DIGITAL_TEMP_HUM_SENSOR] = in3.temperature[ROOM_DIGITAL_TEMP_HUM_SENSOR];
         }
-        if (in3.temperature[room_digital_TempHum_Sensor] < temperatureMin[room_digital_TempHum_Sensor])
+        if (in3.temperature[ROOM_DIGITAL_TEMP_HUM_SENSOR] < temperatureMin[ROOM_DIGITAL_TEMP_HUM_SENSOR])
         {
-          temperatureMin[room_digital_TempHum_Sensor] = in3.temperature[room_digital_TempHum_Sensor];
+          temperatureMin[ROOM_DIGITAL_TEMP_HUM_SENSOR] = in3.temperature[ROOM_DIGITAL_TEMP_HUM_SENSOR];
         }
         return true;
       }
@@ -327,9 +327,8 @@ bool updateAmbientSensor(){
     if (ambientSensorPresent){
   sensors_event_t humidity, temp;
   sht4.getEvent(&humidity, &temp);// populate temp and humidity objects with fresh data
-  in3.temperature[ambient_digital_TempHum_Sensor] = temp.temperature;
-  //Serial.print("Ambient Temperature: "); Serial.print(temp.temperature); Serial.println(" degrees C");
-  //Serial.print("Ambient Humidity: "); Serial.print(humidity.relative_humidity); Serial.println("% rH");
+  in3.temperature[AMBIENT_DIGITAL_TEMP_HUM_SENSOR] = temp.temperature;
+  in3.humidity[AMBIENT_DIGITAL_TEMP_HUM_SENSOR] = humidity.relative_humidity;
   return true;
     }
     else{

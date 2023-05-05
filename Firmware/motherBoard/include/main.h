@@ -68,8 +68,9 @@
 #define LOCATION_LATITUD_KEY "tri_latitud"
 #define TRI_ACCURACY_KEY "tri_accuracy"
 #define UI_LANGUAGE_KEY "UI_language"
-#define AIR_TEMPERATURE_KEY "Air_temp"
 #define SKIN_TEMPERATURE_KEY "Skin_temp"
+#define AIR_TEMPERATURE_KEY "Air_temp"
+#define AMBIENT_TEMPERATURE_KEY "Amb_temp"
 #define HUMIDITY_KEY "Humidity"
 #define SYSTEM_CURRENT_KEY "SYS_current"
 #define SYSTEM_VOLTAGE_KEY "SYS_voltage"
@@ -372,8 +373,8 @@ typedef enum {
 
 typedef struct
 {
-  double temperature[numSensors];
-  double humidity = false;
+  double temperature[SENSOR_TEMP_QTY];
+  double humidity[SENSOR_HUM_QTY];
   double desiredControlTemperature = false;
   double desiredControlHumidity = false;
 
