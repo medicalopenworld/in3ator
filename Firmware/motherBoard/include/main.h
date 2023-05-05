@@ -193,9 +193,14 @@
 #define defaultCurrentSamples 30
 #define defaultTestingSamples 8000
 #define Rsense 3000  // 3 microohm as shunt resistor
-#define digitalCurrentSensor_i2c_address 0x41
-#define roomSensorAddress 0x70
-#define ambientSensorAddress 0x44
+
+#define MAIN 0
+#define SECUNDARY 1
+//I2C addresses
+#define MAIN_DIGITAL_CURRENT_SENSOR_I2C_ADDRESS 0x41
+#define SECUNDARY_DIGITAL_CURRENT_SENSOR_I2C_ADDRESS 0x40
+#define AMBIENT_SENSOR_I2C_ADDRESS 0x44
+#define ROOM_SENSOR_I2C_ADDRESS 0x70
 
 // #define system constants
 #define humidifierDutyCycleMax 100  // maximum humidity cycle in heater to be set
@@ -392,10 +397,15 @@ typedef struct
 
   double system_current = false;
   double system_voltage = false;
+  double heater_current = false;
   double fan_current = false;
   double humidifier_current = false;
   double humidifier_voltage = false;
   double phototherapy_current = false;
+  double USB_current = false;
+  double USB_voltage = false;
+  double BATTERY_current = false;
+  double BATTERY_voltage = false;
   int serialNumber = false;
 
   bool controlMode = DEFAULT_CONTROL_MODE;
@@ -435,8 +445,8 @@ void buzzerHandler();
 void buzzerTone(int beepTimes, int timevTaskDelay, int freq);
 
 void shutBuzzer();
-double measureMeanConsumption(int shunt);
-float measureMeanVoltage(int shunt);
+double measureMeanConsumption(bool, int);
+float measureMeanVoltage(bool, int);
 void WIFI_TB_Init();
 void WifiOTAHandler(void);
 void securityCheck();

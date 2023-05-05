@@ -168,12 +168,24 @@
 #define PHOTOTHERAPY_SHUNT_CHANNEL INA3221_CH2
 #define FAN_SHUNT_CHANNEL INA3221_CH3
 
+#define HEATER_SHUNT_CHANNEL INA3221_CH1
+#define USB_SHUNT_CHANNEL INA3221_CH2
+#define BATTERY_SHUNT_CHANNEL INA3221_CH3
+
 #define HUMIDIFIER_SHUNT 1
 
 #define SDCard false
 #define SYSTEM_SHUNT 2         // miliohms
-#define PHOTOTHERAPY_SHUNT 20  // miliohms
 #define FAN_SHUNT 100          // miliohms
+#if (HW_NUM >= 12)
+#define PHOTOTHERAPY_SHUNT 82  // miliohms
+#else
+#define PHOTOTHERAPY_SHUNT 20  // miliohms
+#endif
+#define BATTERY_SHUNT 27000    // miliohms
+#define USB_SHUNT 100          // miliohms
+#define HEATER_SHUNT 2         // miliohms
+
 
 #define DISPLAY_DEFAULT_ROTATION 3
 

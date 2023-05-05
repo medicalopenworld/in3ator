@@ -31,7 +31,8 @@ extern Adafruit_ILI9341 tft;
 extern SHTC3 mySHTC3; // Declare an instance of the SHTC3 class
 extern Adafruit_SHT4x sht4;
 extern RotaryEncoder encoder;
-extern Beastdevices_INA3221 digitalCurrentSensor;
+extern Beastdevices_INA3221 mainDigitalCurrentSensor;
+extern Beastdevices_INA3221 secundaryDigitalCurrentSensor;
 
 extern bool WIFI_EN;
 extern long lastDebugUpdate;
@@ -63,7 +64,7 @@ extern bool WIFI_connection_status;
 
 extern bool roomSensorPresent;
 extern bool ambientSensorPresent;
-extern bool digitalCurrentSensorPresent;
+extern bool digitalCurrentSensorPresent[2];
 
 
 
@@ -282,7 +283,7 @@ void initInterrupts()
 void initRoomSensor()
 {
   roomSensorPresent = false;
-  wire->beginTransmission(roomSensorAddress);
+  wire->beginTransmission(ROOM_SENSOR_I2C_ADDRESS);
   roomSensorPresent = !(wire->endTransmission());
   if (roomSensorPresent == true)
   {
@@ -295,7 +296,7 @@ void initRoomSensor()
 void initAmbientSensor()
 {
   ambientSensorPresent = false;
-  wire->beginTransmission(ambientSensorAddress);
+  wire->beginTransmission(AMBIENT_SENSOR_I2C_ADDRESS);
   ambientSensorPresent = !(wire->endTransmission());
   if (ambientSensorPresent == true)
   {
@@ -303,20 +304,37 @@ void initAmbientSensor()
     sht4.begin(&Wire);
   }
 }
-void initCurrentSensor()
+void initCurrentSensor(bool currentSensor)
 {
-  log("[HW] -> Initialiting current sensor");
-  wire->beginTransmission(digitalCurrentSensor_i2c_address);
-  digitalCurrentSensorPresent = !(wire->endTransmission());
-  if (digitalCurrentSensorPresent)
+  if(currentSensor==MAIN){
+  log("[HW] -> Initialiting MAIN current sensor");
+  wire->beginTransmission(MAIN_DIGITAL_CURRENT_SENSOR_I2C_ADDRESS);
+  }
+  else{
+  log("[HW] -> Initialiting SECUNDARY current sensor");
+  wire->beginTransmission(SECUNDARY_DIGITAL_CURRENT_SENSOR_I2C_ADDRESS);
+  }
+  if (!(wire->endTransmission()))
   {
-    digitalCurrentSensor.begin();
-    digitalCurrentSensor.reset();
+    digitalCurrentSensorPresent[currentSensor]=true;
+        log("[HW] ->digital sensor detected");
+      if(currentSensor==MAIN){
+    mainDigitalCurrentSensor.begin();
+    mainDigitalCurrentSensor.reset();
     // Set shunt resistors to 10 mOhm for all channels
-    digitalCurrentSensor.setShuntRes(SYSTEM_SHUNT, PHOTOTHERAPY_SHUNT, FAN_SHUNT);
-    digitalCurrentSensor.setShuntConversionTime(INA3221_REG_CONF_CT_140US);
-    digitalCurrentSensor.setAveragingMode(INA3221_REG_CONF_AVG_128);
-    log("[HW] -> digital sensor detected, current consumption is " + String(digitalCurrentSensor.getCurrent(INA3221_CH1), 2) + " Amperes");
+    mainDigitalCurrentSensor.setShuntRes(SYSTEM_SHUNT, PHOTOTHERAPY_SHUNT, FAN_SHUNT);
+    mainDigitalCurrentSensor.setShuntConversionTime(INA3221_REG_CONF_CT_140US);
+    mainDigitalCurrentSensor.setAveragingMode(INA3221_REG_CONF_AVG_128);
+      }
+      else{
+    digitalCurrentSensorPresent[currentSensor]=true;
+    secundaryDigitalCurrentSensor.begin();
+    secundaryDigitalCurrentSensor.reset();
+    // Set shunt resistors to 10 mOhm for all channels
+    secundaryDigitalCurrentSensor.setShuntRes(HEATER_SHUNT, USB_SHUNT, BATTERY_SHUNT);
+    secundaryDigitalCurrentSensor.setShuntConversionTime(INA3221_REG_CONF_CT_140US);
+    secundaryDigitalCurrentSensor.setAveragingMode(INA3221_REG_CONF_AVG_128);
+  }
   }
   else
   {
@@ -345,7 +363,8 @@ void initSensors()
 {
   long error = HW_error;
   log("[HW] -> Initialiting sensors");
-  initCurrentSensor();
+  initCurrentSensor(MAIN);
+  initCurrentSensor(SECUNDARY);
   initRoomSensor();
   initAmbientSensor();
   // sensors verification
@@ -403,7 +422,7 @@ void standByCurrentTest()
   float testCurrent;
   log("[HW] -> Measuring standby current...");
 
-  testCurrent = measureMeanConsumption(SYSTEM_SHUNT_CHANNEL);
+  testCurrent = measureMeanConsumption(MAIN,SYSTEM_SHUNT_CHANNEL);
   if (testCurrent < STANDBY_CONSUMPTION_MIN)
   {
     addErrorToVar(HW_error, DEFECTIVE_CURRENT_SENSOR);
@@ -453,7 +472,7 @@ void initTFT()
   float testCurrent, offsetCurrent;
   long processTime;
   int backlight_start_value, backlight_end_value;
-  offsetCurrent = measureMeanConsumption(SYSTEM_SHUNT_CHANNEL);
+  offsetCurrent = measureMeanConsumption(MAIN,SYSTEM_SHUNT_CHANNEL);
 #if (HW_NUM == 6)
   initPin(TOUCH_CS, OUTPUT);
   initPin(SD_CS, OUTPUT);
@@ -490,7 +509,7 @@ void initTFT()
     }
   }
   vTaskDelay(INIT_TFT_DELAY / portTICK_PERIOD_MS);
-  testCurrent = measureMeanConsumption(SYSTEM_SHUNT_CHANNEL) - offsetCurrent;
+  testCurrent = measureMeanConsumption(MAIN,SYSTEM_SHUNT_CHANNEL) - offsetCurrent;
   if (testCurrent < SCREEN_CONSUMPTION_MIN)
   {
     // addErrorToVar(HW_error, DEFECTIVE_SCREEN;
@@ -517,10 +536,10 @@ void initBuzzer()
   long error = HW_error;
   float testCurrent, offsetCurrent;
 
-  offsetCurrent = measureMeanConsumption(SYSTEM_SHUNT_CHANNEL);
+  offsetCurrent = measureMeanConsumption(MAIN,SYSTEM_SHUNT_CHANNEL);
   ledcWrite(BUZZER_PWM_CHANNEL, BUZZER_HALF_PWM);
   vTaskDelay(CURRENT_STABILIZE_TIME_DEFAULT / portTICK_PERIOD_MS);
-  testCurrent = measureMeanConsumption(SYSTEM_SHUNT_CHANNEL) - offsetCurrent;
+  testCurrent = measureMeanConsumption(MAIN,SYSTEM_SHUNT_CHANNEL) - offsetCurrent;
   ledcWrite(BUZZER_PWM_CHANNEL, false);
   vTaskDelay(CURRENT_STABILIZE_TIME_DEFAULT / portTICK_PERIOD_MS);
   if (testCurrent < BUZZER_CONSUMPTION_MIN)
@@ -545,10 +564,10 @@ bool actuatorsTest()
   log("[HW] -> Checking actuators...");
 
   float testCurrent, offsetCurrent;
-  offsetCurrent = measureMeanConsumption(SYSTEM_SHUNT_CHANNEL);
+  offsetCurrent = measureMeanConsumption(MAIN,SYSTEM_SHUNT_CHANNEL);
   ledcWrite(HEATER_PWM_CHANNEL, PWM_MAX_VALUE);
   vTaskDelay(CURRENT_STABILIZE_TIME_HEATER / portTICK_PERIOD_MS);
-  testCurrent = measureMeanConsumption(SYSTEM_SHUNT_CHANNEL) - offsetCurrent;
+  testCurrent = measureMeanConsumption(MAIN,SYSTEM_SHUNT_CHANNEL) - offsetCurrent;
   log("[HW] -> Heater current consumption: " + String(testCurrent) + " Amps");
   in3.heater_current_test = testCurrent;
   ledcWrite(HEATER_PWM_CHANNEL, 0);
@@ -567,10 +586,10 @@ bool actuatorsTest()
     return (true);
   }
   vTaskDelay(CURRENT_STABILIZE_TIME_DEFAULT / portTICK_PERIOD_MS);
-  offsetCurrent = measureMeanConsumption(PHOTOTHERAPY_SHUNT_CHANNEL);
+  offsetCurrent = measureMeanConsumption(MAIN,PHOTOTHERAPY_SHUNT_CHANNEL);
   GPIOWrite(PHOTOTHERAPY, HIGH);
   vTaskDelay(CURRENT_STABILIZE_TIME_DEFAULT / portTICK_PERIOD_MS);
-  testCurrent = measureMeanConsumption(PHOTOTHERAPY_SHUNT_CHANNEL) - offsetCurrent;
+  testCurrent = measureMeanConsumption(MAIN,PHOTOTHERAPY_SHUNT_CHANNEL) - offsetCurrent;
   GPIOWrite(PHOTOTHERAPY, LOW);
   log("[HW] -> Phototherapy current consumption: " + String(testCurrent) + " Amps");
   in3.phototherapy_current_test = testCurrent;
@@ -586,10 +605,10 @@ bool actuatorsTest()
     return (true);
   }
   vTaskDelay(CURRENT_STABILIZE_TIME_DEFAULT / portTICK_PERIOD_MS);
-  offsetCurrent = measureMeanConsumption(SYSTEM_SHUNT_CHANNEL); // <- UPDATE THIS CODE TO ASK I2C DATA
+  offsetCurrent = measureMeanConsumption(MAIN,SYSTEM_SHUNT_CHANNEL); // <- UPDATE THIS CODE TO ASK I2C DATA
   in3_hum.turn(ON);
   vTaskDelay(CURRENT_STABILIZE_TIME_DEFAULT / portTICK_PERIOD_MS);
-  testCurrent = measureMeanConsumption(SYSTEM_SHUNT_CHANNEL) - offsetCurrent; // <- UPDATE THIS CODE TO ASK I2C DATA
+  testCurrent = measureMeanConsumption(MAIN,SYSTEM_SHUNT_CHANNEL) - offsetCurrent; // <- UPDATE THIS CODE TO ASK I2C DATA
   log("[HW] -> Humidifier current consumption: " + String(testCurrent) + " Amps");
   in3.humidifier_current_test = testCurrent;
   in3_hum.turn(OFF);
@@ -605,10 +624,10 @@ bool actuatorsTest()
     return (true);
   }
   vTaskDelay(CURRENT_STABILIZE_TIME_DEFAULT / portTICK_PERIOD_MS);
-  offsetCurrent = measureMeanConsumption(FAN_SHUNT_CHANNEL);
+  offsetCurrent = measureMeanConsumption(MAIN,FAN_SHUNT_CHANNEL);
   GPIOWrite(FAN, HIGH);
   vTaskDelay(CURRENT_STABILIZE_TIME_DEFAULT / portTICK_PERIOD_MS);
-  testCurrent = measureMeanConsumption(FAN_SHUNT_CHANNEL) - offsetCurrent;
+  testCurrent = measureMeanConsumption(MAIN,FAN_SHUNT_CHANNEL) - offsetCurrent;
   log("[HW] -> FAN consumption: " + String(testCurrent) + " Amps");
   in3.fan_current_test = testCurrent;
   GPIOWrite(FAN, LOW);

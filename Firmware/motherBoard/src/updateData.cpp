@@ -29,7 +29,6 @@ extern MAM_in3ator_Humidifier in3_hum;
 extern Adafruit_ILI9341 tft;
 extern SHTC3 mySHTC3; // Declare an instance of the SHTC3 class
 extern RotaryEncoder encoder;
-extern Beastdevices_INA3221 digitalCurrentSensor;
 
 extern bool WIFI_EN;
 extern long lastDebugUpdate;
@@ -61,7 +60,7 @@ extern volatile bool statusEncSwitch;
 extern bool WIFI_connection_status;
 
 extern bool roomSensorPresent;
-extern bool digitalCurrentSensorPresent;
+extern bool digitalCurrentSensorPresent[2];
 
 
 
@@ -325,11 +324,18 @@ void updateData()
     log("[SENSORS] -> fan speed: " + String(in3.fan_rpm) + " rpm");
 
     log("[SENSORS] -> System current consumption is: " + String(in3.system_current, 2) + " Amps");
-    if (digitalCurrentSensorPresent)
+    if (digitalCurrentSensorPresent[MAIN])
     {
-      log("[SENSORS] -> System voltage is: " + String(in3.system_voltage, 2) + " Amps");
+      log("[SENSORS] -> System voltage is: " + String(in3.system_voltage, 2) + " V");
       log("[SENSORS] -> Phototherapy current consumption is: " + String(in3.phototherapy_current, 4) + " Amps");
       log("[SENSORS] -> Fan current consumption is: " + String(in3.fan_current, 4) + " Amps");
+    }
+    if (digitalCurrentSensorPresent[SECUNDARY])
+    {
+      log("[SENSORS] -> USB current is: " + String(in3.USB_current, 4) + " Amps");
+      log("[SENSORS] -> USB voltage is: " + String(in3.USB_voltage, 2) + " V");
+      log("[SENSORS] -> BATTERY charge current is: " + String(in3.BATTERY_current, 4) + " Amps");
+      log("[SENSORS] -> BATTERY voltage is: " + String(in3.BATTERY_voltage, 2) + " V");
     }
     
     // log("[SENSORS] -> ON_OFF: " + String(GPIORead(ON_OFF_SWITCH)));

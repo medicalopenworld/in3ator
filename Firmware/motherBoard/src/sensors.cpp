@@ -31,7 +31,8 @@ extern Adafruit_ILI9341 tft;
 extern SHTC3 mySHTC3; // Declare an instance of the SHTC3 class
 extern Adafruit_SHT4x sht4;
 extern RotaryEncoder encoder;
-extern Beastdevices_INA3221 digitalCurrentSensor;
+extern Beastdevices_INA3221 mainDigitalCurrentSensor;
+extern Beastdevices_INA3221 secundaryDigitalCurrentSensor;
 
 extern bool WIFI_EN;
 extern long lastDebugUpdate;
@@ -64,7 +65,7 @@ extern bool WIFI_connection_status;
 
 extern bool roomSensorPresent;
 extern bool ambientSensorPresent;
-extern bool digitalCurrentSensorPresent;
+extern bool digitalCurrentSensorPresent[2];
 
 // room variables;
 extern boolean A_set;
@@ -152,25 +153,38 @@ long lastEncoderUpdate;
 
 void currentMonitor()
 {
-  if (digitalCurrentSensorPresent && millis() - lastCurrentMeasurement > CURRENT_UPDATE_PERIOD)
+  if (millis() - lastCurrentMeasurement > CURRENT_UPDATE_PERIOD)
   {
-    in3.system_current = measureMeanConsumption(SYSTEM_SHUNT_CHANNEL);
-    in3.fan_current = measureMeanConsumption(FAN_SHUNT_CHANNEL);
-    in3.phototherapy_current = measureMeanConsumption(PHOTOTHERAPY_SHUNT_CHANNEL);
-    lastCurrentMeasurement = millis();
+    if(digitalCurrentSensorPresent[MAIN]){
+      in3.system_current = measureMeanConsumption(MAIN,SYSTEM_SHUNT_CHANNEL);
+      in3.fan_current = measureMeanConsumption(MAIN,FAN_SHUNT_CHANNEL);
+      in3.phototherapy_current = measureMeanConsumption(MAIN,PHOTOTHERAPY_SHUNT_CHANNEL);
+    }
+    if(digitalCurrentSensorPresent[SECUNDARY]){
+      in3.heater_current = measureMeanConsumption(SECUNDARY,HEATER_SHUNT_CHANNEL);
+      in3.USB_current = measureMeanConsumption(SECUNDARY,USB_SHUNT_CHANNEL);
+      in3.BATTERY_current = measureMeanConsumption(SECUNDARY,BATTERY_SHUNT_CHANNEL);
+    }
+       lastCurrentMeasurement = millis();
   }
 }
 
 void voltageMonitor()
 {
-  if (digitalCurrentSensorPresent && millis() - lastVoltageMeasurement > VOLTAGE_UPDATE_PERIOD)
+  if (millis() - lastVoltageMeasurement > VOLTAGE_UPDATE_PERIOD)
   {
-    in3.system_voltage = measureMeanVoltage(SYSTEM_SHUNT_CHANNEL);
+    if(digitalCurrentSensorPresent[MAIN]){
+    in3.system_voltage = measureMeanVoltage(MAIN, SYSTEM_SHUNT_CHANNEL);
+    }
+    if(digitalCurrentSensorPresent[SECUNDARY]){
+    in3.USB_voltage = measureMeanVoltage(SECUNDARY, USB_SHUNT_CHANNEL);
+    in3.BATTERY_voltage = measureMeanVoltage(SECUNDARY, BATTERY_SHUNT_CHANNEL);
+    }
     lastVoltageMeasurement = millis();
   }
 }
 
-double measureMeanConsumption(int shunt)
+double measureMeanConsumption(bool sensor, int shunt)
 {
 #if (HW_NUM >= 6 && HW_NUM <=8)
   for (int i = 0; i < CURRENT_MEASURES_AMOUNT; i++)
@@ -179,19 +193,25 @@ double measureMeanConsumption(int shunt)
   }
   return (in3.system_current);
 #else
-  if (digitalCurrentSensorPresent)
+  if (digitalCurrentSensorPresent[sensor])
   {
-    return (digitalCurrentSensor.getCurrent(ina3221_ch_t(shunt))); // Amperes
+    if(sensor){
+    return (secundaryDigitalCurrentSensor.getCurrent(ina3221_ch_t(shunt))); // Amperes
+    }
+    return (mainDigitalCurrentSensor.getCurrent(ina3221_ch_t(shunt))); // Amperes
   }
 #endif
   return (false);
 }
 
-float measureMeanVoltage(int shunt)
+float measureMeanVoltage(bool sensor, int shunt)
 {
-  if (digitalCurrentSensorPresent)
+  if (digitalCurrentSensorPresent[sensor])
   {
-    return (digitalCurrentSensor.getVoltage(ina3221_ch_t(shunt))); // Amperes
+    if(sensor){
+    return (secundaryDigitalCurrentSensor.getVoltage(ina3221_ch_t(shunt))); // Volts
+    }
+    return (mainDigitalCurrentSensor.getVoltage(ina3221_ch_t(shunt))); // Volts
   }
   return (false);
 }

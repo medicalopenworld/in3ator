@@ -30,7 +30,6 @@ extern MAM_in3ator_Humidifier in3_hum;
 extern Adafruit_ILI9341 tft;
 extern SHTC3 mySHTC3; // Declare an instance of the SHTC3 class
 extern RotaryEncoder encoder;
-extern Beastdevices_INA3221 digitalCurrentSensor;
 
 extern bool WIFI_EN;
 extern long lastDebugUpdate;
@@ -62,9 +61,7 @@ extern volatile bool statusEncSwitch;
 extern bool WIFI_connection_status;
 
 extern bool roomSensorPresent;
-extern bool digitalCurrentSensorPresent;
-
-
+extern bool digitalCurrentSensorPresent[2];
 
 // room variables;         // desired temperature in heater
 extern const float minDesiredTemp[2]; // minimum allowed temperature to be set
