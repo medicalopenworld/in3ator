@@ -71,9 +71,11 @@
 #define HEATER 27
 #define ENC_B 32
 #define SCREENBACKLIGHT 33
-#define BABY_NTC_PIN 39
-#define DISPLAY_CONTROLLER_IC ST7789V_CONTROLLER
 #define ON_OFF_SWITCH 34
+#define FAN_SPEED_FEEDBACK 35
+#define BABY_NTC_PIN 39
+
+#define DISPLAY_CONTROLLER_IC ST7789V_CONTROLLER
 
 #elif (HW_NUM == 8)
 #define TFT_DC 0
@@ -153,11 +155,13 @@
 #endif
 
 // number assignment of each environmental sensor for later call in variable
-#define NTC_QTY 1  // number of NTC
 #define SKIN_SENSOR 0
-#define ROOM_DIGITAL_TEMP_HUM_SENSOR 1
-#define AMBIENT_DIGITAL_TEMP_HUM_SENSOR 2
+#define NTC_QTY 1  // number of NTC
+#define ROOM_DIGITAL_TEMP_SENSOR 1
+#define AMBIENT_DIGITAL_TEMP_SENSOR 2
 #define SENSOR_TEMP_QTY 3  // number of total temperature sensors in system
+#define ROOM_DIGITAL_HUM_SENSOR 0
+#define AMBIENT_DIGITAL_HUM_SENSOR 1
 #define SENSOR_HUM_QTY 2  // number of total humidity sensors in system
 
 #define SYSTEM_SHUNT_CHANNEL INA3221_CH1

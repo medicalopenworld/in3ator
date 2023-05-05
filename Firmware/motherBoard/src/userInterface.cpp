@@ -36,17 +36,13 @@ extern bool WIFI_EN;
 extern long lastDebugUpdate;
 extern long loopCounts;
 extern int page;
-extern int temperature_filter; // amount of temperature samples to filter
-extern long lastNTCmeasurement[NTC_QTY];
-
+ 
 extern double errorTemperature[SENSOR_TEMP_QTY], temperatureCalibrationPoint;
 extern double ReferenceTemperatureRange, ReferenceTemperatureLow;
 extern double provisionalReferenceTemperatureLow;
 extern double fineTuneSkinTemperature, fineTuneAirTemperature;
 extern double RawTemperatureLow[SENSOR_TEMP_QTY], RawTemperatureRange[SENSOR_TEMP_QTY];
 extern double provisionalRawTemperatureLow[SENSOR_TEMP_QTY];
-extern double temperatureMax[SENSOR_TEMP_QTY], temperatureMin[SENSOR_TEMP_QTY];
-extern int temperatureArray[NTC_QTY][analog_temperature_filter]; // variable to handle each NTC with the array of last samples (only for NTC)
 extern int temperature_array_pos;                               // temperature sensor number turn to measure
 extern float diffSkinTemperature, diffAirTemperature;           // difference between measured temperature and user input real temperature
 extern bool humidifierState, humidifierStateChange;
@@ -68,8 +64,7 @@ extern bool WIFI_connection_status;
 extern bool roomSensorPresent;
 extern bool digitalCurrentSensorPresent;
 
-extern float instantTemperature[secondOrder_filter];
-extern float previousTemperature[secondOrder_filter];
+
 
 // room variables
 extern const float minDesiredTemp[2]; // minimum allowed temperature to be set
@@ -319,6 +314,7 @@ void userInterfaceHandler(int UI_page)
             drawRightString(convertStringToChar(cstring, "OFF"), unitPosition, ypos, textFontSize);
           }
           GPIOWrite(PHOTOTHERAPY, in3.phototherapy);
+          turnFans(in3.phototherapy);
           break;
         case settingsGraphicPosition:
           UI_settings();
@@ -480,7 +476,7 @@ void userInterfaceHandler(int UI_page)
         case temperatureCalibrationGraphicPosition:
           errorTemperature[SKIN_SENSOR] = false;
           diffSkinTemperature = in3.temperature[SKIN_SENSOR];
-          diffAirTemperature = in3.temperature[ROOM_DIGITAL_TEMP_HUM_SENSOR];
+          diffAirTemperature = in3.temperature[ROOM_DIGITAL_TEMP_SENSOR];
           while (GPIORead(ENC_SWITCH))
           {
             updateData();
@@ -498,7 +494,7 @@ void userInterfaceHandler(int UI_page)
           break;
         case setCalibrationGraphicPosition:
           fineTuneSkinTemperature = diffSkinTemperature - in3.temperature[SKIN_SENSOR];
-          fineTuneAirTemperature = diffAirTemperature - in3.temperature[ROOM_DIGITAL_TEMP_HUM_SENSOR];
+          fineTuneAirTemperature = diffAirTemperature - in3.temperature[ROOM_DIGITAL_TEMP_SENSOR];
           log("[CALIBRATION] -> Fine tune Skin value is " + String(fineTuneSkinTemperature));
           log("[CALIBRATION] -> Fine tune Air value is " + String(fineTuneAirTemperature));
           EEPROM.writeFloat(EEPROM_FINE_TUNE_TEMP_SKIN, fineTuneSkinTemperature);
@@ -515,7 +511,7 @@ void userInterfaceHandler(int UI_page)
         case temperatureCalibrationGraphicPosition:
           errorTemperature[SKIN_SENSOR] = false;
           diffSkinTemperature = in3.temperature[SKIN_SENSOR];
-          diffAirTemperature = in3.temperature[ROOM_DIGITAL_TEMP_HUM_SENSOR];
+          diffAirTemperature = in3.temperature[ROOM_DIGITAL_TEMP_SENSOR];
           while (GPIORead(ENC_SWITCH))
           {
             updateData();

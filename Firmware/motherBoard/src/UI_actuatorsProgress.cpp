@@ -35,17 +35,13 @@ extern Beastdevices_INA3221 digitalCurrentSensor;
 extern bool WIFI_EN;
 extern long loopCounts;
 extern int page;
-extern int temperature_filter; // amount of temperature samples to filter
-extern long lastNTCmeasurement[NTC_QTY];
-
+ 
 extern double errorTemperature[SENSOR_TEMP_QTY], temperatureCalibrationPoint;
 extern double ReferenceTemperatureRange, ReferenceTemperatureLow;
 extern double provisionalReferenceTemperatureLow;
 extern double fineTuneSkinTemperature;
 extern double RawTemperatureLow[SENSOR_TEMP_QTY], RawTemperatureRange[SENSOR_TEMP_QTY];
 extern double provisionalRawTemperatureLow[SENSOR_TEMP_QTY];
-extern double temperatureMax[SENSOR_TEMP_QTY], temperatureMin[SENSOR_TEMP_QTY];
-extern int temperatureArray[NTC_QTY][analog_temperature_filter]; // variable to handle each NTC with the array of last samples (only for NTC)
 extern int temperature_array_pos;                               // temperature sensor number turn to measure
 extern float diffSkinTemperature, diffAirTemperature;           // difference between measured temperature and user input real temperature
 extern bool humidifierState, humidifierStateChange;
@@ -67,8 +63,7 @@ extern bool WIFI_connection_status;
 extern bool roomSensorPresent;
 extern bool digitalCurrentSensorPresent;
 
-extern float instantTemperature[secondOrder_filter];
-extern float previousTemperature[secondOrder_filter];
+
 
 // room variables
 extern boolean A_set;
@@ -156,7 +151,7 @@ void basictemperatureControl()
 void basicHumidityControl()
 {
   /*
-  if (in3.humidity [ROOM_DIGITAL_TEMP_HUM_SENSOR]< in3.desiredControlHumidity)
+  if (in3.humidity [ROOM_DIGITAL_HUM_SENSOR]< in3.desiredControlHumidity)
   {
     if (!humidifierState || humidifierStateChange)
     {
@@ -180,7 +175,7 @@ void basicHumidityControl()
 void turnActuators(bool mode)
 {
   ledcWrite(HEATER_PWM_CHANNEL, mode * HEATER_MAX_PWM * ongoingCriticalAlarm());
-  if (mode * ongoingCriticalAlarm())
+  if (mode && ongoingCriticalAlarm())
   {
     in3_hum.turn(ON);
   }
@@ -201,7 +196,8 @@ void stopActuation()
 
 void turnFans(bool mode)
 {
-  GPIOWrite(FAN, mode * ongoingCriticalAlarm());
+  GPIOWrite(ACTUATORS_EN, mode || in3.phototherapy);
+  GPIOWrite(FAN, in3.phototherapy || mode && ongoingCriticalAlarm());
 }
 
 void UI_actuatorsProgress()
@@ -331,13 +327,12 @@ void UI_actuatorsProgress()
   {
     printLoadingTemperatureBar(in3.desiredControlTemperature);
     temperatureAtStart = in3.temperature[in3.controlMode];
-    // exitActuation = !checkFan();
   }
   if (in3.humidityControl)
   {
     printLoadingHumidityBar(in3.desiredControlHumidity);
   }
-  humidityAtStart = in3.humidity[ROOM_DIGITAL_TEMP_HUM_SENSOR];
+  humidityAtStart = in3.humidity[ROOM_DIGITAL_HUM_SENSOR];
   turnFans(ON);
   while (!exitActuation)
   {

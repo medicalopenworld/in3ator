@@ -37,18 +37,13 @@ extern bool WIFI_EN;
 extern long lastDebugUpdate;
 extern long loopCounts;
 extern int page;
-extern int temperature_filter; // amount of temperature samples to filter
-extern long lastNTCmeasurement[NTC_QTY];
-
+ 
 extern double errorTemperature[SENSOR_TEMP_QTY], temperatureCalibrationPoint;
 extern double ReferenceTemperatureRange, ReferenceTemperatureLow;
 extern double provisionalReferenceTemperatureLow;
 extern double fineTuneSkinTemperature;
 extern double RawTemperatureLow[SENSOR_TEMP_QTY], RawTemperatureRange[SENSOR_TEMP_QTY];
 extern double provisionalRawTemperatureLow[SENSOR_TEMP_QTY];
-extern double temperatureMax[SENSOR_TEMP_QTY], temperatureMin[SENSOR_TEMP_QTY];
-extern int temperatureArray[NTC_QTY][analog_temperature_filter]; // variable to handle each NTC with the array of last samples (only for NTC)
-extern int temperature_array_pos;                               // temperature sensor number turn to measure
 extern float diffSkinTemperature, diffAirTemperature;           // difference between measured temperature and user input real temperature
 extern bool humidifierState, humidifierStateChange;
 extern int previousHumidity; // previous sampled humidity
@@ -70,8 +65,7 @@ extern bool roomSensorPresent;
 extern bool ambientSensorPresent;
 extern bool digitalCurrentSensorPresent;
 
-extern float instantTemperature[secondOrder_filter];
-extern float previousTemperature[secondOrder_filter];
+
 
 // room variables
 extern bool controlAlgorithm;
@@ -256,6 +250,7 @@ void initGPIO()
   initPin(encoderpinA, INPUT_PULLUP);
   initPin(encoderpinB, INPUT_PULLUP);
   initPin(ENC_SWITCH, INPUT_PULLUP);
+  initPin(FAN_SPEED_FEEDBACK, INPUT_PULLUP);
   initPin(TFT_CS, OUTPUT);
   initPin(PHOTOTHERAPY, OUTPUT);
   GPIOWrite(PHOTOTHERAPY, LOW);
@@ -276,9 +271,11 @@ void initInterrupts()
 {
   attachInterrupt(ENC_SWITCH, encSwitchHandler, CHANGE);
   attachInterrupt(ENC_A, encoderISR, CHANGE);
-  attachInterrupt(ENC_B, encoderISR, CHANGE);
+  attachInterrupt(ENC_B, encoderISR, CHANGE);  
+  attachInterrupt(FAN_SPEED_FEEDBACK, fanEncoderISR, CHANGE);
+  
 #if (HW_NUM >= 10)
-  attachInterrupt(ON_OFF_SWITCH, ON_OFF_Switch_ISR, CHANGE);
+  attachInterrupt(ON_OFF_SWITCH, ON_OFF_Switch_ISR, FALLING);
 #endif
 }
 
@@ -354,8 +351,7 @@ void initSensors()
   // sensors verification
   for (int i = 0; i <= NTC_SAMPLES_TEST; i++)
   {
-    while (!measureNTCTemperature(SKIN_SENSOR))
-      ;
+    while (!measureNTCTemperature());
   }
   if (in3.temperature[SKIN_SENSOR] < NTC_BABY_MIN)
   {
@@ -369,22 +365,22 @@ void initSensors()
   }
   if (updateRoomSensor())
   {
-    if (in3.temperature[ROOM_DIGITAL_TEMP_HUM_SENSOR] < DIG_TEMP_ROOM_MIN)
+    if (in3.temperature[ROOM_DIGITAL_TEMP_SENSOR] < DIG_TEMP_ROOM_MIN)
     {
       log("[HW] -> Fail -> Room temperature is lower than expected");
       addErrorToVar(HW_error, DIG_TEMP_ROOM_MIN_ERROR);
     }
-    if (in3.temperature[ROOM_DIGITAL_TEMP_HUM_SENSOR] > DIG_TEMP_ROOM_MAX)
+    if (in3.temperature[ROOM_DIGITAL_TEMP_SENSOR] > DIG_TEMP_ROOM_MAX)
     {
       log("[HW] -> Fail -> Room temperature is higher than expected");
       addErrorToVar(HW_error, DIG_TEMP_ROOM_MAX_ERROR);
     }
-    if (in3.humidity [ROOM_DIGITAL_TEMP_HUM_SENSOR]< DIG_HUM_ROOM_MIN)
+    if (in3.humidity [ROOM_DIGITAL_HUM_SENSOR]< DIG_HUM_ROOM_MIN)
     {
       log("[HW] -> Fail -> Room humidity is lower than expected");
       addErrorToVar(HW_error, DIG_HUM_ROOM_MIN_ERROR);
     }
-    if (in3.humidity [ROOM_DIGITAL_TEMP_HUM_SENSOR]> DIG_HUM_ROOM_MAX)
+    if (in3.humidity [ROOM_DIGITAL_HUM_SENSOR]> DIG_HUM_ROOM_MAX)
     {
       log("[HW] -> Fail -> Room humidity is higher than expected");
       addErrorToVar(HW_error, DIG_HUM_ROOM_MAX_ERROR);
@@ -733,4 +729,5 @@ void initHardware(bool printOutputTest)
   buzzerTone(2, buzzerStandbyToneDuration, buzzerStandbyTone);
   watchdogInit(WDT_TIMEOUT);
   initAlarms();
+  GPIOWrite(ACTUATORS_EN, LOW);
 }

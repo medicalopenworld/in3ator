@@ -367,12 +367,13 @@ void addTelemetriesToGPRSJSON() {
  }
 
   addVariableToTelemetryGPRSJSON[SKIN_TEMPERATURE_KEY] = roundSignificantDigits(in3.temperature[SKIN_SENSOR], TELEMETRIES_DECIMALS);
-  addVariableToTelemetryGPRSJSON[AIR_TEMPERATURE_KEY] = roundSignificantDigits(in3.temperature[ROOM_DIGITAL_TEMP_HUM_SENSOR], TELEMETRIES_DECIMALS);
-  if(in3.temperature[AMBIENT_DIGITAL_TEMP_HUM_SENSOR]){
-  addVariableToTelemetryGPRSJSON[AMBIENT_TEMPERATURE_KEY] = roundSignificantDigits(in3.temperature[AMBIENT_DIGITAL_TEMP_HUM_SENSOR], TELEMETRIES_DECIMALS);
+  addVariableToTelemetryGPRSJSON[AIR_TEMPERATURE_KEY] = roundSignificantDigits(in3.temperature[ROOM_DIGITAL_TEMP_SENSOR], TELEMETRIES_DECIMALS);
+  if(in3.temperature[AMBIENT_DIGITAL_TEMP_SENSOR] && in3.humidity[AMBIENT_DIGITAL_HUM_SENSOR]){
+  addVariableToTelemetryGPRSJSON[AMBIENT_TEMPERATURE_KEY] = roundSignificantDigits(in3.temperature[AMBIENT_DIGITAL_TEMP_SENSOR], TELEMETRIES_DECIMALS);
+  addVariableToTelemetryGPRSJSON[HUMIDITY_AMBIENT_KEY] = roundSignificantDigits(in3.humidity[AMBIENT_DIGITAL_HUM_SENSOR], TELEMETRIES_DECIMALS);
   }
   addVariableToTelemetryGPRSJSON[PHOTOTHERAPY_ACTIVE_KEY] = in3.phototherapy;
-  addVariableToTelemetryGPRSJSON[HUMIDITY_KEY] = roundSignificantDigits(in3.humidity[ROOM_DIGITAL_TEMP_HUM_SENSOR], TELEMETRIES_DECIMALS);
+  addVariableToTelemetryGPRSJSON[HUMIDITY_ROOM_KEY] = roundSignificantDigits(in3.humidity[ROOM_DIGITAL_HUM_SENSOR], TELEMETRIES_DECIMALS);
   addVariableToTelemetryGPRSJSON[SYSTEM_CURRENT_KEY] = roundSignificantDigits(in3.system_current, TELEMETRIES_DECIMALS);
   addVariableToTelemetryGPRSJSON[SYSTEM_VOLTAGE_KEY] = roundSignificantDigits(in3.system_voltage, TELEMETRIES_DECIMALS);
   addVariableToTelemetryGPRSJSON[CELL_SIGNAL_QUALITY_KEY] = GPRS.CSQ;
@@ -386,7 +387,7 @@ void addTelemetriesToGPRSJSON() {
       addVariableToTelemetryGPRSJSON[HEATER_ACTIVE_TIME_KEY] = roundSignificantDigits(in3.heater_active_time, TELEMETRIES_DECIMALS);
     }
     if (in3.humidityControl) {
-      addVariableToTelemetryGPRSJSON[DESIRED_HUMIDITY_KEY] = in3.desiredControlHumidity;
+      addVariableToTelemetryGPRSJSON[DESIRED_HUMIDITY_ROOM_KEY] = in3.desiredControlHumidity;
     }
     if (!GPRS.firstConfigPost) {
       GPRS.firstConfigPost = true;
@@ -400,7 +401,7 @@ void addTelemetriesToGPRSJSON() {
         addVariableToTelemetryGPRSJSON[DESIRED_TEMPERATURE_KEY] = in3.desiredControlTemperature;
       }
       if (in3.humidityControl) {
-        addVariableToTelemetryGPRSJSON[DESIRED_HUMIDITY_KEY] = in3.desiredControlHumidity;
+        addVariableToTelemetryGPRSJSON[DESIRED_HUMIDITY_ROOM_KEY] = in3.desiredControlHumidity;
       }
     }
   } else {
@@ -412,7 +413,7 @@ void addTelemetriesToGPRSJSON() {
     addVariableToTelemetryGPRSJSON[HUMIDIFIER_CURRENT_KEY] = roundSignificantDigits(in3.humidifier_current, TELEMETRIES_DECIMALS);
     addVariableToTelemetryGPRSJSON[HUMIDIFIER_VOLTAGE_KEY] = roundSignificantDigits(in3.humidifier_voltage, TELEMETRIES_DECIMALS);
     addVariableToTelemetryGPRSJSON[HUMIDIFIER_ACTIVE_TIME_KEY] = roundSignificantDigits(in3.humidifier_active_time, TELEMETRIES_DECIMALS);
-    addVariableToTelemetryGPRSJSON[DESIRED_HUMIDITY_KEY] = in3.desiredControlHumidity;
+    addVariableToTelemetryGPRSJSON[DESIRED_HUMIDITY_ROOM_KEY] = in3.desiredControlHumidity;
   }
   if (in3.phototherapy) {
     addVariableToTelemetryGPRSJSON[PHOTOTHERAPY_CURRENT_KEY] = roundSignificantDigits(in3.phototherapy_current, TELEMETRIES_DECIMALS);

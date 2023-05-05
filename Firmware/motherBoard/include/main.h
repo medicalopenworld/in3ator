@@ -27,10 +27,16 @@
 #include "driver/rtc_io.h"
 #include "esp32/ulp.h"
 #include "in3ator_humidifier.h"
+#include <Filters.h> 
+#include <AH/Timing/MillisMicrosTimer.hpp>
+#include <Filters/Butterworth.hpp>
 
 #include "Credentials.h"
 
 #define WDT_TIMEOUT 45
+
+#define FAN_RPM_CONVERSION 13333333
+#define FAN_UPDATE_TIME_MIN 1000
 
 #define ENABLE_WIFI_OTA true  // enable wifi OTA
 #define ENABLE_GPRS_OTA true  // enable GPRS OTA
@@ -71,7 +77,8 @@
 #define SKIN_TEMPERATURE_KEY "Skin_temp"
 #define AIR_TEMPERATURE_KEY "Air_temp"
 #define AMBIENT_TEMPERATURE_KEY "Amb_temp"
-#define HUMIDITY_KEY "Humidity"
+#define HUMIDITY_ROOM_KEY "Humidity"
+#define HUMIDITY_AMBIENT_KEY "Amb_humidity"
 #define SYSTEM_CURRENT_KEY "SYS_current"
 #define SYSTEM_VOLTAGE_KEY "SYS_voltage"
 #define CELL_SIGNAL_QUALITY_KEY "CSQ"
@@ -79,7 +86,7 @@
 #define CONTROL_ACTIVE_KEY "Control_active"
 #define CONTROL_MODE_KEY "Control_mode"
 #define DESIRED_TEMPERATURE_KEY "Temp_desired"
-#define DESIRED_HUMIDITY_KEY "Hum_desired"
+#define DESIRED_HUMIDITY_ROOM_KEY "Hum_desired"
 #define HUMIDIFIER_CURRENT_KEY "Humidifier_current"
 #define HUMIDIFIER_VOLTAGE_KEY "Humidifier_voltage"
 #define PHOTOTHERAPY_CURRENT_KEY "Phototherapy_current"
@@ -165,12 +172,8 @@
 #define defaultLanguage english  // Preset number configuration when booting for first time
 #define DEFAULT_CONTROL_MODE AIR_CONTROL
 
-#define secondOrder_filter 3           // amount of temperature samples to filter
-#define analog_temperature_filter 500  // amount of temperature samples to filter
-#define digital_temperature_filter 10  // amount of temperature samples to filter
-
 #define NTC_MEASUREMENT_PERIOD 1  // in millis
-#define NTC_SAMPLES_TEST 1000
+#define NTC_SAMPLES_TEST 100
 #define CURRENT_UPDATE_PERIOD 500  // in millis
 #define VOLTAGE_UPDATE_PERIOD 50   // in millis
 
@@ -203,8 +206,6 @@
 #define presetHumidity 60             // preset humidity
 #define maxHum 90                     // maximum allowed humidity to be set
 #define minHum 20                     // minimum allowed humidity to be set
-#define LEDMaxIntensity 100           // max LED intensity to be set
-#define fanMaxSpeed 100               // max fan speed (percentage) to be set
 
 // Encoder variables
 #define NUMENCODERS 1  // number of encoders in circuit
@@ -364,6 +365,7 @@ typedef enum {
 #define DIGITAL_CURRENT_SENSOR_PERIOD 5
 #define BUZZER_TASK_PERIOD 1
 #define BACKLIGHT_TASK_PERIOD 100
+#define FAN_TASK_PERIOD 1
 #define LOOP_TASK_PERIOD 1
 
 #define BACKLIGHT_DELAY 2
@@ -412,6 +414,10 @@ typedef struct
   float humidifier_active_time = false;
 
   bool alarmsEnabled = true;
+
+  float fan_rpm = false;
+  bool fanEncoderUpdate = false;
+  long fanEncoderPeriod[2] = {false,false};
 
   byte language;
 
@@ -484,7 +490,6 @@ bool ongoingAlarms();
 void disableAllAlarms();
 
 void checkSetMessage(int UI_page);
-bool checkFan();
 
 bool updateRoomSensor();
 bool updateAmbientSensor();
@@ -518,7 +523,6 @@ void powerMonitor();
 void currentMonitor();
 void voltageMonitor();
 
-double butterworth2(double y1, double y2, double x0, double x1, double x2);
 double roundSignificantDigits(double value, int numberOfDecimals);
 
 void initGPIO();
@@ -527,10 +531,12 @@ void drawHardwareErrorMessage(long error, bool criticalError, bool calibrationEr
 void initAlarms();
 void IRAM_ATTR encSwitchHandler();
 void IRAM_ATTR encoderISR();
+void IRAM_ATTR fanEncoderISR();
 void IRAM_ATTR ON_OFF_Switch_ISR();
 void backlightHandler();
 
-bool measureNTCTemperature(uint8_t);
+void fanSpeedHandler();
+bool measureNTCTemperature();
 void loadlogo();
 
 void initPin(uint8_t GPIO, uint8_t Mode);

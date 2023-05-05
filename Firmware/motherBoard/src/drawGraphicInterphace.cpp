@@ -37,17 +37,13 @@ extern bool WIFI_EN;
 extern long lastDebugUpdate;
 extern long loopCounts;
 extern int page;
-extern int temperature_filter;  // amount of temperature samples to filter
-extern long lastNTCmeasurement[NTC_QTY];
-
+ 
 extern double errorTemperature[SENSOR_TEMP_QTY], temperatureCalibrationPoint;
 extern double ReferenceTemperatureRange, ReferenceTemperatureLow;
 extern double provisionalReferenceTemperatureLow;
 extern double fineTuneSkinTemperature;
 extern double RawTemperatureLow[SENSOR_TEMP_QTY], RawTemperatureRange[SENSOR_TEMP_QTY];
 extern double provisionalRawTemperatureLow[SENSOR_TEMP_QTY];
-extern double temperatureMax[SENSOR_TEMP_QTY], temperatureMin[SENSOR_TEMP_QTY];
-extern int temperatureArray[NTC_QTY][analog_temperature_filter];  // variable to handle each NTC with the array of last samples (only for NTC)
 extern int temperature_array_pos;                                // temperature sensor number turn to measure
 extern float diffSkinTemperature, diffAirTemperature;            // difference between measured temperature and user input real temperature
 extern bool humidifierState, humidifierStateChange;
@@ -69,8 +65,7 @@ extern bool WIFI_connection_status;
 extern bool roomSensorPresent;
 extern bool digitalCurrentSensorPresent;
 
-extern float instantTemperature[secondOrder_filter];
-extern float previousTemperature[secondOrder_filter];
+
 
 // room variables
 

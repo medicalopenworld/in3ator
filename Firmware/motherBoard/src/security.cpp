@@ -36,17 +36,13 @@ extern bool WIFI_EN;
 extern long lastDebugUpdate;
 extern long loopCounts;
 extern int page;
-extern int temperature_filter; // amount of temperature samples to filter
-extern long lastNTCmeasurement[NTC_QTY];
-
+ 
 extern double errorTemperature[SENSOR_TEMP_QTY], temperatureCalibrationPoint;
 extern double ReferenceTemperatureRange, ReferenceTemperatureLow;
 extern double provisionalReferenceTemperatureLow;
 extern double fineTuneSkinTemperature;
 extern double RawTemperatureLow[SENSOR_TEMP_QTY], RawTemperatureRange[SENSOR_TEMP_QTY];
 extern double provisionalRawTemperatureLow[SENSOR_TEMP_QTY];
-extern double temperatureMax[SENSOR_TEMP_QTY], temperatureMin[SENSOR_TEMP_QTY];
-extern int temperatureArray[NTC_QTY][analog_temperature_filter]; // variable to handle each NTC with the array of last samples (only for NTC)
 extern int temperature_array_pos;                               // temperature sensor number turn to measure
 extern float diffSkinTemperature, diffAirTemperature;           // difference between measured temperature and user input real temperature
 extern bool humidifierState, humidifierStateChange;
@@ -68,8 +64,7 @@ extern bool WIFI_connection_status;
 extern bool roomSensorPresent;
 extern bool digitalCurrentSensorPresent;
 
-extern float instantTemperature[secondOrder_filter];
-extern float previousTemperature[secondOrder_filter];
+
 
 // room variables;         // desired temperature in heater
 extern const float minDesiredTemp[2]; // minimum allowed temperature to be set
@@ -216,7 +211,7 @@ bool evaluateAlarm(byte alarmID, float setPoint, float measuredValue, float erro
 
 void checkThermalCutOuts()
 {
-  evaluateAlarm(AIR_THERMAL_CUTOUT_ALARM, AIR_THERMAL_CUTOUT, in3.temperature[ROOM_DIGITAL_TEMP_HUM_SENSOR], false, AIR_THERMAL_CUTOUT_HYSTERESIS, lastAlarmTrigger[AIR_THERMAL_CUTOUT_ALARM]);
+  evaluateAlarm(AIR_THERMAL_CUTOUT_ALARM, AIR_THERMAL_CUTOUT, in3.temperature[ROOM_DIGITAL_TEMP_SENSOR], false, AIR_THERMAL_CUTOUT_HYSTERESIS, lastAlarmTrigger[AIR_THERMAL_CUTOUT_ALARM]);
   evaluateAlarm(SKIN_THERMAL_CUTOUT_ALARM, SKIN_THERMAL_CUTOUT, in3.temperature[SKIN_SENSOR], false, SKIN_THERMAL_CUTOUT_HYSTERESIS, lastAlarmTrigger[SKIN_THERMAL_CUTOUT_ALARM]);
 }
 
@@ -225,7 +220,7 @@ void checkStatusOfSensor(byte sensor)
   byte alarmID = false;
   switch (sensor)
   {
-  case ROOM_DIGITAL_TEMP_HUM_SENSOR:
+  case ROOM_DIGITAL_TEMP_SENSOR:
     alarmID = AIR_SENSOR_ISSUE_ALARM;
     break;
   case SKIN_SENSOR:
@@ -257,7 +252,7 @@ void powerFailureAlarm()
 
 void sensorHealthMonitor()
 {
-  checkStatusOfSensor(ROOM_DIGITAL_TEMP_HUM_SENSOR);
+  checkStatusOfSensor(ROOM_DIGITAL_TEMP_SENSOR);
   checkStatusOfSensor(SKIN_SENSOR);
 }
 
@@ -376,42 +371,7 @@ void disableAllAlarms()
   }
 }
 
-bool checkFan()
-{
 
-  float offsetCurrent;
-  float testCurrent;
-  long ongoingTest = millis();
-  ledcWrite(HEATER_PWM_CHANNEL, HEATER_HALF_PWR * ongoingCriticalAlarm());
-  while (millis() - ongoingTest < FAN_TEST_PREHEAT_TIME)
-  {
-    if (encoderContinuousPress(page))
-    {
-      return false;
-    }
-    updateData();
-  }
-  offsetCurrent = measureMeanConsumption(SYSTEM_SHUNT_CHANNEL);
-  turnFans(ON);
-  ongoingTest = millis();
-  while (millis() - ongoingTest < FAN_TEST_PREHEAT_TIME)
-  {
-    if (encoderContinuousPress(page))
-    {
-      return false;
-    }
-    updateData();
-  }
-  ledcWrite(HEATER_PWM_CHANNEL, HEATER_HALF_PWR * ongoingCriticalAlarm());
-  testCurrent = measureMeanConsumption(SYSTEM_SHUNT_CHANNEL);
-  ledcWrite(HEATER_PWM_CHANNEL, false);
-  if (offsetCurrent - testCurrent < FAN_TEST_CURRENTDIF_MIN)
-  {
-    setAlarm(FAN_ISSUE_ALARM);
-    return false;
-  }
-  return true;
-}
 
 void checkAlarms()
 {
@@ -421,7 +381,7 @@ void checkAlarms()
     {
       if (in3.controlMode)
       {
-        alarmSensedValue = in3.temperature[ROOM_DIGITAL_TEMP_HUM_SENSOR];
+        alarmSensedValue = in3.temperature[ROOM_DIGITAL_TEMP_SENSOR];
       }
       else
       {
@@ -431,7 +391,7 @@ void checkAlarms()
     }
     if (in3.humidityControl)
     {
-      evaluateAlarm(HUMIDITY_ALARM, in3.humidity[ROOM_DIGITAL_TEMP_HUM_SENSOR], in3.desiredControlHumidity, HUMIDITY_ERROR, HUMIDITY_ERROR_HYSTERESIS, lastAlarmTrigger[HUMIDITY_ALARM]);
+      evaluateAlarm(HUMIDITY_ALARM, in3.humidity[ROOM_DIGITAL_HUM_SENSOR], in3.desiredControlHumidity, HUMIDITY_ERROR, HUMIDITY_ERROR_HYSTERESIS, lastAlarmTrigger[HUMIDITY_ALARM]);
     }
   }
 }

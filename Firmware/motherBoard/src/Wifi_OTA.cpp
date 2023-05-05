@@ -293,12 +293,13 @@ void addConfigTelemetriesToWIFIJSON()
 void addTelemetriesToWIFIJSON()
 {
   addVariableToTelemetryWIFIJSON[SKIN_TEMPERATURE_KEY] = roundSignificantDigits(in3.temperature[SKIN_SENSOR], TELEMETRIES_DECIMALS);
-  addVariableToTelemetryWIFIJSON[AIR_TEMPERATURE_KEY] = roundSignificantDigits(in3.temperature[ROOM_DIGITAL_TEMP_HUM_SENSOR], TELEMETRIES_DECIMALS);
-  if(in3.temperature[AMBIENT_DIGITAL_TEMP_HUM_SENSOR]){
-  addVariableToTelemetryWIFIJSON[AMBIENT_TEMPERATURE_KEY] = roundSignificantDigits(in3.temperature[AMBIENT_DIGITAL_TEMP_HUM_SENSOR], TELEMETRIES_DECIMALS);
+  addVariableToTelemetryWIFIJSON[AIR_TEMPERATURE_KEY] = roundSignificantDigits(in3.temperature[ROOM_DIGITAL_TEMP_SENSOR], TELEMETRIES_DECIMALS);
+  if(in3.temperature[AMBIENT_DIGITAL_TEMP_SENSOR] && in3.humidity[AMBIENT_DIGITAL_HUM_SENSOR]){
+  addVariableToTelemetryWIFIJSON[AMBIENT_TEMPERATURE_KEY] = roundSignificantDigits(in3.temperature[AMBIENT_DIGITAL_TEMP_SENSOR], TELEMETRIES_DECIMALS);
+  addVariableToTelemetryWIFIJSON[HUMIDITY_AMBIENT_KEY] = roundSignificantDigits(in3.humidity[AMBIENT_DIGITAL_HUM_SENSOR], TELEMETRIES_DECIMALS);
   }
   addVariableToTelemetryWIFIJSON[PHOTOTHERAPY_ACTIVE_KEY] = in3.phototherapy;
-  addVariableToTelemetryWIFIJSON[HUMIDITY_KEY] = roundSignificantDigits(in3.humidity[ROOM_DIGITAL_TEMP_HUM_SENSOR], TELEMETRIES_DECIMALS);
+  addVariableToTelemetryWIFIJSON[HUMIDITY_ROOM_KEY] = roundSignificantDigits(in3.humidity[ROOM_DIGITAL_HUM_SENSOR], TELEMETRIES_DECIMALS);
   addVariableToTelemetryWIFIJSON[SYSTEM_CURRENT_KEY] = roundSignificantDigits(in3.system_current, TELEMETRIES_DECIMALS);
   addVariableToTelemetryWIFIJSON[SYSTEM_VOLTAGE_KEY] = roundSignificantDigits(in3.system_voltage, TELEMETRIES_DECIMALS);
 
@@ -314,7 +315,7 @@ void addTelemetriesToWIFIJSON()
     }
     if (in3.humidityControl)
     {
-      addVariableToTelemetryWIFIJSON[DESIRED_HUMIDITY_KEY] = in3.desiredControlHumidity;
+      addVariableToTelemetryWIFIJSON[DESIRED_HUMIDITY_ROOM_KEY] = in3.desiredControlHumidity;
     }
     if (!Wifi_TB.firstConfigPost)
     {
