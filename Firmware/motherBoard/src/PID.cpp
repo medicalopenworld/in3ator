@@ -58,13 +58,13 @@ void PIDHandler()
   {
     airControlPIDInput = in3.temperature[ROOM_DIGITAL_TEMP_SENSOR];
     airControlPID.Compute();
-    ledcWrite(HEATER_PWM_CHANNEL, HeaterPIDOutput && ongoingCriticalAlarm());
+    ledcWrite(HEATER_PWM_CHANNEL, HeaterPIDOutput * ongoingCriticalAlarm());
   }
   if (skinControlPID.GetMode() == AUTOMATIC)
   {
     skinControlPIDInput = in3.temperature[SKIN_SENSOR];
     skinControlPID.Compute();
-    ledcWrite(HEATER_PWM_CHANNEL, HeaterPIDOutput && ongoingCriticalAlarm());
+    ledcWrite(HEATER_PWM_CHANNEL, HeaterPIDOutput * ongoingCriticalAlarm());
   }
   if (humidityControlPID.GetMode() == AUTOMATIC)
   {
