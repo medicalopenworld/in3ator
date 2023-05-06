@@ -377,12 +377,17 @@ void addTelemetriesToGPRSJSON() {
   addVariableToTelemetryGPRSJSON[SYSTEM_CURRENT_KEY] = roundSignificantDigits(in3.system_current, TELEMETRIES_DECIMALS);
   addVariableToTelemetryGPRSJSON[SYSTEM_VOLTAGE_KEY] = roundSignificantDigits(in3.system_voltage, TELEMETRIES_DECIMALS);
   addVariableToTelemetryGPRSJSON[CELL_SIGNAL_QUALITY_KEY] = GPRS.CSQ;
+    addVariableToTelemetryGPRSJSON[V5_CURRENT_KEY] = roundSignificantDigits(in3.USB_current, TELEMETRIES_DECIMALS);
+    addVariableToTelemetryGPRSJSON[V5_VOLTAGE_KEY] = roundSignificantDigits(in3.USB_voltage, TELEMETRIES_DECIMALS);
+   addVariableToTelemetryGPRSJSON[BAT_CURRENT_KEY] = roundSignificantDigits(in3.BATTERY_current, TELEMETRIES_DECIMALS);
+    addVariableToTelemetryGPRSJSON[BAT_VOLTAGE_KEY] = roundSignificantDigits(in3.BATTERY_voltage, TELEMETRIES_DECIMALS);
 
   if (in3.temperatureControl || in3.humidityControl) {
     addVariableToTelemetryGPRSJSON[FAN_CURRENT_KEY] = roundSignificantDigits(in3.fan_current, TELEMETRIES_DECIMALS);
     addVariableToTelemetryGPRSJSON[CONTROL_ACTIVE_TIME_KEY] = roundSignificantDigits(in3.control_active_time, TELEMETRIES_DECIMALS);
     addVariableToTelemetryGPRSJSON[FAN_ACTIVE_TIME_KEY] = roundSignificantDigits(in3.fan_active_time, TELEMETRIES_DECIMALS);
     if (in3.temperatureControl) {
+    addVariableToTelemetryGPRSJSON[HEATER_CURRENT_KEY] = roundSignificantDigits(in3.heater_current, TELEMETRIES_DECIMALS);
       addVariableToTelemetryGPRSJSON[DESIRED_TEMPERATURE_KEY] = in3.desiredControlTemperature;
       addVariableToTelemetryGPRSJSON[HEATER_ACTIVE_TIME_KEY] = roundSignificantDigits(in3.heater_active_time, TELEMETRIES_DECIMALS);
     }

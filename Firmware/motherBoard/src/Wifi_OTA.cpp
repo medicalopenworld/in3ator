@@ -302,6 +302,10 @@ void addTelemetriesToWIFIJSON()
   addVariableToTelemetryWIFIJSON[HUMIDITY_ROOM_KEY] = roundSignificantDigits(in3.humidity[ROOM_DIGITAL_HUM_SENSOR], TELEMETRIES_DECIMALS);
   addVariableToTelemetryWIFIJSON[SYSTEM_CURRENT_KEY] = roundSignificantDigits(in3.system_current, TELEMETRIES_DECIMALS);
   addVariableToTelemetryWIFIJSON[SYSTEM_VOLTAGE_KEY] = roundSignificantDigits(in3.system_voltage, TELEMETRIES_DECIMALS);
+   addVariableToTelemetryWIFIJSON[V5_CURRENT_KEY] = roundSignificantDigits(in3.USB_current, TELEMETRIES_DECIMALS);
+    addVariableToTelemetryWIFIJSON[V5_VOLTAGE_KEY] = roundSignificantDigits(in3.USB_voltage, TELEMETRIES_DECIMALS);
+   addVariableToTelemetryWIFIJSON[BAT_CURRENT_KEY] = roundSignificantDigits(in3.BATTERY_current, TELEMETRIES_DECIMALS);
+    addVariableToTelemetryWIFIJSON[BAT_VOLTAGE_KEY] = roundSignificantDigits(in3.BATTERY_voltage, TELEMETRIES_DECIMALS);
 
   if (in3.temperatureControl || in3.humidityControl)
   {
@@ -310,8 +314,9 @@ void addTelemetriesToWIFIJSON()
     addVariableToTelemetryWIFIJSON[FAN_ACTIVE_TIME_KEY] = roundSignificantDigits(in3.fan_active_time, TELEMETRIES_DECIMALS);
     if (in3.temperatureControl)
     {
-      addVariableToTelemetryWIFIJSON[DESIRED_TEMPERATURE_KEY] = in3.desiredControlTemperature;
-      addVariableToTelemetryWIFIJSON[HEATER_ACTIVE_TIME_KEY] = roundSignificantDigits(in3.heater_active_time, TELEMETRIES_DECIMALS);
+     addVariableToTelemetryWIFIJSON[HEATER_CURRENT_KEY] = roundSignificantDigits(in3.heater_current, TELEMETRIES_DECIMALS);
+     addVariableToTelemetryWIFIJSON[DESIRED_TEMPERATURE_KEY] = in3.desiredControlTemperature;
+    addVariableToTelemetryWIFIJSON[HEATER_ACTIVE_TIME_KEY] = roundSignificantDigits(in3.heater_active_time, TELEMETRIES_DECIMALS);
     }
     if (in3.humidityControl)
     {
