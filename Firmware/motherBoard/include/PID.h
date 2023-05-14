@@ -13,11 +13,15 @@
 #define KP_AIR 200
 #define KI_AIR 1
 #define KD_AIR 500
+#define AWO_SKIN 2
 
 #define KP_SKIN 200
 #define KI_SKIN 1
 #define KD_SKIN 500
+#define AWO_AIR 2
 
 #define KP_HUMIDITY 200
 #define KI_HUMIDITY 2
 #define KD_HUMIDITY 20
+#define AWO_HUMIDITY 5
+
