@@ -425,6 +425,8 @@ class ThingsBoardSized {
     m_client.setCallback(std::bind(&ThingsBoardSized::on_message, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
   }
 
+const char* TB_host;
+const char* TB_token;
   // Connects to the specified ThingsBoard server and port.
   // Access token is used to authenticate a client.
   // Returns true on success, false otherwise.
@@ -432,6 +434,8 @@ class ThingsBoardSized {
     if (!host) {
       return false;
     }
+TB_host=host;
+TB_token=access_token;
     m_client.setServer(host, port);
     const bool connection_result = m_client.connect(client_id, access_token, password);
     if (connection_result) {
@@ -461,8 +465,8 @@ class ThingsBoardSized {
   }
 
   // Executes an event loop for PubSub client.
-  inline void loop() {
-    m_client.loop();
+  bool loop() {
+    return(m_client.loop());
   }
 
   //----------------------------------------------------------------------------
@@ -849,7 +853,10 @@ class ThingsBoardSized {
       const uint64_t timeout = millis() + 10000U;  // Amount of time we wait until we declare the download as failed in milliseconds.
       do {
         delay(5);
-        loop();
+        if(!loop()){
+          Logger::log("Disconnected from server, reconnecting...");        
+          connect(TB_host, TB_token);
+        }
       } while ((m_fwChunkReceive != currChunk) && (timeout >= millis()));
 
       if (m_fwChunkReceive == currChunk) {
