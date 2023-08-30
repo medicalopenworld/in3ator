@@ -48,18 +48,22 @@ double errorTemperature[SENSOR_TEMP_QTY], temperatureCalibrationPoint;
 double ReferenceTemperatureRange, ReferenceTemperatureLow;
 double provisionalReferenceTemperatureLow;
 double fineTuneSkinTemperature, fineTuneAirTemperature;
-float diffSkinTemperature, diffAirTemperature;  // difference between measured temperature and user input real temperature
+float diffSkinTemperature,
+    diffAirTemperature;  // difference between measured temperature and user
+                         // input real temperature
 double RawTemperatureLow[SENSOR_TEMP_QTY], RawTemperatureRange[SENSOR_TEMP_QTY];
 double provisionalRawTemperatureLow[SENSOR_TEMP_QTY];
 double temperatureMax[SENSOR_TEMP_QTY], temperatureMin[SENSOR_TEMP_QTY];
-int temperature_array_pos;                                // temperature sensor number turn to measure
+int temperature_array_pos;  // temperature sensor number turn to measure
 bool humidifierState, humidifierStateChange;
 int previousHumidity;  // previous sampled humidity
-float diffHumidity;    // difference between measured humidity and user input real humidity
+float diffHumidity;  // difference between measured humidity and user input real
+                     // humidity
 
 byte autoCalibrationProcess;
 
-// Sensor check rate (in ms). Both sensors are checked in same interrupt and they have different check rates
+// Sensor check rate (in ms). Both sensors are checked in same interrupt and
+// they have different check rates
 byte encoderRate = true;
 byte encoderCount = false;
 bool encPulseDetected;
@@ -85,8 +89,9 @@ volatile int EncMove;                  // moved encoder
 volatile int lastEncMove;              // moved last encoder
 volatile int EncMoveOrientation = -1;  // set to -1 to increase values clockwise
 volatile int last_encoder_move;        // moved encoder
-long encoder_debounce_time = true;     // in milliseconds, debounce time in encoder to filter signal bounces
-long last_encPulsed;                   // last time encoder was pulsed
+long encoder_debounce_time =
+    true;  // in milliseconds, debounce time in encoder to filter signal bounces
+long last_encPulsed;  // last time encoder was pulsed
 
 // Text Graphic position variables
 int humidityX;
@@ -106,7 +111,8 @@ int barWidth, barHeight, tempBarPosX, tempBarPosY, humBarPosX, humBarPosY;
 int screenTextColor, screenTextBackgroundColor;
 
 // User Interface display variables
-bool autoLock;              // setting that enables backlight switch OFF after a given time of no user actions
+bool autoLock;  // setting that enables backlight switch OFF after a given time
+                // of no user actions
 long lastbacklightHandler;  // last time there was a encoder movement or pulse
 long sensorsUpdatePeriod = 1000;
 
@@ -192,34 +198,41 @@ void setup() {
   // Task generation
   /* Task n#1 - GPRS Handler */
   log("Creating GPRS task ...\n");
-  while (xTaskCreatePinnedToCore(GPRS_Task, (const char *)"GPRS", 8192, NULL, 1, NULL, CORE_ID_FREERTOS) != pdPASS)
+  while (xTaskCreatePinnedToCore(GPRS_Task, (const char *)"GPRS", 8192, NULL, 1,
+                                 NULL, CORE_ID_FREERTOS) != pdPASS)
     ;
   log("GPRS task successfully created!\n");
 
   log("Creating OTA task ...\n");
-  while (xTaskCreatePinnedToCore(OTA_Task, (const char *)"OTA", 8192, NULL, 1, NULL, CORE_ID_FREERTOS) != pdPASS)
+  while (xTaskCreatePinnedToCore(OTA_Task, (const char *)"OTA", 8192, NULL, 1,
+                                 NULL, CORE_ID_FREERTOS) != pdPASS)
     ;
   ;
   log("OTA task successfully created!\n");
   log("Creating Backlight task ...\n");
-  while (xTaskCreatePinnedToCore(Backlight_Task, (const char *)"BACKLIGHT", 4096, NULL, 1, NULL, CORE_ID_FREERTOS) != pdPASS)
+  while (xTaskCreatePinnedToCore(Backlight_Task, (const char *)"BACKLIGHT",
+                                 4096, NULL, 1, NULL,
+                                 CORE_ID_FREERTOS) != pdPASS)
     ;
   ;
   log("Backlight task successfully created!\n");
 
   log("Creating buzzer task ...\n");
-  while (xTaskCreatePinnedToCore(buzzer_Task, (const char *)"BUZZER", 4096, NULL, 1, NULL, CORE_ID_FREERTOS) != pdPASS)
+  while (xTaskCreatePinnedToCore(buzzer_Task, (const char *)"BUZZER", 4096,
+                                 NULL, 1, NULL, CORE_ID_FREERTOS) != pdPASS)
     ;
   ;
   log("Buzzer task successfully created!\n");
   log("Creating sensors task ...\n");
-  while (xTaskCreatePinnedToCore(sensors_Task, (const char *)"SENSORS", 4096, NULL, 1, NULL, CORE_ID_FREERTOS) != pdPASS)
+  while (xTaskCreatePinnedToCore(sensors_Task, (const char *)"SENSORS", 4096,
+                                 NULL, 1, NULL, CORE_ID_FREERTOS) != pdPASS)
     ;
   ;
   log("sensors task successfully created!\n");
   /*
   log("Creating time track task ...\n");
-  while (xTaskCreatePinnedToCore(time_track_Task, (const char *)"SENSORS", 4096, NULL, 1, NULL, CORE_ID_FREERTOS) != pdPASS)
+  while (xTaskCreatePinnedToCore(time_track_Task, (const char *)"SENSORS", 4096,
+  NULL, 1, NULL, CORE_ID_FREERTOS) != pdPASS)
     ;
   ;
   log("Time track task successfully created!\n");

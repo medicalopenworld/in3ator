@@ -24,19 +24,13 @@
 */
 
 #include "ESP32_config.h"
-void watchdogInit(uint32_t wdt_timeout)
-{
-  esp_task_wdt_init(wdt_timeout, true); // enable panic so ESP32 restarts
-  esp_task_wdt_add(NULL);               // add current thread to WDT watch
+void watchdogInit(uint32_t wdt_timeout) {
+  esp_task_wdt_init(wdt_timeout, true);  // enable panic so ESP32 restarts
+  esp_task_wdt_add(NULL);                // add current thread to WDT watch
 }
 
-void watchdogReload()
-{
-  esp_task_wdt_reset();
-}
+void watchdogReload() { esp_task_wdt_reset(); }
 
-void brownOutConfig(uint32_t val)
-{
+void brownOutConfig(uint32_t val) {
   WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, val);
 }
-

@@ -25,27 +25,18 @@
 
 #include <Arduino.h>
 
-long minsToMillis(long timeInMillis)
-{
-  return (timeInMillis * 60 * 1000);
-}
+long minsToMillis(long timeInMillis) { return (timeInMillis * 60 * 1000); }
 
-long secsToMillis(long timeInMillis)
-{
-  return (timeInMillis * 1000);
-}
+long secsToMillis(long timeInMillis) { return (timeInMillis * 1000); }
 
-float millisToHours(long timeInMillis)
-{
+float millisToHours(long timeInMillis) {
   return (timeInMillis / 1000.0 / 60.0 / 60.0);
 }
 
-double roundSignificantDigits(double value, int numberOfDecimals)
-{
+double roundSignificantDigits(double value, int numberOfDecimals) {
   double exponent;
   double provisionalValue = abs(value);
-  while (provisionalValue < 1 && provisionalValue > 0)
-  {
+  while (provisionalValue < 1 && provisionalValue > 0) {
     provisionalValue *= 10;
     exponent++;
   }

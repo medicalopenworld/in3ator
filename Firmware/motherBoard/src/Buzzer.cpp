@@ -23,6 +23,7 @@
 
 */
 #include <Arduino.h>
+
 #include "main.h"
 
 #define BUZZER_DISABLED false
@@ -42,14 +43,13 @@ void buzzerHandler() {
 
     if (buzzerBeeps) {
       buzzerState = BUZZER_ENABLED;
-    }
-    else {
+    } else {
       buzzerState = BUZZER_DISABLED;
     }
   }
 }
 
-void buzzerConstantTone (int freq) {
+void buzzerConstantTone(int freq) {
   log("[BUZZER] -> BUZZER activated in constant Mode");
   if (buzzerState == BUZZER_DISABLED) {
     ledcWrite(BUZZER_PWM_CHANNEL, BUZZER_HALF_PWM);
@@ -57,15 +57,16 @@ void buzzerConstantTone (int freq) {
   }
 }
 
-void shutBuzzer () {
+void shutBuzzer() {
   if (buzzerState == BUZZER_ENABLED) {
-    //log("[BUZZER] -> BUZZER was shutted");
+    // log("[BUZZER] -> BUZZER was shutted");
     ledcWrite(BUZZER_PWM_CHANNEL, false);
   }
 }
 
-void buzzerTone (int beepTimes, int timevTaskDelay, int freq) {
-  //log("[BUZZER] -> BUZZER beep mode activated  " + String(beepTimes) + " times");
+void buzzerTone(int beepTimes, int timevTaskDelay, int freq) {
+  // log("[BUZZER] -> BUZZER beep mode activated  " + String(beepTimes) + "
+  // times");
   buzzerBeeps += beepTimes;
   buzzerToneTime = timevTaskDelay;
 }
