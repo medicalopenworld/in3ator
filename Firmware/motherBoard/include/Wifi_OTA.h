@@ -1,6 +1,8 @@
 
 #ifndef _WIFI_OTA_H_
 #define _WIFI_OTA_H_
+//#define THINGSBOARD_ENABLE_DYNAMIC 1
+#define THINGSBOARD_ENABLE_OTA 1
 
 #include <Arduino.h>
 #include "main.h"
@@ -29,6 +31,5 @@ struct WIFIstruct
 bool WIFIIsConnectedToServer();
 bool WIFIIsConnected();
 bool WIFICheckNewEvent();
-bool WIFIOTAIsOngoing();
 
 #endif // _WIFI_OTA_H_

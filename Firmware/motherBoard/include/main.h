@@ -52,7 +52,11 @@
 
 #define THINGSBOARD_BUFFER_SIZE 4096
 #define THINGSBOARD_FIELDS_AMOUNT 64
+#define MAX_MESSAGE_SIZE 512
+#define THINGSBOARD_QOS false
 #define TELEMETRIES_DECIMALS 2
+#define FIRMWARE_FAILURE_RETRIES 5
+#define FIRMWARE_PACKET_SIZE 4096
 
 #define SN_KEY "SN"
 #define HW_NUM_KEY "HW_num"
@@ -515,7 +519,6 @@ void UI_actuatorsProgress();
 
 void wifiInit(void);
 void wifiDisable();
-bool GPRS_CheckConnection();
 
 void loaddefaultValues();
 void UI_calibration();

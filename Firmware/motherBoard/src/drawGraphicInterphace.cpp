@@ -223,7 +223,6 @@ void UI_updateConnectivityEvents() {
   updateHeadingEvent(EVENT_2G, GPRSIsAttached());
   updateHeadingEvent(EVENT_WIFI, WIFIIsConnected());
   updateHeadingEvent(EVENT_SERVER_CONNECTION, GPRSIsConnectedToServer() || WIFIIsConnectedToServer());
-  updateHeadingEvent(EVENT_OTA_ONGOING, WIFIOTAIsOngoing() || GPRSOTAIsOngoing());
 }
 
 void eraseBar(int UI_menu_rows, int bar_pos) {

@@ -32,8 +32,8 @@ WebServer wifiServer(80);
 WiFiClient espClient;
 
 // Initialize ThingsBoard instance
-ThingsBoardSized<THINGSBOARD_BUFFER_SIZE, THINGSBOARD_FIELDS_AMOUNT> tb_wifi(espClient);
-
+//ThingsBoardSized<THINGSBOARD_BUFFER_SIZE, THINGSBOARD_FIELDS_AMOUNT> tb_wifi(espClient);
+ThingsBoard tb_wifi(espClient, MAX_MESSAGE_SIZE);
 StaticJsonDocument<JSON_OBJECT_SIZE(THINGSBOARD_FIELDS_AMOUNT)> WIFI_JSON;
 JsonObject addVariableToTelemetryWIFIJSON = WIFI_JSON.to<JsonObject>();
 
@@ -42,6 +42,8 @@ bool WIFI_connection_status = false;
 
 extern in3ator_parameters in3;
 WIFIstruct Wifi_TB;
+
+const OTA_Update_Callback OTAcallback(&progressCallback, &updatedCallback, CURRENT_FIRMWARE_TITLE, FWversion, FIRMWARE_FAILURE_RETRIES, FIRMWARE_PACKET_SIZE);
 
 /*
    Login page
@@ -227,12 +229,10 @@ bool WIFICheckNewEvent()
   bool retVal = false;
   bool WifiStatus = (WiFi.status() == WL_CONNECTED);
   bool serverConnectionStatus = WIFIIsConnectedToServer();
-  bool OTAInProgress = WIFIOTAIsOngoing();
-  if (serverConnectionStatus != Wifi_TB.lastServerConnectionStatus || WifiStatus != Wifi_TB.lastWIFIConnectionStatus || OTAInProgress != Wifi_TB.lastOTAInProgress)
+  if (serverConnectionStatus != Wifi_TB.lastServerConnectionStatus || WifiStatus != Wifi_TB.lastWIFIConnectionStatus)
   {
     retVal = true;
   }
-  Wifi_TB.lastOTAInProgress = OTAInProgress;
   Wifi_TB.lastWIFIConnectionStatus = WifiStatus;
   Wifi_TB.lastServerConnectionStatus = serverConnectionStatus;
   return (retVal);
@@ -248,15 +248,11 @@ bool WIFIIsConnectedToServer()
   return (Wifi_TB.serverConnectionStatus && WIFIIsConnected());
 }
 
-bool WIFIOTAIsOngoing()
-{
-  return (tb_wifi.Firmware_is_updating() && WIFIIsConnectedToServer());
-}
-
 void WIFICheckOTA()
 {
   log("[WIFI] -> Checking WIFI firwmare Update...");
-  tb_wifi.Start_Firmware_Update(CURRENT_FIRMWARE_TITLE, FWversion, WIFI_UpdatedCallback);
+   tb_wifi.Firmware_Send_Info(CURRENT_FIRMWARE_TITLE, FWversion);
+   tb_wifi.Start_Firmware_Update(OTAcallback);
 }
 
 void WIFI_TB_Init()

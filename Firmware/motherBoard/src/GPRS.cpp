@@ -36,10 +36,11 @@ TinyGsm modem(modemSerial);
 TinyGsmClient client(modem);
 
 // Initialize ThingsBoard instance
-ThingsBoardSized<THINGSBOARD_BUFFER_SIZE, THINGSBOARD_FIELDS_AMOUNT> tb(client);
+//ThingsBoardSized<THINGSBOARD_BUFFER_SIZE, THINGSBOARD_FIELDS_AMOUNT> tb(client);
+ThingsBoard tb(client, MAX_MESSAGE_SIZE);
 
 // Initialize ThingsBoard client provision instance
-ThingsBoardSized<THINGSBOARD_BUFFER_SIZE> tb_provision(client);  // increase buffer size
+ThingsBoard tb_provision(client, MAX_MESSAGE_SIZE);
 
 StaticJsonDocument<JSON_OBJECT_SIZE(THINGSBOARD_FIELDS_AMOUNT)> GPRS_JSON;
 JsonObject addVariableToTelemetryGPRSJSON = GPRS_JSON.to<JsonObject>();
@@ -50,6 +51,21 @@ extern bool ambientSensorPresent;
 extern in3ator_parameters in3;
 GPRSstruct GPRS;
 Credentials credentials;
+
+void progressCallback(const uint32_t& currentChunk, const uint32_t& totalChuncks) {
+  Serial.printf("Progress %.2f%%\n", static_cast<float>(currentChunk * 100U) / totalChuncks);
+}
+
+void updatedCallback(const bool &success) {
+  if (success) {
+    log("[WIFI] -> Done, OTA will be implemented on next boot");
+    // esp_restart();
+  } else {
+    log("[GPRS] -> No new firmware");
+  }
+}
+
+const OTA_Update_Callback OTAcallback(&progressCallback, &updatedCallback, CURRENT_FIRMWARE_TITLE, FWversion, FIRMWARE_FAILURE_RETRIES, FIRMWARE_PACKET_SIZE);
 
 void clearGPRSBuffer() {
   memset(GPRS.buffer, 0, sizeof(GPRS.buffer));
@@ -98,10 +114,6 @@ bool GPRSIsAttached() {
 
 bool GPRSIsConnectedToServer() {
   return (GPRS.serverConnectionStatus);
-}
-
-bool GPRSOTAIsOngoing() {
-  return (tb.Firmware_is_updating() && GPRSIsConnectedToServer());
 }
 
 void GPRS_get_triangulation_location() {
@@ -263,28 +275,45 @@ void GPRSSetPostPeriod() {
   }
 }
 
-void GPRSProvisionResponse(Provision_Data &data) {
+void GPRSProvisionResponse(const Provision_Data &data) {
   log("[GPRS] -> Received device provision response");
-  int jsonSize = measureJson(data) + 1;
+    int jsonSize = JSON_STRING_SIZE(measureJson(data));
+
   char buffer[jsonSize];
   serializeJson(data, buffer, jsonSize);
   log("[GPRS] -> " + String(buffer));
   if (strncmp(data["status"], "SUCCESS", strlen("SUCCESS")) != 0) {
     log("[GPRS] -> Provision response contains the error: ");
     log("[GPRS] -> " + data["errorMsg"].as<String>());
-    GPRS.provision_request_processed = true;
     return;
   }
-  if (strncmp(data["credentialsType"], "ACCESS_TOKEN", strlen("ACCESS_TOKEN")) == 0) {
+
+  if (strncmp(data[CREDENTIALS_TYPE], ACCESS_TOKEN_CRED_TYPE, strlen(ACCESS_TOKEN_CRED_TYPE)) == 0) {
     credentials.client_id = "";
-    credentials.username = data["credentialsValue"].as<String>();
+    credentials.username = data[CREDENTIALS_VALUE].as<std::string>();
     credentials.password = "";
     GPRS.provisioned = true;
-    GPRS.device_token = credentials.username;
+    GPRS.device_token = credentials.username.c_str();
     EEPROM.writeString(EEPROM_THINGSBOARD_TOKEN, GPRS.device_token);
     EEPROM.write(EEPROM_THINGSBOARD_PROVISIONED, GPRS.provisioned);
     EEPROM.commit();
     log("[GPRS] -> Device provisioned successfully");
+  }
+    else if (strncmp(data[CREDENTIALS_TYPE], MQTT_BASIC_CRED_TYPE, strlen(MQTT_BASIC_CRED_TYPE)) == 0) {
+    auto credentials_value = data[CREDENTIALS_VALUE].as<JsonObjectConst>();
+    credentials.client_id = credentials_value[CLIENT_ID].as<std::string>();
+    credentials.username = credentials_value[CLIENT_USERNAME].as<std::string>();
+    credentials.password = credentials_value[CLIENT_PASSWORD].as<std::string>();
+    GPRS.provisioned = true;
+    GPRS.device_token = credentials.username.c_str();
+    EEPROM.writeString(EEPROM_THINGSBOARD_TOKEN, GPRS.device_token);
+    EEPROM.write(EEPROM_THINGSBOARD_PROVISIONED, GPRS.provisioned);
+    EEPROM.commit();
+    log("[GPRS] -> Device provisioned successfully");
+}
+  else{
+    log("[GPRS] -> Unexpected provision credentialsType");
+    return;
   }
   if (tb_provision.connected()) {
     tb_provision.disconnect();
@@ -294,31 +323,21 @@ void GPRSProvisionResponse(Provision_Data &data) {
 
 void TBProvision() {
   if (!tb_provision.connected()) {
-    const Provision_Callback provisionCallback = (Provision_Callback)GPRSProvisionResponse;
     // Connect to the ThingsBoard
-    log("[WIFI] -> Sending provision request to: " + String(THINGSBOARD_SERVER));
+    log("[GPRS] -> Sending provision request to: " + String(THINGSBOARD_SERVER));
     if (!tb_provision.connect(THINGSBOARD_SERVER, "provision", THINGSBOARD_PORT)) {
       Serial.println("Failed to connect");
       return;
     }
-    if (tb_provision.Provision_Subscribe(provisionCallback)) {
-    }
+      const Provision_Callback provisionCallback(Access_Token(), &GPRSProvisionResponse, PROVISION_DEVICE_KEY, PROVISION_DEVICE_SECRET, GPRS.CCID.c_str());
+      GPRS.provision_request_sent = tb_provision.Provision_Request(provisionCallback);
   } else {
-    if (tb_provision.sendProvisionRequest(GPRS.CCID.c_str(), PROVISION_DEVICE_KEY, PROVISION_DEVICE_SECRET)) {
       GPRS.provision_request_sent = true;
+    if (GPRS.provision_request_processed) {
       Serial.println("Provision request was sent!");
     } else {
       Serial.println("Provision request FAILED!");
     }
-  }
-}
-
-void UpdatedCallback(const bool &success) {
-  if (success) {
-    log("[WIFI] -> Done, OTA will be implemented on next boot");
-    // esp_restart();
-  } else {
-    log("[GPRS] -> No new firmware");
   }
 }
 
@@ -330,7 +349,8 @@ void addIntVariableToTelemetryJSON(JsonObject &json, const char *key, const int 
 
 void GPRSCheckOTA() {
   Serial.println("Checking GPRS firwmare Update...");
-  tb.Start_Firmware_Update(CURRENT_FIRMWARE_TITLE, FWversion, UpdatedCallback);
+  tb.Firmware_Send_Info(CURRENT_FIRMWARE_TITLE, FWversion);
+  tb.Start_Firmware_Update(OTAcallback);
 }
 
 void addConfigTelemetriesToGPRSJSON() {
@@ -485,16 +505,6 @@ void GPRS_TB_Init() {
   if (GPRS.provisioned) {
     GPRS.device_token = EEPROM.readString(EEPROM_THINGSBOARD_TOKEN);
   }
-}
-
-bool GPRS_CheckConnection() {
-  bool reconnecting = false;
-  if (tb.Firmware_is_updating() && !tb.connected()) {
-    tb.connect(THINGSBOARD_SERVER, GPRS.device_token.c_str());
-    reconnecting = true;
-    tb.loop();
-  }
-  return (reconnecting);
 }
 
 void GPRS_Handler() {

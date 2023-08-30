@@ -3,7 +3,8 @@
 
 #define TINY_GSM_MODEM_SIM800
 #define modemSerial Serial2
-
+//#define THINGSBOARD_ENABLE_DYNAMIC 1
+#define THINGSBOARD_ENABLE_OTA 1
 #include <Arduino.h>
 #include <TinyGsmClient.h>
 #include "ThingsBoard.h"
@@ -32,6 +33,12 @@
 #define AT_OK "OK"
 #define AT_CPIN_READY "+CPIN: READY"
 #define AT_ERROR "ERROR"
+
+#define CREDENTIALS_TYPE "credentialsType"
+#define CREDENTIALS_VALUE "credentialsValue"
+#define CLIENT_ID "clientId"
+#define CLIENT_PASSWORD "password"
+#define CLIENT_USERNAME "userName"
 
 struct GPRSstruct
 {
@@ -76,20 +83,19 @@ struct GPRSstruct
 };
 
 // Struct for client connecting after provisioning
-struct Credentials
-{
-  String client_id;
-  String username;
-  String password;
+struct Credentials {
+  std::string client_id;
+  std::string username;
+  std::string password;
 };
 
 bool GPRSCheckNewEvent();
 bool GPRSIsAttached();
 bool GPRSIsConnectedToServer();
-bool GPRSOTAIsOngoing();
 void GPRS_Handler();
 void GPRS_TB_Init();
 void initGPRS();
 void GPRSSetPostPeriod();
-
+void progressCallback(const uint32_t& currentChunk, const uint32_t& totalChuncks);
+void updatedCallback(const bool &success);
 #endif // _GPRS_123H_

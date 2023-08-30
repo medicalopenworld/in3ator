@@ -7,1111 +7,2008 @@
 #ifndef ThingsBoard_h
 #define ThingsBoard_h
 
-// Library includes.
-#if !defined(ESP8266) && !defined(ESP32)
-#include <ArduinoHttpClient.h>
-#endif
-
-#include <ArduinoJson.h>
-#include <PubSubClient.h>
-#include <pgmspace.h>
-
-#include <array>
-#include <functional>
-#include <vector>
-
-#if defined(ESP8266)
-#include <Updater.h>
-// Add defines used that or not included in the pgm header.
-#ifndef snprintf_P
-#define snprintf_P snprintf
-#endif  // snprintf_P
-#ifndef vsnprintf_P
-#define vsnprintf_P vsnprintf
-#endif  // vsnprintf_P
-#elif defined(ESP32)
-#include <Update.h>
-#endif
-
 // Local includes.
+#include "Constants.h"
+#include "Vector.h"
 #include "ThingsBoardDefaultLogger.h"
+#include "HashGenerator.h"
+#include "Telemetry.h"
+#include "Shared_Attribute_Callback.h"
+#include "Attribute_Request_Callback.h"
+#include "RPC_Callback.h"
+#include "RPC_Request_Callback.h"
+#include "Provision_Callback.h"
+#include "OTA_Update_Callback.h"
 
-#define Default_Payload 64
-#define Default_Fields_Amt 8
+#if THINGSBOARD_ENABLE_STL
+#include <assert.h>
+#endif // THINGSBOARD_ENABLE_STL
 
-class ThingsBoardDefaultLogger;
+// Library includes.
+#include <stdarg.h>
+#include <TBPubSubClient.h>
+
+#if THINGSBOARD_ENABLE_OTA
+#ifdef ESP8266
+#include <Updater.h>
+#else
+#ifdef ESP32
+#include <Update.h>
+#endif // ESP32
+#endif // ESP8266
+#endif // THINGSBOARD_ENABLE_OTA
+
 
 /// ---------------------------------
 /// Constant strings in flash memory.
 /// ---------------------------------
-#if !defined(ESP8266) && !defined(ESP32)
-constexpr char HTTP_TELEMETRY_TOPIC[] = PSTR("/api/v1/%s/telemetry");
-constexpr char HTTP_ATTRIBUTES_TOPIC[] = PSTR("/api/v1/%s/attributes");
-constexpr char HTTP_POST_PATH[] = PSTR("application/json");
-#endif
-
 // Publish data topics.
-constexpr char ATTRIBUTE_TOPIC[] = PSTR("v1/devices/me/attributes");
-constexpr char TELEMETRY_TOPIC[] = PSTR("v1/devices/me/telemetry");
+#if THINGSBOARD_ENABLE_PROGMEM
+constexpr char ATTRIBUTE_TOPIC[] PROGMEM = "v1/devices/me/attributes";
+constexpr char TELEMETRY_TOPIC[] PROGMEM = "v1/devices/me/telemetry";
+#else
+constexpr char ATTRIBUTE_TOPIC[] = "v1/devices/me/attributes";
+constexpr char TELEMETRY_TOPIC[] = "v1/devices/me/telemetry";
+#endif // THINGSBOARD_ENABLE_PROGMEM
 
 // RPC topics.
-constexpr char RPC_SUBSCRIBE_TOPIC[] = PSTR("v1/devices/me/rpc/request/+");
-constexpr char RPC_TOPIC[] = PSTR("v1/devices/me/rpc");
+#if THINGSBOARD_ENABLE_PROGMEM
+constexpr char RPC_SUBSCRIBE_TOPIC[] PROGMEM = "v1/devices/me/rpc/request/+";
+constexpr char RPC_RESPONSE_SUBSCRIBE_TOPIC[] PROGMEM = "v1/devices/me/rpc/response/+";
+constexpr char RPC_SEND_REQUEST_TOPIC[] PROGMEM = "v1/devices/me/rpc/request/%u";
+constexpr char RPC_REQUEST_TOPIC[] PROGMEM = "v1/devices/me/rpc/request";
+constexpr char RPC_RESPONSE_TOPIC[] PROGMEM = "v1/devices/me/rpc/response";
+constexpr char RPC_SEND_RESPONSE_TOPIC[] = "v1/devices/me/rpc/response/%u";
+#else
+constexpr char RPC_SUBSCRIBE_TOPIC[] = "v1/devices/me/rpc/request/+";
+constexpr char RPC_RESPONSE_SUBSCRIBE_TOPIC[] = "v1/devices/me/rpc/response/+";
+constexpr char RPC_SEND_REQUEST_TOPIC[] = "v1/devices/me/rpc/request/%u";
+constexpr char RPC_REQUEST_TOPIC[] = "v1/devices/me/rpc/request";
+constexpr char RPC_RESPONSE_TOPIC[] = "v1/devices/me/rpc/response";
+constexpr char RPC_SEND_RESPONSE_TOPIC[] = "v1/devices/me/rpc/response/%u";
+#endif // THINGSBOARD_ENABLE_PROGMEM
 
 // Firmware topics.
-constexpr char FIRMWARE_RESPONSE_TOPIC[] = PSTR("v2/fw/response");
+#if THINGSBOARD_ENABLE_PROGMEM
+constexpr char FIRMWARE_RESPONSE_TOPIC[] PROGMEM = "v2/fw/response";
+#else
+constexpr char FIRMWARE_RESPONSE_TOPIC[] = "v2/fw/response";
+#endif // THINGSBOARD_ENABLE_PROGMEM
 
 // Shared attribute topics.
-constexpr char ATTRIBUTE_REQUEST_TOPIC[] = PSTR("v1/devices/me/attributes/request/%u");
-constexpr char ATTRIBUTE_RESPONSE_SUBSCRIBE_TOPIC[] = PSTR("v1/devices/me/attributes/response/+");
-constexpr char ATTRIBUTE_RESPONSE_TOPIC[] = PSTR("v1/devices/me/attributes/response");
+#if THINGSBOARD_ENABLE_PROGMEM
+constexpr char ATTRIBUTE_REQUEST_TOPIC[] PROGMEM = "v1/devices/me/attributes/request/%u";
+constexpr char ATTRIBUTE_RESPONSE_SUBSCRIBE_TOPIC[] PROGMEM = "v1/devices/me/attributes/response/+";
+constexpr char ATTRIBUTE_RESPONSE_TOPIC[] PROGMEM = "v1/devices/me/attributes/response";
+#else
+constexpr char ATTRIBUTE_REQUEST_TOPIC[] = "v1/devices/me/attributes/request/%u";
+constexpr char ATTRIBUTE_RESPONSE_SUBSCRIBE_TOPIC[] = "v1/devices/me/attributes/response/+";
+constexpr char ATTRIBUTE_RESPONSE_TOPIC[] = "v1/devices/me/attributes/response";
+#endif // THINGSBOARD_ENABLE_PROGMEM
 
 // Provision topics.
-constexpr char PROV_RESPONSE_TOPIC[] = PSTR("/provision/response");
+#if THINGSBOARD_ENABLE_PROGMEM
+constexpr char PROV_RESPONSE_TOPIC[] PROGMEM = "/provision/response";
+#else
+constexpr char PROV_RESPONSE_TOPIC[] = "/provision/response";
+#endif // THINGSBOARD_ENABLE_PROGMEM
 
 // Default login data.
-constexpr char PROV_ACCESS_TOKEN[] = PSTR("provision");
-constexpr char DEFAULT_CLIENT_ID[] = PSTR("TbDev");
+#if THINGSBOARD_ENABLE_PROGMEM
+constexpr char PROV_ACCESS_TOKEN[] PROGMEM = "provision";
+constexpr char DEFAULT_CLIENT_ID[] PROGMEM = "TbDev";
+#else
+constexpr char PROV_ACCESS_TOKEN[] = "provision";
+constexpr char DEFAULT_CLIENT_ID[] = "TbDev";
+#endif // THINGSBOARD_ENABLE_PROGMEM
 
 // Shared attribute request keys.
-constexpr char SHARED_KEYS[] = PSTR("sharedKeys");
-constexpr char SHARED_KEY[] = PSTR("shared");
+#if THINGSBOARD_ENABLE_PROGMEM
+constexpr char SHARED_REQUEST_KEY[] PROGMEM = "sharedKeys";
+constexpr char SHARED_RESPONSE_KEY[] PROGMEM = "shared";
+#else
+constexpr char SHARED_REQUEST_KEY[] = "sharedKeys";
+constexpr char SHARED_RESPONSE_KEY[] = "shared";
+#endif // THINGSBOARD_ENABLE_PROGMEM
+
+// Client side attribute request keys.
+#if THINGSBOARD_ENABLE_PROGMEM
+constexpr char CLIENT_REQUEST_KEYS[] PROGMEM = "clientKeys";
+constexpr char CLIENT_RESPONSE_KEY[] PROGMEM = "client";
+#else
+constexpr char CLIENT_REQUEST_KEYS[] = "clientKeys";
+constexpr char CLIENT_RESPONSE_KEY[] = "client";
+#endif // THINGSBOARD_ENABLE_PROGMEM
 
 // RPC data keys.
-constexpr char RPC_METHOD_KEY[] = PSTR("method");
-constexpr char RPC_PARAMS_KEY[] = PSTR("params");
-constexpr char RPC_REQUEST_KEY[] = PSTR("request");
-constexpr char RPC_RESPONSE_KEY[] = PSTR("response");
+#if THINGSBOARD_ENABLE_PROGMEM
+constexpr char RPC_METHOD_KEY[] PROGMEM = "method";
+constexpr char RPC_PARAMS_KEY[] PROGMEM = "params";
+constexpr char RPC_EMPTY_PARAMS_VALUE[] PROGMEM = "{}";
+#else
+constexpr char RPC_METHOD_KEY[] = "method";
+constexpr char RPC_PARAMS_KEY[] = "params";
+constexpr char RPC_EMPTY_PARAMS_VALUE[] = "{}";
+#endif // THINGSBOARD_ENABLE_PROGMEM
 
 // Log messages.
-constexpr char INVALID_BUFFER_SIZE[] = PSTR("PayloadSize (%u) to small for the given payloads size (%u)");
-constexpr char MAX_RPC_EXCEEDED[] = PSTR("Too many rpc subscriptions, increase MaxFieldsAmt or unsubscribe");
-constexpr char MAX_SHARED_ATT_UPDATE_EXCEEDED[] = PSTR("Too many shared attribute update callback subscriptions, increase MaxFieldsAmt or unsubscribe");
-constexpr char MAX_SHARED_ATT_REQUEST_EXCEEDED[] = PSTR("Too many shared attribute request callback subscriptions, increase MaxFieldsAmt");
-constexpr char NUMBER_PRINTF[] = PSTR("%u");
-constexpr char COMMA = PSTR(',');
-constexpr char NO_KEYS_TO_REQUEST[] = PSTR("No keys to request were given");
-constexpr char REQUEST_ATT[] = PSTR("Requesting shared attributes transformed from (%s) into json (%s)");
-constexpr char UNABLE_TO_SERIALIZE[] = PSTR("Unable to serialize data");
-constexpr char UNABLE_TO_DE_SERIALIZE_RPC[] = PSTR("Unable to de-serialize RPC");
-constexpr char UNABLE_TO_DE_SERIALIZE_ATT_REQUEST[] = PSTR("Unable to de-serialize shared attribute request");
-constexpr char UNABLE_TO_DE_SERIALIZE_ATT_UPDATE[] = PSTR("Unable to de-serialize shared attribute update");
-constexpr char RECEIVED_RPC_LOG_MESSAGE[] = PSTR("Received RPC:");
-constexpr char RPC_METHOD_NULL[] = PSTR("RPC method is NULL");
-constexpr char RPC_CB_NULL[] = PSTR("RPC callback or subscribed rpc method name is NULL");
-constexpr char NO_RPC_PARAMS_PASSED[] = PSTR("No parameters passed with RPC, passing null JSON");
-constexpr char CALLING_RPC[] = PSTR("Calling RPC:");
-constexpr char RECEIVED_ATT_UPDATE[] = PSTR("Received shared attribute update");
-constexpr char NOT_FOUND_ATT_UPDATE[] = PSTR("Shared attribute update key not found");
-constexpr char ATT_CB_ID[] = PSTR("Shared attribute update callback id: (%u)");
-constexpr char ATT_CB_IS_NULL[] = PSTR("Shared attribute update callback is NULL");
-constexpr char ATT_CB_NO_KEYS[] = PSTR("No keys subscribed. Calling subscribed callback for any updated attributes (assumed to be subscribed to every possible key)");
-constexpr char ATT_IS_NULL[] = PSTR("Subscribed shared attribute update key is NULL");
-constexpr char ATT_IN_ARRAY[] = PSTR("Shared attribute update key: (%s) is subscribed");
-constexpr char ATT_NO_CHANGE[] = PSTR("No keys that we subscribed too were changed, skipping callback");
-constexpr char CALLING_ATT_CB[] = PSTR("Calling subscribed callback for updated shared attribute (%s)");
-constexpr char RECEIVED_ATT[] = PSTR("Received shared attribute request");
-constexpr char ATT_KEY_NOT_FOUND[] = PSTR("Shared attribute key not found");
-constexpr char ATT_REQUEST_CB_IS_NULL[] = PSTR("Shared attribute request callback is NULL");
-constexpr char CALLING_REQUEST_ATT_CB[] = PSTR("Calling subscribed callback for response id (%u)");
-constexpr char TOO_MANY_JSON_FIELDS[] = PSTR("Too many JSON fields passed (%u), increase MaxFieldsAmt (%u) accordingly");
-constexpr char CB_ON_MESSAGE[] = PSTR("Callback on_message from topic: (%s)");
-constexpr char CONNECT_FAILED[] = PSTR("Connecting to server failed");
+#if THINGSBOARD_ENABLE_PROGMEM
+constexpr char UNABLE_TO_DE_SERIALIZE_JSON[] PROGMEM = "Unable to de-serialize received json data with error (%s)";
+constexpr char INVALID_BUFFER_SIZE[] PROGMEM = "Buffer size (%u) to small for the given payloads size (%u), increase with setBufferSize accordingly";
+constexpr char NUMBER_PRINTF[] PROGMEM = "%u";
+#if !THINGSBOARD_ENABLE_DYNAMIC
+constexpr char MAX_RPC_EXCEEDED[] PROGMEM = "Too many server-side RPC subscriptions, increase MaxFieldsAmt or unsubscribe";
+constexpr char MAX_RPC_REQUEST_EXCEEDED[] PROGMEM = "Too many client-side RPC subscriptions, increase MaxFieldsAmt or unsubscribe";
+constexpr char MAX_SHARED_ATT_UPDATE_EXCEEDED[] PROGMEM = "Too many shared attribute update callback subscriptions, increase MaxFieldsAmt or unsubscribe";
+constexpr char MAX_SHARED_ATT_REQUEST_EXCEEDED[] PROGMEM = "Too many shared attribute request callback subscriptions, increase MaxFieldsAmt";
+#endif // !THINGSBOARD_ENABLE_DYNAMIC
+constexpr char COMMA PROGMEM = ',';
+constexpr char COLON PROGMEM = ':';
+constexpr char NO_KEYS_TO_REQUEST[] PROGMEM = "No keys to request were given";
+constexpr char REQUEST_RPC[] PROGMEM = "Requesting client side RPC with the json (%s)";
+constexpr char REQUEST_ATT[] PROGMEM = "Requesting shared attributes transformed from (%s) into json (%s)";
+constexpr char RECEIVED_RPC_LOG_MESSAGE[] PROGMEM = "Received RPC:";
+constexpr char RPC_METHOD_NULL[] PROGMEM = "RPC methodName is NULL";
+constexpr char NO_RPC_PARAMS_PASSED[] PROGMEM = "No parameters passed with RPC, passing null JSON";
+constexpr char CALLING_RPC[] PROGMEM = "Calling RPC:";
+constexpr char RECEIVED_ATT_UPDATE[] PROGMEM = "Received shared attribute update";
+constexpr char NOT_FOUND_ATT_UPDATE[] PROGMEM = "Shared attribute update key not found";
+constexpr char ATT_CB_NO_KEYS[] PROGMEM = "No keys subscribed. Calling subscribed callback for any updated attributes (assumed to be subscribed to every possible key)";
+constexpr char ATT_IS_NULL[] PROGMEM = "Subscribed shared attribute update key is NULL";
+constexpr char ATT_IN_ARRAY[] PROGMEM = "Shared attribute update key: (%s) is subscribed";
+constexpr char ATT_NO_CHANGE[] PROGMEM = "No keys that we subscribed too were changed, skipping callback";
+constexpr char CALLING_ATT_CB[] PROGMEM = "Calling subscribed callback for updated shared attribute (%s)";
+constexpr char RECEIVED_ATT[] PROGMEM = "Received shared attribute request";
+constexpr char ATT_KEY_NOT_FOUND[] PROGMEM = "Attribute key not found";
+constexpr char CALLING_REQUEST_CB[] PROGMEM = "Calling subscribed callback for response id (%u)";
+constexpr char CB_ON_MESSAGE[] PROGMEM = "Callback onMQTTMessage from topic: (%s)";
+constexpr char SUBSCRIBE_TOPIC_FAILED[] PROGMEM = "Subscribing the given topic failed";
+constexpr char PROV_REQUEST[] PROGMEM = "Provision request:";
+constexpr char PROV_RESPONSE[] PROGMEM = "Process provisioning response";
+constexpr char RECEIVED_PROV_RESPONSE[] PROGMEM = "Received provision response";
+#else
+constexpr char UNABLE_TO_DE_SERIALIZE_JSON[] = "Unable to de-serialize received json data with error (%s)";
+constexpr char INVALID_BUFFER_SIZE[] = "Buffer size (%u) to small for the given payloads size (%u), increase with setBufferSize accordingly";
+constexpr char NUMBER_PRINTF[] = "%u";
+#if !THINGSBOARD_ENABLE_DYNAMIC
+constexpr char MAX_RPC_EXCEEDED[] = "Too many server-side RPC subscriptions, increase MaxFieldsAmt or unsubscribe";
+constexpr char MAX_RPC_REQUEST_EXCEEDED[] = "Too many client-side RPC subscriptions, increase MaxFieldsAmt or unsubscribe";
+constexpr char MAX_SHARED_ATT_UPDATE_EXCEEDED[] = "Too many shared attribute update callback subscriptions, increase MaxFieldsAmt or unsubscribe";
+constexpr char MAX_SHARED_ATT_REQUEST_EXCEEDED[] = "Too many shared attribute request callback subscriptions, increase MaxFieldsAmt";
+#endif // !THINGSBOARD_ENABLE_DYNAMIC
+constexpr char COMMA = ',';
+constexpr char COLON = ':';
+constexpr char NO_KEYS_TO_REQUEST[] = "No keys to request were given";
+constexpr char REQUEST_RPC[] = "Requesting client side RPC with the json (%s)";
+constexpr char REQUEST_ATT[] = "Requesting shared attributes transformed from (%s) into json (%s)";
+constexpr char RECEIVED_RPC_LOG_MESSAGE[] = "Received RPC:";
+constexpr char RPC_METHOD_NULL[] = "RPC methodName is NULL";
+constexpr char NO_RPC_PARAMS_PASSED[] = "No parameters passed with RPC, passing null JSON";
+constexpr char CALLING_RPC[] = "Calling RPC:";
+constexpr char RECEIVED_ATT_UPDATE[] = "Received shared attribute update";
+constexpr char NOT_FOUND_ATT_UPDATE[] = "Shared attribute update key not found";
+constexpr char ATT_CB_NO_KEYS[] = "No keys subscribed. Calling subscribed callback for any updated attributes (assumed to be subscribed to every possible key)";
+constexpr char ATT_IS_NULL[] = "Subscribed shared attribute update key is NULL";
+constexpr char ATT_IN_ARRAY[] = "Shared attribute update key: (%s) is subscribed";
+constexpr char ATT_NO_CHANGE[] = "No keys that we subscribed too were changed, skipping callback";
+constexpr char CALLING_ATT_CB[] = "Calling subscribed callback for updated shared attribute (%s)";
+constexpr char RECEIVED_ATT[] = "Received shared attribute request";
+constexpr char ATT_KEY_NOT_FOUND[] = "Attribute key not found";
+constexpr char CALLING_REQUEST_CB[] = "Calling subscribed callback for response id (%u)";
+constexpr char CB_ON_MESSAGE[] = "Callback onMQTTMessage from topic: (%s)";
+constexpr char SUBSCRIBE_TOPIC_FAILED[] = "Subscribing the given topic failed";
+constexpr char PROV_REQUEST[] = "Provision request:";
+constexpr char PROV_RESPONSE[] = "Process provisioning response";
+constexpr char RECEIVED_PROV_RESPONSE[] = "Received provision response";
+#endif // THINGSBOARD_ENABLE_PROGMEM
 
-#if defined(ESP8266) || defined(ESP32) || defined(ARDUINO_AVR_MEGA)
 // Claim topics.
-constexpr char CLAIM_TOPIC[] = PSTR("v1/devices/me/claim");
+#if THINGSBOARD_ENABLE_PROGMEM
+constexpr char CLAIM_TOPIC[] PROGMEM = "v1/devices/me/claim";
+#else
+constexpr char CLAIM_TOPIC[] = "v1/devices/me/claim";
+#endif // THINGSBOARD_ENABLE_PROGMEM
 
 // Provision topics.
-constexpr char PROV_REQUEST_TOPIC[] = PSTR("/provision/request");
+#if THINGSBOARD_ENABLE_PROGMEM
+constexpr char PROV_REQUEST_TOPIC[] PROGMEM = "/provision/request";
+#else
+constexpr char PROV_REQUEST_TOPIC[] = "/provision/request";
+#endif // THINGSBOARD_ENABLE_PROGMEM
 
 // Claim data keys.
-constexpr char SECRET_KEY[] = PSTR("secretKey");
-constexpr char DURATION_KEY[] = PSTR("durationMs");
-constexpr char DEVICE_NAME_KEY[] = PSTR("deviceName");
-constexpr char PROV_DEVICE_KEY[] = PSTR("provisionDeviceKey");
-constexpr char PROV_DEVICE_SECRET_KEY[] = PSTR("provisionDeviceSecret");
+#if THINGSBOARD_ENABLE_PROGMEM
+constexpr char SECRET_KEY[] PROGMEM = "secretKey";
+constexpr char DURATION_KEY[] PROGMEM = "durationMs";
+constexpr char DEVICE_NAME_KEY[] PROGMEM = "deviceName";
+constexpr char PROV_DEVICE_KEY[] PROGMEM = "provisionDeviceKey";
+constexpr char PROV_DEVICE_SECRET_KEY[] PROGMEM = "provisionDeviceSecret";
+constexpr char PROV_CRED_TYPE_KEY[] PROGMEM = "credentialsType";
+constexpr char PROV_TOKEN[] PROGMEM = "token";
+constexpr char PROV_CRED_USERNAME[] PROGMEM = "username";
+constexpr char PROV_CRED_PASSWORD[] PROGMEM = "password";
+constexpr char PROV_CRED_CLIENT_ID[] PROGMEM = "clientId";
+constexpr char PROV_CRED_HASH[] PROGMEM = "hash";
+#else
+constexpr char SECRET_KEY[] = "secretKey";
+constexpr char DURATION_KEY[] = "durationMs";
+constexpr char DEVICE_NAME_KEY[] = "deviceName";
+constexpr char PROV_DEVICE_KEY[] = "provisionDeviceKey";
+constexpr char PROV_DEVICE_SECRET_KEY[] = "provisionDeviceSecret";
+constexpr char PROV_CRED_TYPE_KEY[] = "credentialsType";
+constexpr char PROV_TOKEN[] = "token";
+constexpr char PROV_CRED_USERNAME[] = "username";
+constexpr char PROV_CRED_PASSWORD[] = "password";
+constexpr char PROV_CRED_CLIENT_ID[] = "clientId";
+constexpr char PROV_CRED_HASH[] = "hash";
+#endif // THINGSBOARD_ENABLE_PROGMEM
 
-// Provision data keys.
-constexpr char PROV_STATUS_KEY[] = PSTR("status");
-constexpr char PROV_CRED_TYPE_KEY[] = PSTR("credentialsType");
-constexpr char STATUS_SUCCESS[] = PSTR("SUCCESS");
-constexpr char PROV_CRED_TYPE_VALUE[] = PSTR("X509_CERTIFICATE");
+#if THINGSBOARD_ENABLE_OTA
 
-// Log messages.
-constexpr char PROV_REQUEST[] = PSTR("Provision request:");
-constexpr char UNABLE_TO_DE_SERIALIZE_PROV_RESPONSE[] = PSTR("Unable to de-serialize provision response");
-constexpr char PROV_RESPONSE[] = PSTR("Process provisioning response");
-constexpr char RECEIVED_PROV_RESPONSE[] = PSTR("Received provision response");
-constexpr char X509_NOT_SUPPORTED[] = PSTR("Provision response contains X509_CERTIFICATE credentials, this is not supported yet");
-
-#if !defined(ARDUINO_AVR_MEGA)
 // Firmware topics.
-constexpr char FIRMWARE_RESPONSE_SUBSCRIBE_TOPIC[] = PSTR("v2/fw/response/#");
-constexpr char FIRMWARE_REQUEST_TOPIC[] = PSTR("v2/fw/request/0/chunk/%u");
+#if THINGSBOARD_ENABLE_PROGMEM
+constexpr char FIRMWARE_RESPONSE_SUBSCRIBE_TOPIC[] PROGMEM = "v2/fw/response/#";
+constexpr char FIRMWARE_REQUEST_TOPIC[] PROGMEM = "v2/fw/request/0/chunk/%u";
+#else
+constexpr char FIRMWARE_RESPONSE_SUBSCRIBE_TOPIC[] = "v2/fw/response/#";
+constexpr char FIRMWARE_REQUEST_TOPIC[] = "v2/fw/request/0/chunk/%u";
+#endif // THINGSBOARD_ENABLE_PROGMEM
 
 // Firmware data keys.
-constexpr char CURR_FW_TITLE_KEY[] = PSTR("current_fw_title");
-constexpr char CURR_FW_VER_KEY[] = PSTR("current_fw_version");
-constexpr char CURR_FW_STATE_KEY[] = PSTR("current_fw_state");
-constexpr char FW_VER_KEY[] = PSTR("fw_version");
-constexpr char FW_TITLE_KEY[] = PSTR("fw_title");
-constexpr char FW_CHKS_KEY[] = PSTR("fw_checksum");
-constexpr char FW_CHKS_ALGO_KEY[] = PSTR("fw_checksum_algorithm");
-constexpr char FW_SIZE_KEY[] = PSTR("fw_size");
-constexpr char FW_CHECKSUM_VALUE[] = PSTR("MD5");
-constexpr char FW_STATE_CHECKING[] = PSTR("CHECKING FIRMWARE");
-constexpr char FW_STATE_NO_FW[] = PSTR("NO FIRMWARE FOUND");
-constexpr char FW_STATE_UP_TO_DATE[] = PSTR("UP TO DATE");
-constexpr char FW_STATE_INVALID_CHKS[] = PSTR("CHKS IS NOT MD5");
-constexpr char FW_STATE_DOWNLOADING[] = PSTR("DOWNLOADING");
-constexpr char FW_STATE_FAILED[] = PSTR("FAILED");
-constexpr char FW_STATE_UPDATE_ERROR[] = PSTR("UPDATE ERROR");
-constexpr char FW_STATE_CHKS_ERROR[] = PSTR("CHECKSUM ERROR");
+
+#if THINGSBOARD_ENABLE_PROGMEM
+constexpr char CURR_FW_TITLE_KEY[] PROGMEM = "current_fw_title";
+constexpr char CURR_FW_VER_KEY[] PROGMEM = "current_fw_version";
+constexpr char FW_ERROR_KEY[] PROGMEM = "fw_error";
+constexpr char FW_STATE_KEY[] PROGMEM = "fw_state";
+constexpr char FW_STATE_DOWNLOADING[] PROGMEM = "DOWNLOADING";
+constexpr char FW_STATE_DOWNLOADED[] PROGMEM = "DOWNLOADED";
+constexpr char FW_STATE_VERIFIED[] PROGMEM = "VERIFIED";
+constexpr char FW_STATE_UPDATING[] PROGMEM = "UPDATING";
+constexpr char FW_STATE_FAILED[] PROGMEM = "FAILED";
+constexpr char FW_VER_KEY[] PROGMEM = "fw_version";
+constexpr char FW_TITLE_KEY[] PROGMEM = "fw_title";
+constexpr char FW_CHKS_KEY[] PROGMEM = "fw_checksum";
+constexpr char FW_CHKS_ALGO_KEY[] PROGMEM = "fw_checksum_algorithm";
+constexpr char FW_SIZE_KEY[] PROGMEM = "fw_size";
+constexpr char CHECKSUM_AGORITM_MD5[] PROGMEM = "MD5";
+constexpr char CHECKSUM_AGORITM_SHA256[] PROGMEM = "SHA256";
+constexpr char CHECKSUM_AGORITM_SHA384[] PROGMEM = "SHA384";
+constexpr char CHECKSUM_AGORITM_SHA512[] PROGMEM = "SHA512";
+#else
+constexpr char CURR_FW_TITLE_KEY[] = "current_fw_title";
+constexpr char CURR_FW_VER_KEY[] = "current_fw_version";
+constexpr char FW_ERROR_KEY[] = "fw_error";
+constexpr char FW_STATE_KEY[] = "fw_state";
+constexpr char FW_STATE_DOWNLOADING[] = "DOWNLOADING";
+constexpr char FW_STATE_DOWNLOADED[] = "DOWNLOADED";
+constexpr char FW_STATE_VERIFIED[] = "VERIFIED";
+constexpr char FW_STATE_UPDATING[] = "UPDATING";
+constexpr char FW_STATE_FAILED[] = "FAILED";
+constexpr char FW_VER_KEY[] = "fw_version";
+constexpr char FW_TITLE_KEY[] = "fw_title";
+constexpr char FW_CHKS_KEY[] = "fw_checksum";
+constexpr char FW_CHKS_ALGO_KEY[] = "fw_checksum_algorithm";
+constexpr char FW_SIZE_KEY[] = "fw_size";
+constexpr char CHECKSUM_AGORITM_MD5[] = "MD5";
+constexpr char CHECKSUM_AGORITM_SHA256[] = "SHA256";
+constexpr char CHECKSUM_AGORITM_SHA384[] = "SHA384";
+constexpr char CHECKSUM_AGORITM_SHA512[] = "SHA512";
+#endif // THINGSBOARD_ENABLE_PROGMEM
 
 // Log messages.
-constexpr char NO_FW[] = PSTR("No new firmware assigned on the given device");
-constexpr char EMPTY_FW[] = PSTR("Given firmware was NULL");
-constexpr char FW_UP_TO_DATE[] = PSTR("Firmware is already up to date");
-constexpr char FW_NOT_FOR_US[] = PSTR("Firmware is not for us (title is different)");
-constexpr char FW_CHKS_ALGO_NOT_SUPPORTED[] = PSTR("Checksum algorithm is not supported, please use MD5 only");
-constexpr char PAGE_BREAK[] = PSTR("=================================");
-constexpr char NEW_FW[] = PSTR("A new Firmware is available:");
-constexpr char FROM_TOO[] = PSTR("(%s) => (%s)");
-constexpr char DOWNLOADING_FW[] = PSTR("Attempting to download over MQTT...");
-constexpr char NOT_ENOUGH_RAM[] = PSTR("Not enough RAM");
-constexpr char SLASH = PSTR('/');
-constexpr char UNABLE_TO_WRITE[] = PSTR("Unable to write firmware");
-constexpr char UNABLE_TO_DOWNLOAD[] = PSTR("Unable to download firmware");
-constexpr char FW_CHUNK[] = PSTR("Receive chunk (%i), with size (%u) bytes");
-constexpr char ERROR_UPDATE_BEGIN[] = PSTR("Error during Update.begin");
-constexpr char MD5_ACTUAL[] = PSTR("MD5 actual checksum: (%s)");
-constexpr char MD5_EXPECTED[] = PSTR("MD5 expected checksum: (%s)");
-constexpr char CHKS_VER_FAILED[] = PSTR("Checksum verification failed");
-constexpr char CHKS_VER_SUCCESS[] = PSTR("Checksum is the same as expected");
-constexpr char FW_UPDATE_SUCCESS[] = PSTR("Update success");
-#endif
-#endif
+#if THINGSBOARD_ENABLE_PROGMEM
+constexpr char NO_FW[] PROGMEM = "No new firmware assigned on the given device";
+constexpr char EMPTY_FW[] PROGMEM = "Given firmware was NULL";
+constexpr char FW_UP_TO_DATE[] PROGMEM = "Firmware is already up to date";
+constexpr char FW_NOT_FOR_US[] PROGMEM = "Firmware is not for us (title is different)";
+constexpr char UNABLE_TO_WRITE[] PROGMEM = "Unable to write firmware";
+constexpr char UNABLE_TO_REQUEST_CHUNCKS[] PROGMEM = "Unable to request firmware chunk";
+constexpr char UNABLE_TO_DOWNLOAD[] PROGMEM = "Unable to download firmware";
+constexpr char ERROR_UPDATE_BEGIN[] PROGMEM = "Error during Update.begin";
+constexpr char ERROR_UPDATE_WRITE[] PROGMEM = "Error during Update.write";
+constexpr char ERROR_UPDATE_END[] PROGMEM = "Error during Update.end, not all bytes written";
+constexpr char CHKS_VER_FAILED[] PROGMEM = "Checksum verification failed";
+constexpr char FW_CHKS_ALGO_NOT_SUPPORTED[] PROGMEM = "Checksum algorithm (%s) is not supported";
+constexpr char PAGE_BREAK[] PROGMEM = "=================================";
+constexpr char NEW_FW[] PROGMEM = "A new Firmware is available:";
+constexpr char FROM_TOO[] PROGMEM = "(%s) => (%s)";
+constexpr char DOWNLOADING_FW[] PROGMEM = "Attempting to download over MQTT...";
+constexpr char NOT_ENOUGH_RAM[] PROGMEM = "Not enough RAM";
+constexpr char SLASH PROGMEM = '/';
+constexpr char FW_CHUNK[] PROGMEM = "Receive chunk (%i), with size (%u) bytes";
+constexpr char HASH_ACTUAL[] PROGMEM = "(%s) actual checksum: (%s)";
+constexpr char HASH_EXPECTED[] PROGMEM = "(%s) expected checksum: (%s)";
+constexpr char CHKS_VER_SUCCESS[] PROGMEM = "Checksum is the same as expected";
+constexpr char FW_UPDATE_SUCCESS[] PROGMEM = "Update success";
+constexpr char RESETTING_FAILED[] PROGMEM = "Preparing for OTA firmware updates failed, attributes might be NULL";
+#else
+constexpr char NO_FW[] = "No new firmware assigned on the given device";
+constexpr char EMPTY_FW[] = "Given firmware was NULL";
+constexpr char FW_UP_TO_DATE[] = "Firmware is already up to date";
+constexpr char FW_NOT_FOR_US[] = "Firmware is not for us (title is different)";
+constexpr char UNABLE_TO_WRITE[] = "Unable to write firmware";
+constexpr char UNABLE_TO_REQUEST_CHUNCKS[] = "Unable to request firmware chunk";
+constexpr char UNABLE_TO_DOWNLOAD[] = "Unable to download firmware";
+constexpr char ERROR_UPDATE_BEGIN[] = "Error during Update.begin";
+constexpr char ERROR_UPDATE_WRITE[] = "Error during Update.write";
+constexpr char ERROR_UPDATE_END[] = "Error during Update.end, not all bytes written";
+constexpr char CHKS_VER_FAILED[] = "Checksum verification failed";
+constexpr char FW_CHKS_ALGO_NOT_SUPPORTED[] = "Checksum algorithm (%s) is not supported";
+constexpr char PAGE_BREAK[] = "=================================";
+constexpr char NEW_FW[] = "A new Firmware is available:";
+constexpr char FROM_TOO[] = "(%s) => (%s)";
+constexpr char DOWNLOADING_FW[] = "Attempting to download over MQTT...";
+constexpr char NOT_ENOUGH_RAM[] = "Not enough RAM";
+constexpr char SLASH = '/';
+constexpr char FW_CHUNK[] = "Receive chunk (%i), with size (%u) bytes";
+constexpr char HASH_ACTUAL[] = "(%s) actual checksum: (%s)";
+constexpr char HASH_EXPECTED[] = "(%s) expected checksum: (%s)";
+constexpr char CHKS_VER_SUCCESS[] = "Checksum is the same as expected";
+constexpr char FW_UPDATE_SUCCESS[] = "Update success";
+constexpr char RESETTING_FAILED[] = "Preparing for OTA firmware updates failed, attributes might be NULL";
+#endif // THINGSBOARD_ENABLE_PROGMEM
 
-// Telemetry record class, allows to store different data using common interface.
-class Telemetry {
-  template <size_t PayloadSize, size_t MaxFieldsAmt, typename Logger>
-  friend class ThingsBoardSized;
-#ifndef ESP8266
-  template <size_t PayloadSize, size_t MaxFieldsAmt, typename Logger>
-  friend class ThingsBoardHttpSized;
-#endif
- public:
-  inline Telemetry()
-      : m_type(TYPE_NONE), m_key(NULL), m_value() {}
+#endif // THINGSBOARD_ENABLE_OTA
 
-  // Constructs telemetry record from integer value.
-  // EnableIf trick is required to overcome ambiguous float/integer conversion
-  template <
-      typename T,
-      typename = ARDUINOJSON_NAMESPACE::enable_if<ARDUINOJSON_NAMESPACE::is_integral<T>::value>>
-  inline Telemetry(const char *key, T val)
-      : m_type(TYPE_INT), m_key(key), m_value() {
-    m_value.integer = val;
-  }
-
-  // Constructs telemetry record from boolean value.
-  inline Telemetry(const char *key, bool val)
-      : m_type(TYPE_BOOL), m_key(key), m_value() {
-    m_value.boolean = val;
-  }
-
-  // Constructs telemetry record from float value.
-  inline Telemetry(const char *key, float val)
-      : m_type(TYPE_REAL), m_key(key), m_value() {
-    m_value.real = val;
-  }
-
-  // Constructs telemetry record from string value.
-  inline Telemetry(const char *key, const char *val)
-      : m_type(TYPE_STR), m_key(key), m_value() {
-    m_value.str = val;
-  }
-
- private:
-  // Data container
-  union data {
-    const char *str;
-    bool boolean;
-    int integer;
-    float real;
-  };
-
-  // Data type inside a container
-  enum dataType {
-    TYPE_NONE,
-    TYPE_BOOL,
-    TYPE_INT,
-    TYPE_REAL,
-    TYPE_STR,
-  };
-
-  dataType m_type;    // Data type flag
-  const char *m_key;  // Data key
-  data m_value;       // Data value
-
-  // Serializes key-value pair in a generic way.
-  const bool serializeKeyval(JsonVariant &jsonObj) const;
-};
-
-// Convenient aliases
-
-using Attribute = Telemetry;
-using RPC_Response = Telemetry;
-// JSON variant const (read only twice as small as JSON variant), is used to communicate RPC parameters to the client
-using RPC_Data = const JsonVariantConst;
-// JSON object const (read only twice as small as JSON object), is used to communicate Shared Attributes and Provision Data to the client
-using Shared_Attribute_Data = const JsonObjectConst;
-#if defined(ESP8266) || defined(ESP32) || defined(ARDUINO_AVR_MEGA)
-using Provision_Data = const JsonObjectConst;
-#endif
-
-// RPC callback wrapper
-class RPC_Callback {
-  template <size_t PayloadSize, size_t MaxFieldsAmt, typename Logger>
-  friend class ThingsBoardSized;
-
- public:
-  // RPC callback signature
-  using processFn = std::function<RPC_Response(const RPC_Data &data)>;
-
-  // Constructs empty callback
-  inline RPC_Callback()
-      : m_name(), m_cb(nullptr) {}
-
-  // Constructs callback that will be fired upon a RPC request arrival with
-  // given method name
-  inline RPC_Callback(const char *methodName, processFn cb)
-      : m_name(methodName), m_cb(cb) {}
-
- private:
-  const char *m_name;  // Method name
-  processFn m_cb;      // Callback to call
-};
-
-// Shared attributes callback wrapper
-class Shared_Attribute_Callback {
-  template <size_t PayloadSize, size_t MaxFieldsAmt, typename Logger>
-  friend class ThingsBoardSized;
-
- public:
-  // Shared attributes callback signature
-  using processFn = const std::function<void(const Shared_Attribute_Data &data)>;
-
-  // Constructs empty callback
-  inline Shared_Attribute_Callback()
-      : m_att(), m_cb(nullptr) {}
-
-  // Constructs callback that will be fired upon a Shared attribute update arrival,
-  // where one of the given keys was changed.
-  template <class InputIterator>
-  inline Shared_Attribute_Callback(const InputIterator &first_itr, const InputIterator &last_itr, processFn cb)
-      : m_att(first_itr, last_itr), m_cb(cb) {}
-
-  // Constructs callback that will be fired upon a Shared attribute update arrival,
-  // no matter which key was changed.
-  inline Shared_Attribute_Callback(processFn cb)
-      : m_att(), m_cb(cb) {}
-
- private:
-  const std::vector<const char *> m_att;  // Attribute we want to request
-  processFn m_cb;                         // Callback to call
-};
-
-// Shared attributes request callback wrapper
-class Shared_Attribute_Request_Callback {
-  template <size_t PayloadSize, size_t MaxFieldsAmt, typename Logger>
-  friend class ThingsBoardSized;
-
- public:
-  // Shared attributes callback signature
-  using processFn = std::function<void(const Shared_Attribute_Data &data)>;
-
-  // Constructs empty callback
-  inline Shared_Attribute_Request_Callback()
-      : m_request_id(0U), m_cb(nullptr) {}
-
-  // Constructs callback that will be fired upon a Shared attribute request arrival
-  inline Shared_Attribute_Request_Callback(processFn cb)
-      : m_request_id(0U), m_cb(cb) {}
-
- private:
-  uint32_t m_request_id;  // Id the request was called with
-  processFn m_cb;         // Callback to call
-};
-
-#if defined(ESP8266) || defined(ESP32) || defined(ARDUINO_AVR_MEGA)
-// Provisioning callback wrapper
-class Provision_Callback {
-  template <size_t PayloadSize, size_t MaxFieldsAmt, typename Logger>
-  friend class ThingsBoardSized;
-
- public:
-  // Provisioning callback signature
-  using processFn = std::function<void(const Provision_Data &data)>;
-
-  // Constructs empty callback
-  inline Provision_Callback()
-      : m_cb(nullptr) {}
-
-  // Constructs callback that will be fired upon a Provision request arrival with
-  // given attribute key
-  inline Provision_Callback(processFn cb)
-      : m_cb(cb) {}
-
- private:
-  processFn m_cb;  // Callback to call
-};
-#endif
-
-// ThingsBoardSized client class
-template <size_t PayloadSize = Default_Payload,
-          size_t MaxFieldsAmt = Default_Fields_Amt,
-          typename Logger = ThingsBoardDefaultLogger>
+#if THINGSBOARD_ENABLE_DYNAMIC
+/// @brief Wrapper around the PubSubClient to allow connecting and sending / retrieving data from ThingsBoard over the MQTT or MQTT with TLS/SSL protocol.
+/// BufferSize of the underlying data buffer as well as the maximum amount of data points that can ever be sent are either dynamic or can be changed during runtime.
+/// If this feature is not needed and the values can be sent once as template arguements it is recommended to use the static ThingsBoard instance instead.
+/// Simply set THINGSBOARD_ENABLE_DYNAMIC to 0, before including ThingsBoard.h
+/// @tparam Logger Logging class that should be used to print messages generated by ThingsBoard, default = ThingsBoardDefaultLogger
+template<typename Logger = ThingsBoardDefaultLogger>
+#else
+/// @brief Wrapper around the PubSubClient to allow connecting and sending / retrieving data from ThingsBoard over the MQTT or MQTT with TLS/SSL protocol.
+/// BufferSize of the underlying data buffer as well as the maximum amount of data points that can ever be sent have to defined as template arguments.
+/// Changing is only possible if a new instance of this class is created. If theese values should be changeable and dynamic instead.
+/// Simply set THINGSBOARD_ENABLE_DYNAMIC to 1, before including ThingsBoard.h
+/// @tparam MaxFieldsAmt Maximum amount of key value pair that we will be able to sent to ThingsBoard in one call, default = 8
+/// @tparam Logger Logging class that should be used to print messages generated by ThingsBoard, default = ThingsBoardDefaultLogger
+template<size_t MaxFieldsAmt = 64,
+         typename Logger = ThingsBoardDefaultLogger>
+#endif // THINGSBOARD_ENABLE_DYNAMIC
 class ThingsBoardSized {
- public:
-  // Initializes ThingsBoardSized class with network client.
-  // Certain private members can not be set in the constructor initalizor list,
-  // because using 2 instances of the ThingsBoard class (for example. provision and connected client)
-  // will result in the variables being reset between method calls. Resulting in unexpected behaviour.
-  inline ThingsBoardSized(Client &client, const bool &enableQoS = false)
-      : m_client(), m_requestId(0), m_qos(enableQoS)
-#if defined(ESP8266) || defined(ESP32)
-        ,
-        m_fwResponseCallback(std::bind(&ThingsBoardSized::Firmware_Shared_Attribute_Received, this, std::placeholders::_1))
-#endif
-  {
-    reserve_callback_size();
-    setClient(client);
-  }
+  public:
+    /// @brief Constructs a ThingsBoardSized instance with the given network client
+    /// @param client Network client that should be used to establish the connection to ThingsBoard
+    /// @param enableQoS Whether the PubSubClient should use Quality of Service Level 1 or not,
+    /// false means Level 0 is used, which means we simply send the data and hope it arrives if it is lost in transit it isn't resent.
+    /// Level 2 however stores the given message we wanted to send until a response is received from the server,
+    /// meaning that the message has been sent at least once, but it could have been sent multiple times as well,
+    /// will not be a problem if the optional timestamp is added to the sent data,
+    /// making duplicate sent data irrelevant because it simply overrides the data with the same timestamp,
+    /// see https://www.hivemq.com/blog/mqtt-essentials-part-6-mqtt-quality-of-service-levels/ for more information
+    /// @param bufferSize Maximum amount of data that can be either received or sent to ThingsBoard at once, if bigger packets are received they are discarded
+    /// and if we attempt to send data that is bigger, it will not be sent, can be changed later with the setBufferSize() method
+    /// @param maxStackSize Maximum amount of bytes we want to allocate on the stack, default = Default_Max_Stack_Size
+    inline ThingsBoardSized(Client& client, const uint16_t& bufferSize = Default_Payload, const bool& enableQoS = false, const uint32_t& maxStackSize = Default_Max_Stack_Size)
+      : ThingsBoardSized(enableQoS)
+    {
+      setMaximumStackSize(maxStackSize);
+      setBufferSize(bufferSize);
+      setClient(client);
+    }
 
-  // Initializes ThingsBoardSized class without network client. Ensure it is set via. setClient() before using the connect method.
-  inline ThingsBoardSized()
-      : m_client(), m_requestId(0), m_qos(false)
-#if defined(ESP8266) || defined(ESP32)
-        ,
-        m_fwResponseCallback(std::bind(&ThingsBoardSized::Firmware_Shared_Attribute_Received, this, std::placeholders::_1))
-#endif
-  {
-    reserve_callback_size();
-  }
+    /// @brief Constructs a ThingsBoardSized instance without a network client, meaning it has to be added later with the setClient() and setBufferSize() method
+    /// @param enableQoS Whether the PubSubClient should use Quality of Service Level 1 or not,
+    /// false means Level 0 is used, which means we simply send the data and hope it arrives if it is lost in transit it isn't resent.
+    /// Level 2 however stores the given message we wanted to send until a response is received from the server,
+    /// meaning that the message has been sent at least once, but it could have been sent multiple times as well,
+    /// will not be a problem if the optional timestamp is added to the sent data,
+    /// making duplicate sent data irrelevant because it simply overrides the data with the same timestamp,
+    /// see https://www.hivemq.com/blog/mqtt-essentials-part-6-mqtt-quality-of-service-levels/ for more information
+    inline ThingsBoardSized(const bool& enableQoS = false)
+      : m_client()
+      , m_maxStack(Default_Max_Stack_Size)
+      , m_rpcCallbacks()
+      , m_rpcRequestCallbacks()
+      , m_sharedAttributeUpdateCallbacks()
+      , m_attributeRequestCallbacks()
+      , m_provisionCallback()
+      , m_requestId(0U)
+      , m_qos(enableQoS)
+#if THINGSBOARD_ENABLE_OTA
+      , m_fwState(false)
+      , m_fwCallback(nullptr)
+      , m_fwSize(0U)
+      , m_fwChecksumAlgorithm()
+      , m_fwAlgorithm()
+      , m_fwChecksum()
+      , m_fwSharedKeys{FW_CHKS_KEY, FW_CHKS_ALGO_KEY, FW_SIZE_KEY, FW_TITLE_KEY, FW_VER_KEY}
+      , m_fwRequestCallback(m_fwSharedKeys.cbegin(), m_fwSharedKeys.cend(), std::bind(&ThingsBoardSized::Firmware_Shared_Attribute_Received, this, std::placeholders::_1))
+      , m_fwUpdateCallback(m_fwSharedKeys.cbegin(), m_fwSharedKeys.cend(), std::bind(&ThingsBoardSized::Firmware_Shared_Attribute_Received, this, std::placeholders::_1))
+      , m_fwChunkReceive(0U)
+#endif // THINGSBOARD_ENABLE_OTA
+    {
+#if !THINGSBOARD_ENABLE_STL
+      m_subscribedInstance = this;
+#endif // !THINGSBOARD_ENABLE_STL
+#if !THINGSBOARD_ENABLE_DYNAMIC
+      reserve_callback_size(MaxFieldsAmt);
+#endif // !THINGSBOARD_ENABLE_DYNAMIC
+    }
 
-  // Destroys ThingsBoardSized class with network client.
-  inline ~ThingsBoardSized() {
-    // Nothing to do.
-  }
+    /// @brief Destructor
+    inline ~ThingsBoardSized() {
+      // Nothing to do.
+    }
 
-  // Returns a reference to the PubSubClient.
-  inline PubSubClient &getClient(void) {
-    return m_client;
-  }
+    /// @brief Gets the currently connected PubSubClient as a reference,
+    /// allows for calling method directly on the client itself, not advised in normal use cases,
+    /// as it might cause problems if the library expects the client to be sending / receiving data
+    /// but can't anymore because it has been disconnected or certain settings were changed
+    /// @return Reference to the underlying PubSubClient connected to ThingsBoard
+    inline PubSubClient& getClient() {
+      return m_client;
+    }
 
-  // Enables mqtt quality of service for the given underlying MQTT connection.
-  // See https://assetwolf.com/learn/mqtt-qos-understanding-quality-of-service for more information, on quality of service.
-  inline void enableMQTTQoS(const bool &enableQoS) {
-    m_qos = enableQoS;
-  }
+    /// @brief Sets the Quality of Service Level used by the MQTT client either true for Level 1 or false for Level 0
+    /// @param enableQoS  Whether the PubSubClient should use Quality of Service Level 1 or not,
+    /// false means Level 0 is used, which means we simply send the data and hope it arrives if it is lost in transit it isn't resent.
+    /// Level 2 however stores the given message we wanted to send until a response is received from the server,
+    /// meaning that the message has been sent at least once, but it could have been sent multiple times as well,
+    /// will not be a problem if the optional timestamp is added to the sent data,
+    /// making duplicate sent data irrelevant because it simply overrides the data with the same timestamp,
+    /// see https://www.hivemq.com/blog/mqtt-essentials-part-6-mqtt-quality-of-service-levels/ for more information
+    inline void enableMQTTQoS(const bool& enableQoS) {
+      m_qos = enableQoS;
+    }
 
-  // Sets the underlying Client of the PubSubClient.
-  inline void setClient(Client &client) {
-    m_client.setClient(client);
-    m_client.setBufferSize(PayloadSize);
-    // Initalize callback.
-    m_client.setCallback(std::bind(&ThingsBoardSized::on_message, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-  }
+    /// @brief Sets the underlying network client that should be used to establish the connection to ThingsBoard,
+    /// ensure to disconnect and connect again after changing the underlying client
+    /// @param client Network client that should be used to establish the connection to ThingsBoard
+    inline void setClient(Client& client) {
+      m_client.setClient(client);
+      // Initalize callback.
+#if THINGSBOARD_ENABLE_STL
+      m_client.setCallback(std::bind(&ThingsBoardSized::onMQTTMessage, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+#else
+      m_client.setCallback(ThingsBoardSized::onStaticMQTTMessage);
+#endif // THINGSBOARD_ENABLE_STL
+    }
 
+    /// @brief Sets the maximum amount of bytes that we want to allocate on the stack, before allocating on the heap instead
+    /// @param maxStackSize Maximum amount of bytes we want to allocate on the stack
+    inline void setMaximumStackSize(const uint32_t& maxStackSize) {
+      m_maxStack = maxStackSize;
+    }
+
+    /// @brief Sets the size of the buffer for the underlying network client that will be used to establish the connection to ThingsBoard
+    /// @param bufferSize Maximum amount of data that can be either received or sent to ThingsBoard at once, if bigger packets are received they are discarded
+    /// and if we attempt to send data that is bigger, it will not be sent
+    /// @return Whether allocating the needed memory for the given bufferSize was successful or not.
+    inline bool setBufferSize(const uint16_t& bufferSize) {
+      return m_client.setBufferSize(bufferSize);
+    }
 const char* TB_host;
 const char* TB_token;
-  // Connects to the specified ThingsBoard server and port.
-  // Access token is used to authenticate a client.
-  // Returns true on success, false otherwise.
-  inline const bool connect(const char *host, const char *access_token = PROV_ACCESS_TOKEN, int port = 1883, const char *client_id = DEFAULT_CLIENT_ID, const char *password = NULL) {
-    if (!host) {
-      return false;
-    }
-TB_host=host;
-TB_token=access_token;
-    m_client.setServer(host, port);
-    const bool connection_result = m_client.connect(client_id, access_token, password);
-    if (connection_result) {
-      this->RPC_Unsubscribe();                        // Cleanup all RPC subscriptions
-      this->Shared_Attributes_Unsubscribe();          // Cleanup all shared attributes subscriptions
-      this->Shared_Attributes_Request_Unsubscribe();  // Cleanup all shared attributes requests
-#if defined(ESP8266) || defined(ESP32) || defined(ARDUINO_AVR_MEGA)
-      this->Provision_Unsubscribe();
-#endif
-#if defined(ESP8266) || defined(ESP32)
-      this->Firmware_OTA_Unsubscribe();
-#endif
-    } else {
-      Logger::log(CONNECT_FAILED);
-    }
-    return connection_result;
-  }
-
-  // Disconnects from ThingsBoard.
-  inline void disconnect() {
-    m_client.disconnect();
-  }
-
-  // Returns true if connected, false otherwise.
-  inline const bool connected() {
-    return m_client.connected();
-  }
-
-  // Executes an event loop for PubSub client.
-  bool loop() {
-    return(m_client.loop());
-  }
-
-  //----------------------------------------------------------------------------
-  // Claiming API
-
-#if defined(ESP8266) || defined(ESP32) || defined(ARDUINO_AVR_MEGA)
-
-  inline const bool sendClaimingRequest(const char *secretKey, uint32_t durationMs) {
-    StaticJsonDocument<JSON_OBJECT_SIZE(1)> requestBuffer;
-    JsonObject resp_obj = requestBuffer.to<JsonObject>();
-
-    resp_obj[SECRET_KEY] = secretKey;
-    resp_obj[DURATION_KEY] = durationMs;
-
-    uint8_t objectSize = JSON_STRING_SIZE(measureJson(requestBuffer));
-    char responsePayload[objectSize];
-    serializeJson(resp_obj, responsePayload, objectSize);
-
-    return m_client.publish(CLAIM_TOPIC, responsePayload, m_qos);
-  }
-
-  // Provisioning API
-  inline const bool sendProvisionRequest(const char *deviceName, const char *provisionDeviceKey, const char *provisionDeviceSecret) {
-    // TODO Add ability to provide specific credentials from client side.
-    StaticJsonDocument<JSON_OBJECT_SIZE(3)> requestBuffer;
-    JsonObject requestObject = requestBuffer.to<JsonObject>();
-
-    requestObject[DEVICE_NAME_KEY] = deviceName;
-    requestObject[PROV_DEVICE_KEY] = provisionDeviceKey;
-    requestObject[PROV_DEVICE_SECRET_KEY] = provisionDeviceSecret;
-
-    uint8_t objectSize = JSON_STRING_SIZE(measureJson(requestBuffer));
-    char requestPayload[objectSize];
-    serializeJson(requestObject, requestPayload, objectSize);
-
-    Logger::log(PROV_REQUEST);
-    Logger::log(requestPayload);
-    return m_client.publish(PROV_REQUEST_TOPIC, requestPayload, m_qos);
-  }
-
-#endif
-  //----------------------------------------------------------------------------
-  // Telemetry API
-
-  // Sends telemetry data to the ThingsBoard, returns true on success.
-  template <class T>
-  inline const bool sendTelemetryData(const char *key, T value) {
-    return sendKeyval(key, value);
-  }
-
-  // Sends integer telemetry data to the ThingsBoard, returns true on success.
-  inline const bool sendTelemetryInt(const char *key, int value) {
-    return sendKeyval(key, value);
-  }
-
-  // Sends boolean telemetry data to the ThingsBoard, returns true on success.
-  inline const bool sendTelemetryBool(const char *key, bool value) {
-    return sendKeyval(key, value);
-  }
-
-  // Sends float telemetry data to the ThingsBoard, returns true on success.
-  inline const bool sendTelemetryFloat(const char *key, float value) {
-    return sendKeyval(key, value);
-  }
-
-  // Sends string telemetry data to the ThingsBoard, returns true on success.
-  inline const bool sendTelemetryString(const char *key, const char *value) {
-    return sendKeyval(key, value);
-  }
-
-  // Sends aggregated telemetry to the ThingsBoard.
-  inline const bool sendTelemetry(const Telemetry *data, size_t data_count) {
-    return sendDataArray(data, data_count);
-  }
-
-  // Sends custom JSON telemetry string to the ThingsBoard.
-  inline const bool sendTelemetryJson(const char *json) {
-    if (json == nullptr) {
-      return false;
+    /// @brief Connects to the specified ThingsBoard server over the given port as the given device
+    /// @param host ThingsBoard server instance we want to connect to
+    /// @param access_token Access token that connects this device with a created device on the ThingsBoard server,
+    /// can be "provision", if the device creates itself instead
+    /// @param port Port that will be used to establish a connection and send / receive data from ThingsBoard over
+    /// @param client_id Client username that can be used to differentiate the user that is connecting the given device to ThingsBoard
+    /// @param password Client password that can be used to authenticate the user that is connecting the given device to ThingsBoard
+    /// @return Whether connecting to ThingsBoard was successful or not
+    inline bool connect(const char *host, const char *access_token = PROV_ACCESS_TOKEN, const uint16_t port = 1883, const char *client_id = DEFAULT_CLIENT_ID, const char *password = nullptr) {
+      if (!host) {
+        return false;
+      }
+      TB_host = host;
+      TB_token = access_token;
+      Logger::log("Connecting to server...");        
+      m_client.setServer(host, port);
+      return connect_to_host(access_token, client_id, password);
     }
 
-    const uint32_t json_size = JSON_STRING_SIZE(strlen(json));
-    if (PayloadSize < json_size) {
-      char message[detect_size(INVALID_BUFFER_SIZE, PayloadSize, json_size)];
-      snprintf_P(message, sizeof(message), INVALID_BUFFER_SIZE, PayloadSize, json_size);
-      Logger::log(message);
-      return false;
-    }
-    return m_client.publish(TELEMETRY_TOPIC, json, m_qos);
-  }
-
-  // Sends custom JSON telemetry JsonObject to the ThingsBoard.
-  inline const bool sendTelemetryJson(const JsonObject &jsonObject, const uint32_t &jsonSize) {
-    const uint32_t jsonObjectSize = jsonObject.size();
-    if (MaxFieldsAmt < jsonObjectSize) {
-      char message[detect_size(TOO_MANY_JSON_FIELDS, jsonObjectSize, MaxFieldsAmt)];
-      snprintf_P(message, sizeof(message), TOO_MANY_JSON_FIELDS, jsonObjectSize, MaxFieldsAmt);
-      Logger::log(message);
-      return false;
-    }
-    char json[jsonSize];
-    serializeJson(jsonObject, json, jsonSize);
-    return sendTelemetryJson(json);
-  }
-
-  // Sends custom JSON telemetry JsonVariant to the ThingsBoard.
-  inline const bool sendTelemetryJson(const JsonVariant &jsonVariant, const uint32_t &jsonSize) {
-    const uint32_t jsonVariantSize = jsonVariant.size();
-    if (MaxFieldsAmt < jsonVariantSize) {
-      char message[detect_size(TOO_MANY_JSON_FIELDS, jsonVariantSize, MaxFieldsAmt)];
-      snprintf_P(message, sizeof(message), TOO_MANY_JSON_FIELDS, jsonVariantSize, MaxFieldsAmt);
-      Logger::log(message);
-      return false;
-    }
-    char json[jsonSize];
-    serializeJson(jsonVariant, json, jsonSize);
-    return sendTelemetryJson(json);
-  }
-
-  //----------------------------------------------------------------------------
-  // Attribute API
-
-  // Sends an attribute with given name and value.
-  template <class T>
-  inline const bool sendAttributeData(const char *attrName, T value) {
-    return sendKeyval(attrName, value, false);
-  }
-
-  // Sends integer attribute with given name and value.
-  inline const bool sendAttributeInt(const char *attrName, int value) {
-    return sendKeyval(attrName, value, false);
-  }
-
-  // Sends boolean attribute with given name and value.
-  inline const bool sendAttributeBool(const char *attrName, bool value) {
-    return sendKeyval(attrName, value, false);
-  }
-
-  // Sends float attribute with given name and value.
-  inline const bool sendAttributeFloat(const char *attrName, float value) {
-    return sendKeyval(attrName, value, false);
-  }
-
-  // Sends string attribute with given name and value.
-  inline const bool sendAttributeString(const char *attrName, const char *value) {
-    return sendKeyval(attrName, value, false);
-  }
-
-  // Sends aggregated attributes to the ThingsBoard.
-  inline const bool sendAttributes(const Attribute *data, size_t data_count) {
-    return sendDataArray(data, data_count, false);
-  }
-
-  // Sends custom JSON with attributes to the ThingsBoard.
-  inline const bool sendAttributeJSON(const char *json) {
-    if (json == nullptr) {
-      return false;
+    inline bool connect(const IPAddress& host, const char *access_token = PROV_ACCESS_TOKEN, const uint16_t port = 1883, const char *client_id = DEFAULT_CLIENT_ID, const char *password = nullptr) {
+      m_client.setServer(host, port);
+      return connect_to_host(access_token, client_id, password);
     }
 
-    const uint32_t json_size = JSON_STRING_SIZE(strlen(json));
-    if (PayloadSize < json_size) {
-      char message[detect_size(INVALID_BUFFER_SIZE, PayloadSize, json_size)];
-      snprintf_P(message, sizeof(message), INVALID_BUFFER_SIZE, PayloadSize, json_size);
-      Logger::log(message);
-      return false;
-    }
-    return m_client.publish(ATTRIBUTE_TOPIC, json, m_qos);
-  }
-
-  // Sends custom JsonObject with attributes to the ThingsBoard.
-  inline const bool sendAttributeJSON(const JsonObject &jsonObject, const uint32_t &jsonSize) {
-    const uint32_t jsonObjectSize = jsonObject.size();
-    if (MaxFieldsAmt < jsonObjectSize) {
-      char message[detect_size(TOO_MANY_JSON_FIELDS, jsonObjectSize, MaxFieldsAmt)];
-      snprintf_P(message, sizeof(message), TOO_MANY_JSON_FIELDS, jsonObjectSize, MaxFieldsAmt);
-      Logger::log(message);
-      return false;
-    }
-    char json[jsonSize];
-    serializeJson(jsonObject, json, jsonSize);
-    return sendAttributeJSON(json);
-  }
-
-  // Sends custom JsonVariant with attributes to the ThingsBoard.
-  inline const bool sendAttributeJSON(const JsonVariant &jsonVariant, const uint32_t &jsonSize) {
-    const uint32_t jsonVariantSize = jsonVariant.size();
-    if (MaxFieldsAmt < jsonVariantSize) {
-      char message[detect_size(TOO_MANY_JSON_FIELDS, jsonVariantSize, MaxFieldsAmt)];
-      snprintf_P(message, sizeof(message), TOO_MANY_JSON_FIELDS, jsonVariantSize, MaxFieldsAmt);
-      Logger::log(message);
-      return false;
-    }
-    char json[jsonSize];
-    serializeJson(jsonVariant, json, jsonSize);
-    return sendTelemetryJson(json);
-  }
-
-  //----------------------------------------------------------------------------
-  // Server-side RPC API
-
-  // Subscribes multiple RPC callbacks.
-  template <class InputIterator>
-  inline const bool RPC_Subscribe(const InputIterator &first_itr, const InputIterator &last_itr) {
-    const uint32_t size = std::distance(first_itr, last_itr);
-    if (m_rpcCallbacks.size() + size > m_rpcCallbacks.capacity()) {
-      Logger::log(MAX_RPC_EXCEEDED);
-      return false;
-    }
-    if (!m_client.subscribe(RPC_SUBSCRIBE_TOPIC, m_qos ? 1 : 0)) {
-      return false;
+    /// @brief Disconnects any connection that has been established already
+    inline void disconnect() {
+      m_client.disconnect();
     }
 
-    // Push back complete vector into our local m_rpcCallbacks vector.
-    m_rpcCallbacks.insert(m_rpcCallbacks.end(), first_itr, last_itr);
-    return true;
-  }
-
-  // Subscribe one RPC callback.
-  inline const bool RPC_Subscribe(const RPC_Callback &callback) {
-    if (m_rpcCallbacks.size() + 1 > m_rpcCallbacks.capacity()) {
-      Logger::log(MAX_RPC_EXCEEDED);
-      return false;
-    }
-    if (!m_client.subscribe(RPC_SUBSCRIBE_TOPIC, m_qos ? 1 : 0)) {
-      return false;
+    /// @brief Returns our current connection status to the cloud, true meaning we are connected,
+    /// false meaning we have been disconnected or have not established a connection yet
+    /// @return Whether the underlying PubSubClient is currently connected or not
+    inline bool connected() {
+      return m_client.connected();
     }
 
-    // Push back given callback into our local m_rpcCallbacks vector.
-    m_rpcCallbacks.push_back(callback);
-    return true;
-  }
-
-  inline const bool RPC_Unsubscribe() {
-    // Empty all callbacks.
-    m_rpcCallbacks.clear();
-    return m_client.unsubscribe(RPC_SUBSCRIBE_TOPIC);
-  }
-
-  //----------------------------------------------------------------------------
-  // Firmware OTA API
-
-#if defined(ESP8266) || defined(ESP32)
-  inline const bool Start_Firmware_Update(const char *currFwTitle, const char *currFwVersion, const std::function<void(const bool &)> &updatedCallback) {
-    m_fwState = nullptr;
-    m_fwChecksum = "";
-
-    // Send current firmware version
-    if (currFwTitle == nullptr || currFwVersion == nullptr) {
-      return false;
-    } else if (!Firmware_Send_FW_Info(currFwTitle, currFwVersion)) {
-      return false;
+    /// @brief Receives / sends any outstanding messages from and to the MQTT broker
+    bool loop() {
+      return (m_client.loop());
     }
 
-    // Update state
-    if (!Firmware_Send_State(FW_STATE_CHECKING)) {
-      return false;
+    //----------------------------------------------------------------------------
+    // Claiming API
+
+    /// @brief Sends a claiming request for the given device, allowing any given user on the cloud to assign the device as their own (claim),
+    /// as long as they enter the given device name and secret key in the given amount of time.
+    /// Optionally a secret key can be passed or be left empty (cloud will allow any user to claim the device for the given amount of time)
+    /// @param secretKey Password the user additionaly to the device name needs to enter to claim it as their own,
+    /// pass nullptr or an empty string if the user should be able to claim the device without any password
+    /// @param durationMs Total time in milliseconds the user has to claim their device as their own
+    /// @return Whether sending the claiming request was successful or not
+    inline bool Claim_Request(const char *secretKey, const uint32_t& durationMs) {
+      StaticJsonDocument<JSON_OBJECT_SIZE(2)> requestBuffer;
+      const JsonObject respObj = requestBuffer.to<JsonObject>();
+
+      // Make the secret key optional,
+      // meaning if it is an empty string or null instead we don't send it at all.
+      if (secretKey != nullptr && secretKey[0] != '\0') {
+        respObj[SECRET_KEY] = secretKey;
+      }
+      respObj[DURATION_KEY] = durationMs;
+
+      const uint16_t currentBufferSize = m_client.getBufferSize();
+      const size_t objectSize = JSON_STRING_SIZE(measureJson(respObj));
+      char responsePayload[objectSize];
+      if (currentBufferSize < objectSize) {
+        char message[detectSize(INVALID_BUFFER_SIZE, currentBufferSize, objectSize)];
+        snprintf_P(message, sizeof(message), INVALID_BUFFER_SIZE, currentBufferSize, objectSize);
+        Logger::log(message);
+        return false;
+      }
+      // Serialize json does not include size of the string null terminator
+      else if (serializeJson(respObj, responsePayload, objectSize) < objectSize - 1) {
+        Logger::log(UNABLE_TO_SERIALIZE_JSON);
+        return false;
+      }
+
+      return m_client.publish(CLAIM_TOPIC, responsePayload, m_qos);
     }
 
-    // Set private members needed for update.
-    m_currFwTitle = currFwTitle;
-    m_currFwVersion = currFwVersion;
-    m_fwUpdatedCallback = updatedCallback;
+    //----------------------------------------------------------------------------
+    // Provisioning API
 
-    // Request the firmware informations
-    const std::array<const char *, 5U> fwSharedKeys{FW_CHKS_KEY, FW_CHKS_ALGO_KEY, FW_SIZE_KEY, FW_TITLE_KEY, FW_VER_KEY};
-    return Shared_Attributes_Request(fwSharedKeys.cbegin(), fwSharedKeys.cend(), m_fwResponseCallback);
-  }
+    /// @brief Sends provisioning request for a new device, meaning we want to create a device that we can then connect over,
+    /// where the given provision device key / secret decide which device profile is used to create the given device with.
+    /// Optionally a device name can be passed or be left empty (cloud will use the unqiue access token as a name instead).
+    /// The cloud then sends back json data containing our credentials, that the given callback, if creating the device was successful.
+    /// The data contained in that callbackcan then be used to disconnect and reconnect to the ThingsBoard server as our newly created device
+    /// @param callback Callback method that will be called
+    /// @return Whether sending the provisioning request was successful or not
+    inline bool Provision_Request(const Provision_Callback& callback) {
+      StaticJsonDocument<JSON_OBJECT_SIZE(9)> requestBuffer;
+      const JsonObject requestObject = requestBuffer.to<JsonObject>();
 
-  inline const bool Firmware_Send_FW_Info(const char *currFwTitle, const char *currFwVersion) {
-    // Send our firmware title and version
-    StaticJsonDocument<JSON_OBJECT_SIZE(2)> currentFirmwareInfo;
-    JsonObject currentFirmwareInfoObject = currentFirmwareInfo.to<JsonObject>();
+      const char *provisionDeviceKey = callback.Get_Device_Key();
+      const char *provisionDeviceSecret = callback.Get_Device_Secret();
 
-    currentFirmwareInfoObject[CURR_FW_TITLE_KEY] = currFwTitle;
-    currentFirmwareInfoObject[CURR_FW_VER_KEY] = currFwVersion;
-    return sendTelemetryJson(currentFirmwareInfoObject, JSON_STRING_SIZE(measureJson(currentFirmwareInfoObject)));
-  }
+      if (provisionDeviceKey == nullptr || provisionDeviceSecret == nullptr) {
+        return false;
+      }
+      // Ensure the response topic has been subscribed
+      else if (!Provision_Subscribe(callback)) {
+        return false;
+      }
 
-  inline const bool Firmware_Send_State(const char *currFwState) {
-    // Send our firmware title and version
-    StaticJsonDocument<JSON_OBJECT_SIZE(1)> currentFirmwareState;
-    JsonObject currentFirmwareStateObject = currentFirmwareState.to<JsonObject>();
+      const char *deviceName = callback.Get_Device_Name();
+      const char *accessToken = callback.Get_Device_Access_Token();
+      const char *credUsername = callback.Get_Credentials_Username();
+      const char *credPassword = callback.Get_Credentials_Password();
+      const char *credClientID = callback.Get_Credentials_Client_ID();
+      const char *hash = callback.Get_Certificate_Hash();
+      const char *credentialsType = callback.Get_Credentials_Type();
 
-    currentFirmwareStateObject[CURR_FW_STATE_KEY] = currFwState;
-    return sendTelemetryJson(currentFirmwareStateObject, JSON_STRING_SIZE(measureJson(currentFirmwareStateObject)));
-  }
+      // Make the key-value pairs we don't want to send optional,
+      // meaning if it is an empty string or null instead we don't send it at all.
+      // Deciding which underlying provisioning method is restricted, by the Provision_Callback class.
+      // Meaning only the key-value pairs that are needed for the given provisionign method are set,
+      // meaning the rest will not be sent and therefore the provisoning request has the correct formatting
+      if (deviceName != nullptr && deviceName[0] != '\0') {
+        requestObject[DEVICE_NAME_KEY] = deviceName;
+      }
+      if (accessToken != nullptr && accessToken[0] != '\0') {
+        requestObject[PROV_TOKEN] = accessToken;
+      }
+      if (credUsername != nullptr && credUsername[0] != '\0') {
+        requestObject[PROV_CRED_USERNAME] = credUsername;
+      }
+      if (credPassword != nullptr && credPassword[0] != '\0') {
+        requestObject[PROV_CRED_PASSWORD] = credPassword;
+      }
+      if (credClientID != nullptr && credClientID[0] != '\0') {
+        requestObject[PROV_CRED_CLIENT_ID] = credClientID;
+      }
+      if (hash != nullptr && hash[0] != '\0') {
+        requestObject[PROV_CRED_HASH] = hash;
+      }
+      if (credentialsType != nullptr && credentialsType[0] != '\0') {
+        requestObject[PROV_CRED_TYPE_KEY] = credentialsType;
+      }
+      requestObject[PROV_DEVICE_KEY] = provisionDeviceKey;
+      requestObject[PROV_DEVICE_SECRET_KEY] = provisionDeviceSecret;
 
-  inline const bool Firmware_OTA_Subscribe() {
-    if (!m_client.subscribe(FIRMWARE_RESPONSE_SUBSCRIBE_TOPIC, m_qos ? 1 : 0)) {
-      return false;
+      const uint16_t currentBufferSize = m_client.getBufferSize();
+      const size_t objectSize = JSON_STRING_SIZE(measureJson(requestObject));
+      char requestPayload[objectSize];
+      if (currentBufferSize < objectSize) {
+        char message[detectSize(INVALID_BUFFER_SIZE, currentBufferSize, objectSize)];
+        snprintf_P(message, sizeof(message), INVALID_BUFFER_SIZE, currentBufferSize, objectSize);
+        Logger::log(message);
+        return false;
+      }
+      // Serialize json does not include size of the string null terminator
+      else if (serializeJson(requestObject, requestPayload, objectSize) < objectSize - 1) {
+        Logger::log(UNABLE_TO_SERIALIZE_JSON);
+        return false;
+      }
+
+      Logger::log(PROV_REQUEST);
+      Logger::log(requestPayload);
+
+      return m_client.publish(PROV_REQUEST_TOPIC, requestPayload, m_qos);
     }
 
-    return true;
-  }
+    //----------------------------------------------------------------------------
+    // Telemetry API
 
-  inline const bool Firmware_OTA_Unsubscribe() {
-    if (!m_client.unsubscribe(FIRMWARE_RESPONSE_SUBSCRIBE_TOPIC)) {
-      return false;
+    /// @brief Attempts to send telemetry data with the given key and value of the given type
+    /// @tparam T Type of the passed value
+    /// @param key Key of the key value pair we want to send
+    /// @param value Value of the key value pair we want to send
+    /// @return Whether sending the data was successful or not
+    template<typename T>
+    inline bool sendTelemetryData(const char *key, T value) {
+      return sendKeyValue(key, value);
     }
 
-    return true;
-  }
-
-  inline void Firmware_Shared_Attribute_Received(const Shared_Attribute_Data &data) {
-    // Print out firmware shared attributes.
-    int jsonSize = JSON_STRING_SIZE(measureJson(data));
-    char buffer[jsonSize];
-    serializeJson(data, buffer, jsonSize);
-    Logger::log(buffer);
-
-    // Check if firmware is available for our device
-    if (!data.containsKey(FW_VER_KEY) || !data.containsKey(FW_TITLE_KEY)) {
-      Logger::log(NO_FW);
-      Firmware_Send_State(FW_STATE_NO_FW);
-      return;
+    /// @brief Attempts to send integer telemetry data with the given key and value
+    /// @param key Key of the key value pair we want to send
+    /// @param value Value of the key value pair we want to send
+    /// @return Whether sending the data was successful or not
+    inline bool sendTelemetryInt(const char *key, int value) {
+      return sendKeyValue(key, value);
     }
 
-    const char *fw_title = data[FW_TITLE_KEY].as<const char *>();
-    const char *fw_version = data[FW_VER_KEY].as<const char *>();
-    m_fwChecksum = data[FW_CHKS_KEY].as<const char *>();
-    const char *fw_checksum_algorithm = data[FW_CHKS_ALGO_KEY].as<const char *>();
-    m_fwSize = data[FW_SIZE_KEY].as<const unsigned int>();
-
-    if (fw_title == nullptr || fw_version == nullptr || m_currFwTitle == nullptr || m_fwChecksum[0] == '\0' || m_fwChecksum == nullptr || fw_checksum_algorithm == nullptr) {
-      Logger::log(EMPTY_FW);
-      Firmware_Send_State(FW_STATE_NO_FW);
-      return;
-    }
-    // If firmware is the same, we do not update it
-    else if (strncmp_P(m_currFwTitle, fw_title, JSON_STRING_SIZE(strlen(m_currFwTitle))) == 0 && strncmp_P(m_currFwVersion, fw_version, JSON_STRING_SIZE(strlen(m_currFwVersion))) == 0) {
-      Logger::log(FW_UP_TO_DATE);
-      Firmware_Send_State(FW_STATE_UP_TO_DATE);
-      return;
-    }
-    // If firmware title is not the same, we quit now
-    else if (strncmp_P(m_currFwTitle, fw_title, JSON_STRING_SIZE(strlen(m_currFwTitle))) != 0) {
-      Logger::log(FW_NOT_FOR_US);
-      Firmware_Send_State(FW_STATE_NO_FW);
-      return;
-    } else if (strncmp_P(FW_CHECKSUM_VALUE, fw_checksum_algorithm, JSON_STRING_SIZE(strlen(FW_CHECKSUM_VALUE))) != 0) {
-      Logger::log(FW_CHKS_ALGO_NOT_SUPPORTED);
-      Firmware_Send_State(FW_STATE_INVALID_CHKS);
-      return;
+    /// @brief Attempts to send boolean telemetry data with the given key and value
+    /// @param key Key of the key value pair we want to send
+    /// @param value Value of the key value pair we want to send
+    /// @return Whether sending the data was successful or not
+    inline bool sendTelemetryBool(const char *key, bool value) {
+      return sendKeyValue(key, value);
     }
 
-    // Subscribe to the needed OTA fw topics.
-    Firmware_OTA_Subscribe();
-
-    Logger::log(PAGE_BREAK);
-    Logger::log(NEW_FW);
-    char firmware[JSON_STRING_SIZE(strlen(FROM_TOO)) + JSON_STRING_SIZE(strlen(m_currFwVersion)) + JSON_STRING_SIZE(strlen(fw_version))];
-    snprintf_P(firmware, sizeof(firmware), FROM_TOO, m_currFwVersion, fw_version);
-    Logger::log(firmware);
-    Logger::log(DOWNLOADING_FW);
-
-    const uint16_t chunkSize = 4096U;  // maybe less if we don't have enough RAM
-    const uint16_t numberOfChunk = static_cast<uint16_t>(m_fwSize / chunkSize) + 1U;
-    uint16_t currChunk = 0U;
-    uint8_t nbRetry = 3U;
-
-    // Get the previous buffer size and cache it so the previous settings can be restored.
-    const uint16_t previousBufferSize = m_client.getBufferSize();
-    const bool changeBufferSize = previousBufferSize < (chunkSize + 50U);
-
-    // Increase size of receive buffer
-    if (changeBufferSize && !m_client.setBufferSize(chunkSize + 50U)) {
-      Logger::log(NOT_ENOUGH_RAM);
-      return;
+    /// @brief Attempts to send float telemetry data with the given key and value
+    /// @param key Key of the key value pair we want to send
+    /// @param value Value of the key value pair we want to send
+    /// @return Whether sending the data was successful or not
+    inline bool sendTelemetryFloat(const char *key, float value) {
+      return sendKeyValue(key, value);
     }
 
-    // Update state
-    Firmware_Send_State(FW_STATE_DOWNLOADING);
-    m_fwState = FW_STATE_DOWNLOADING;
+    /// @brief Attempts to send string telemetry data with the given key and value
+    /// @param key Key of the key value pair we want to send
+    /// @param value Value of the key value pair we want to send
+    /// @return Whether sending the data was successful or not
+    inline bool sendTelemetryString(const char *key, const char *value) {
+      return sendKeyValue(key, value);
+    }
 
-    char size[detect_size(NUMBER_PRINTF, chunkSize)];
-    // Download the firmware
-    do {
-      Serial.println("Requesting chunk " + String(currChunk) + " of " + String(numberOfChunk));
-      char topic[detect_size(FIRMWARE_REQUEST_TOPIC, currChunk)];  // Size adjuts dynamically to the current length of the currChunk number to ensure we don't cut it out of the topic string.
-      snprintf_P(topic, sizeof(topic), FIRMWARE_REQUEST_TOPIC, currChunk);
-      snprintf_P(size, sizeof(size), NUMBER_PRINTF, chunkSize);
-      m_client.publish(topic, size, m_qos);
+    /// @brief Attempts to send aggregated telemetry data
+    /// @param data Array containing all the data we want to send
+    /// @param data_count Amount of data entries in the array that we want to send
+    /// @return Whether sending the data was successful or not
+    inline bool sendTelemetry(const Telemetry *data, size_t data_count) {
+      return sendDataArray(data, data_count);
+    }
 
-      const uint64_t timeout = millis() + 10000U;  // Amount of time we wait until we declare the download as failed in milliseconds.
-      do {
-        delay(5);
-        if(!loop()){
-          Logger::log("Disconnected from server, reconnecting...");        
-          connect(TB_host, TB_token);
+    /// @brief Attempts to send custom json telemetry string
+    /// @param json String containing our json key value pairs we want to attempt to send
+    /// @return Whether sending the data was successful or not
+    inline bool sendTelemetryJson(const char *json) {
+      if (json == nullptr) {
+        return false;
+      }
+
+      const uint16_t currentBufferSize = m_client.getBufferSize();
+      const uint32_t jsonSize = JSON_STRING_SIZE(strlen(json));
+
+      if (currentBufferSize < jsonSize) {
+        char message[detectSize(INVALID_BUFFER_SIZE, currentBufferSize, jsonSize)];
+        snprintf_P(message, sizeof(message), INVALID_BUFFER_SIZE, currentBufferSize, jsonSize);
+        Logger::log(message);
+        return false;
+      }
+
+      return m_client.publish(TELEMETRY_TOPIC, json, m_qos);
+    }
+
+    /// @brief Attempts to send custom telemetry JsonObject
+    /// @param jsonObject JsonObject containing our json key value pairs we want to send
+    /// @param jsonSize Size of the data inside the JsonObject
+    /// @return Whether sending the data was successful or not
+    inline bool sendTelemetryJson(const JsonObject jsonObject, const uint32_t& jsonSize) {
+      // Check if allocating needed memory failed when trying to create the JsonObject,
+      // if it did the method will return true. See https://arduinojson.org/v6/api/jsonobject/isnull/ for more information.
+      if (jsonObject.isNull()) {
+        Logger::log(UNABLE_TO_ALLOCATE_MEMORY);
+        return false;
+      }
+#if !THINGSBOARD_ENABLE_DYNAMIC
+      const uint32_t jsonObjectSize = jsonObject.size();
+      if (MaxFieldsAmt < jsonObjectSize) {
+        char message[detectSize(TOO_MANY_JSON_FIELDS, jsonObjectSize, MaxFieldsAmt)];
+        snprintf_P(message, sizeof(message), TOO_MANY_JSON_FIELDS, jsonObjectSize, MaxFieldsAmt);
+        Logger::log(message);
+        return false;
+      }
+#endif // !THINGSBOARD_ENABLE_DYNAMIC
+      bool result = false;
+
+      // Check if the remaining stack size of the current task would overflow the stack,
+      // if it would allocate the memory on the heap instead to ensure no stack overflow occurs.
+      if (getMaximumStackSize() < jsonSize) {
+        char* json = new char[jsonSize];
+        // Serialize json does not include size of the string null terminator
+        if (serializeJson(jsonObject, json, jsonSize) < jsonSize - 1) {
+          Logger::log(UNABLE_TO_SERIALIZE_JSON);
         }
-      } while ((m_fwChunkReceive != currChunk) && (timeout >= millis()));
-
-      if (m_fwChunkReceive == currChunk) {
-        // Check if the current chunk is not the last one.
-        if (numberOfChunk != (currChunk + 1)) {
-          // Check if state is still DOWNLOADING and did not fail.
-          if (strncmp_P(FW_STATE_DOWNLOADING, m_fwState, strlen(FW_STATE_DOWNLOADING)) == 0) {
-            currChunk++;
-            Logger::log("Packet received OK");
-            nbRetry = 3U;  // added line
-          } else {
-            nbRetry--;
-            Logger::log("Failed OTA packet, retrying...");
-            if (nbRetry == 0) {
-              Logger::log(UNABLE_TO_WRITE);
-              break;
-            }
-          }
-        }
-        // The last chunk
         else {
-          currChunk++;
-          Logger::log("Packet received OK");
+          result = sendTelemetryJson(json);
         }
+        // Ensure to actually delete the memory placed onto the heap, to make sure we do not create a memory leak
+        // and set the pointer to null so we do not have a dangling reference.
+        delete[] json;
+        json = nullptr;
       }
-      // Timeout
       else {
-        nbRetry--;
-        if (timeout <= millis()) {
-          Serial.println("Timeout while waiting for OTA packet" + String(m_fwChunkReceive) + ", expected " + String(currChunk) + ", retrying...");
-        } else {
-          Serial.println("Received wrong OTA packet" + String(m_fwChunkReceive) + ", expected " + String(currChunk) + ", retrying...");
+        char json[jsonSize];
+        // Serialize json does not include size of the string null terminator
+        if (serializeJson(jsonObject, json, jsonSize) < jsonSize - 1) {
+          Logger::log(UNABLE_TO_SERIALIZE_JSON);
+          return result;
         }
-        if (nbRetry == 0) {
-          Logger::log(UNABLE_TO_DOWNLOAD);
-          break;
+        result = sendTelemetryJson(json);
+      }
+      return result;
+    }
+
+    /// @brief Attempts to send custom telemetry JsonVariant
+    /// @param jsonVariant JsonVariant containing our json key value pairs we want to send
+    /// @param jsonSize Size of the data inside the JsonVariant
+    /// @return Whether sending the data was successful or not
+    inline bool sendTelemetryJson(const JsonVariant& jsonVariant, const uint32_t& jsonSize) {
+      // Check if allocating needed memory failed when trying to create the JsonObject,
+      // if it did the method will return true. See https://arduinojson.org/v6/api/jsonvariant/isnull/ for more information.
+      if (jsonVariant.isNull()) {
+        Logger::log(UNABLE_TO_ALLOCATE_MEMORY);
+        return false;
+      }
+#if !THINGSBOARD_ENABLE_DYNAMIC
+      const uint32_t jsonVariantSize = jsonVariant.size();
+      if (MaxFieldsAmt < jsonVariantSize) {
+        char message[detectSize(TOO_MANY_JSON_FIELDS, jsonVariantSize, MaxFieldsAmt)];
+        snprintf_P(message, sizeof(message), TOO_MANY_JSON_FIELDS, jsonVariantSize, MaxFieldsAmt);
+        Logger::log(message);
+        return false;
+      }
+#endif // !THINGSBOARD_ENABLE_DYNAMIC
+      bool result = false;
+
+      // Check if the remaining stack size of the current task would overflow the stack,
+      // if it would allocate the memory on the heap instead to ensure no stack overflow occurs.
+      if (getMaximumStackSize() < jsonSize) {
+        char* json = new char[jsonSize];
+        // Serialize json does not include size of the string null terminator
+        if (serializeJson(jsonVariant, json, jsonSize) < jsonSize - 1) {
+          Logger::log(UNABLE_TO_SERIALIZE_JSON);
         }
+        else {
+          result = sendTelemetryJson(json);
+        }
+        // Ensure to actually delete the memory placed onto the heap, to make sure we do not create a memory leak
+        // and set the pointer to null so we do not have a dangling reference.
+        delete[] json;
+        json = nullptr;
       }
-    } while (numberOfChunk != currChunk);
-
-    // Buffer size has been set to another value by the method return to the previous value.
-    if (changeBufferSize) {
-      m_client.setBufferSize(previousBufferSize);
-    }
-
-    // Unsubscribe from now not needed topics anymore.
-    Firmware_OTA_Unsubscribe();
-
-    bool success = false;
-    // Update current_fw_title and current_fw_version if updating was a success.
-    if (strncmp_P(STATUS_SUCCESS, m_fwState, strlen(STATUS_SUCCESS)) == 0) {
-      Firmware_Send_FW_Info(fw_title, fw_version);
-      Firmware_Send_State(STATUS_SUCCESS);
-      success = true;
-    } else {
-      Firmware_Send_State(FW_STATE_FAILED);
-    }
-
-    if (m_fwUpdatedCallback != nullptr) {
-      m_fwUpdatedCallback(success);
-    }
-  }
-
-  inline const bool Firmware_is_updating() {
-    if (m_fwState != nullptr) {
-      return (strncmp_P(FW_STATE_DOWNLOADING, m_fwState, strlen(FW_STATE_DOWNLOADING)) == 0);
-    }
-    return false;
-  }
-#endif
-
-  //----------------------------------------------------------------------------
-  // Shared attributes API
-
-  template <class InputIterator>
-  inline const bool Shared_Attributes_Request(const InputIterator &first_itr, const InputIterator &last_itr, Shared_Attribute_Request_Callback &callback) {
-    StaticJsonDocument<JSON_OBJECT_SIZE(1)> requestBuffer;
-    JsonObject requestObject = requestBuffer.to<JsonObject>();
-
-    std::string sharedKeys;
-    for (auto itr = first_itr; itr != last_itr; ++itr) {
-      // Check if the given attribute is null, if it is skip it.
-      if (*itr == nullptr) {
-        continue;
+      else {
+        char json[jsonSize];
+        // Serialize json does not include size of the string null terminator
+        if (serializeJson(jsonVariant, json, jsonSize) < jsonSize - 1) {
+          Logger::log(UNABLE_TO_SERIALIZE_JSON);
+          return result;
+        }
+        result = sendTelemetryJson(json);
       }
-      sharedKeys.append(*itr);
-      sharedKeys.push_back(COMMA);
+      return result;
     }
 
-    // Check if any sharedKeys were requested.
-    if (sharedKeys.empty()) {
-      Logger::log(NO_KEYS_TO_REQUEST);
-      return false;
+    //----------------------------------------------------------------------------
+    // Attribute API
+
+    /// @brief Attempts to send attribute data with the given key and value of the given type
+    /// @tparam T Type of the passed value
+    /// @param key Key of the key value pair we want to send
+    /// @param value Value of the key value pair we want to send
+    /// @return Whether sending the data was successful or not
+    template<typename T>
+    inline bool sendAttributeData(const char *key, T value) {
+      return sendKeyValue(key, value, false);
     }
 
-    // Remove latest not needed ,
-    sharedKeys.pop_back();
-
-    requestObject[SHARED_KEYS] = sharedKeys.c_str();
-    int objectSize = measureJson(requestBuffer) + 1;
-    char buffer[objectSize];
-    serializeJson(requestObject, buffer, objectSize);
-
-    // Print requested keys.
-    char message[JSON_STRING_SIZE(strlen(REQUEST_ATT)) + sharedKeys.length() + JSON_STRING_SIZE(strlen(buffer))];
-    snprintf_P(message, sizeof(message), REQUEST_ATT, sharedKeys.c_str(), buffer);
-    Logger::log(message);
-
-    m_requestId++;
-    callback.m_request_id = m_requestId;
-    Shared_Attributes_Request_Subscribe(callback);
-
-    char topic[detect_size(ATTRIBUTE_REQUEST_TOPIC, m_requestId)];
-    snprintf_P(topic, sizeof(topic), ATTRIBUTE_REQUEST_TOPIC, m_requestId);
-    return m_client.publish(topic, buffer, m_qos);
-  }
-
-  // Subscribes multiple Shared attributes callbacks.
-  template <class InputIterator>
-  inline const bool Shared_Attributes_Subscribe(const InputIterator &first_itr, const InputIterator &last_itr) {
-    const uint32_t size = std::distance(first_itr, last_itr);
-    if (m_sharedAttributeUpdateCallbacks.size() + size > m_sharedAttributeUpdateCallbacks.capacity()) {
-      Logger::log(MAX_SHARED_ATT_UPDATE_EXCEEDED);
-      return false;
-    }
-    if (!m_client.subscribe(ATTRIBUTE_TOPIC, m_qos ? 1 : 0)) {
-      return false;
+    /// @brief Attempts to send integer attribute data with the given key and value
+    /// @param key Key of the key value pair we want to send
+    /// @param value Value of the key value pair we want to send
+    /// @return Whether sending the data was successful or not
+    inline bool sendAttributeInt(const char *key, int value) {
+      return sendKeyValue(key, value, false);
     }
 
-    // Push back complete vector into our local m_sharedAttributeUpdateCallbacks vector.
-    m_sharedAttributeUpdateCallbacks.insert(m_sharedAttributeUpdateCallbacks.end(), first_itr, last_itr);
-    return true;
-  }
-
-  // Subscribe one Shared attributes callback.
-  inline const bool Shared_Attributes_Subscribe(const Shared_Attribute_Callback &callback) {
-    if (m_sharedAttributeUpdateCallbacks.size() + 1U > m_sharedAttributeUpdateCallbacks.capacity()) {
-      Logger::log(MAX_SHARED_ATT_UPDATE_EXCEEDED);
-      return false;
-    }
-    if (!m_client.subscribe(ATTRIBUTE_TOPIC, m_qos ? 1 : 0)) {
-      return false;
+    /// @brief Attempts to send boolean attribute data with the given key and value
+    /// @param key Key of the key value pair we want to send
+    /// @param value Value of the key value pair we want to send
+    /// @return Whether sending the data was successful or not
+    inline bool sendAttributeBool(const char *key, bool value) {
+      return sendKeyValue(key, value, false);
     }
 
-    // Push back given callback into our local m_sharedAttributeUpdateCallbacks vector.
-    m_sharedAttributeUpdateCallbacks.push_back(callback);
-    return true;
-  }
-
-  inline const bool Shared_Attributes_Unsubscribe() {
-    // Empty all callbacks.
-    m_sharedAttributeUpdateCallbacks.clear();
-    if (!m_client.unsubscribe(ATTRIBUTE_TOPIC)) {
-      return false;
-    }
-    return true;
-  }
-
-  // -------------------------------------------------------------------------------
-  // Provisioning API
-
-  // Subscribes to get provision response
-
-#if defined(ESP8266) || defined(ESP32) || defined(ARDUINO_AVR_MEGA)
-  inline const bool Provision_Subscribe(const Provision_Callback callback) {
-    if (!m_client.subscribe(PROV_RESPONSE_TOPIC, m_qos ? 1 : 0)) {
-      return false;
-    }
-    m_provisionCallback = callback;
-    return true;
-  }
-
-  inline const bool Provision_Unsubscribe() {
-    if (!m_client.unsubscribe(PROV_RESPONSE_TOPIC)) {
-      return false;
-    }
-    return true;
-  }
-#endif
-
- private:
-  // Returns the length in chars needed for a given value with the given argument string to be displayed completly.
-  inline const uint8_t detect_size(const char *msg, ...) {
-    va_list args;
-    va_start(args, msg);
-    // Result is what would have been written if the passed buffer would have been large enough not counting null character,
-    // or if an error occured while creating the string a negative number is returned instead. TO ensure this will not crash the system
-    // when creating an array with negative size we assert beforehand with a clear error message.
-    const int32_t result = JSON_STRING_SIZE(vsnprintf_P(nullptr, 0U, msg, args));
-    assert(result >= 0);
-    va_end(args);
-    return result;
-  }
-
-  // Reserves size of callback vectors to improve performance
-  inline void reserve_callback_size(void) {
-    // Reserve size of both m_sharedAttributeUpdateCallbacks, rpcCallbacks and m_sharedAttributeRequestCallbacks beforehand for performance reasons.
-    m_rpcCallbacks.reserve(MaxFieldsAmt);
-    m_sharedAttributeUpdateCallbacks.reserve(MaxFieldsAmt);
-    m_sharedAttributeRequestCallbacks.reserve(MaxFieldsAmt);
-  }
-
-  // Subscribe one Shared attributes request callback.
-  inline const bool Shared_Attributes_Request_Subscribe(const Shared_Attribute_Request_Callback &callback) {
-    if (m_sharedAttributeRequestCallbacks.size() + 1 > m_sharedAttributeRequestCallbacks.capacity()) {
-      Logger::log(MAX_SHARED_ATT_REQUEST_EXCEEDED);
-      return false;
-    }
-    if (!m_client.subscribe(ATTRIBUTE_RESPONSE_SUBSCRIBE_TOPIC, m_qos ? 1 : 0)) {
-      return false;
+    /// @brief Attempts to send float attribute data with the given key and value
+    /// @param key Key of the key value pair we want to send
+    /// @param value Value of the key value pair we want to send
+    /// @return Whether sending the data was successful or not
+    inline bool sendAttributeFloat(const char *key, float value) {
+      return sendKeyValue(key, value, false);
     }
 
-    // Push back given callback into our local m_sharedAttributeRequestCallbacks vector.
-    m_sharedAttributeRequestCallbacks.push_back(callback);
-    return true;
-  }
-
-  inline const bool Shared_Attributes_Request_Unsubscribe() {
-    // Empty all callbacks.
-    m_sharedAttributeRequestCallbacks.clear();
-    if (!m_client.unsubscribe(ATTRIBUTE_RESPONSE_SUBSCRIBE_TOPIC)) {
-      return false;
-    }
-    return true;
-  }
-
-  // Sends single key-value in a generic way.
-  template <typename T>
-  inline const bool sendKeyval(const char *key, T value, bool telemetry = true) {
-    Telemetry t(key, value);
-    StaticJsonDocument<JSON_OBJECT_SIZE(1)> jsonBuffer;
-    JsonVariant object = jsonBuffer.template to<JsonVariant>();
-    if (!t.serializeKeyval(object)) {
-      Logger::log(UNABLE_TO_SERIALIZE);
-      return false;
+    /// @brief Attempts to send string attribute data with the given key and value
+    /// @param key Key of the key value pair we want to send
+    /// @param value Value of the key value pair we want to send
+    /// @return Whether sending the data was successful or not
+    inline bool sendAttributeString(const char *key, const char *value) {
+      return sendKeyValue(key, value, false);
     }
 
-    return telemetry ? sendTelemetryJson(object, JSON_STRING_SIZE(measureJson(object))) : sendAttributeJSON(object, JSON_STRING_SIZE(measureJson(object)));
-  }
+    /// @brief Attempts to send aggregated attribute data
+    /// @param data Array containing all the data we want to send
+    /// @param data_count Amount of data entries in the array that we want to send
+    /// @return Whether sending the data was successful or not
+    inline bool sendAttributes(const Attribute *data, size_t data_count) {
+      return sendDataArray(data, data_count, false);
+    }
 
-  // Processes RPC message
-  inline void process_rpc_message(char *topic, uint8_t *payload, uint32_t length) {
-    RPC_Response r;
-    {
-      StaticJsonDocument<JSON_OBJECT_SIZE(MaxFieldsAmt)> jsonBuffer;
-      DeserializationError error = deserializeJson(jsonBuffer, payload, length);
-      if (error) {
-        Logger::log(UNABLE_TO_DE_SERIALIZE_RPC);
+    /// @brief Attempts to send custom json attribute string
+    /// @param json String containing our json key value pairs we want to attempt to send
+    /// @return Whether sending the data was successful or not
+    inline bool sendAttributeJSON(const char *json) {
+      if (json == nullptr) {
+        return false;
+      }
+
+      const uint16_t currentBufferSize = m_client.getBufferSize();
+      const uint32_t jsonSize = JSON_STRING_SIZE(strlen(json));
+
+      if (currentBufferSize < jsonSize) {
+        char message[detectSize(INVALID_BUFFER_SIZE, currentBufferSize, jsonSize)];
+        snprintf_P(message, sizeof(message), INVALID_BUFFER_SIZE, currentBufferSize, jsonSize);
+        Logger::log(message);
+        return false;
+      }
+
+      return m_client.publish(ATTRIBUTE_TOPIC, json, m_qos);
+    }
+
+    /// @brief Attempts to send custom attribute JsonObject
+    /// @param jsonObject JsonObject containing our json key value pairs we want to send
+    /// @param jsonSize Size of the data inside the JsonObject
+    /// @return Whether sending the data was successful or not
+    inline bool sendAttributeJSON(const JsonObject& jsonObject, const uint32_t& jsonSize) {
+      // Check if allocating needed memory failed when trying to create the JsonObject,
+      // if it did the method will return true. See https://arduinojson.org/v6/api/jsonobject/isnull/ for more information.
+      if (jsonObject.isNull()) {
+        Logger::log(UNABLE_TO_ALLOCATE_MEMORY);
+        return false;
+      }
+#if !THINGSBOARD_ENABLE_DYNAMIC
+      const uint32_t jsonObjectSize = jsonObject.size();
+      if (MaxFieldsAmt < jsonObjectSize) {
+        char message[detectSize(TOO_MANY_JSON_FIELDS, jsonObjectSize, MaxFieldsAmt)];
+        snprintf_P(message, sizeof(message), TOO_MANY_JSON_FIELDS, jsonObjectSize, MaxFieldsAmt);
+        Logger::log(message);
+        return false;
+      }
+#endif // !THINGSBOARD_ENABLE_DYNAMIC
+      bool result = false;
+
+      // Check if the remaining stack size of the current task would overflow the stack,
+      // if it would allocate the memory on the heap instead to ensure no stack overflow occurs.
+      if (getMaximumStackSize() < jsonSize) {
+        char* json = new char[jsonSize];
+        // Serialize json does not include size of the string null terminator
+        if (serializeJson(jsonObject, json, jsonSize) < jsonSize - 1) {
+          Logger::log(UNABLE_TO_SERIALIZE_JSON);
+        }
+        else {
+          result = sendAttributeJSON(json);
+        }
+        // Ensure to actually delete the memory placed onto the heap, to make sure we do not create a memory leak
+        // and set the pointer to null so we do not have a dangling reference.
+        delete[] json;
+        json = nullptr;
+      }
+      else {
+        char json[jsonSize];
+        // Serialize json does not include size of the string null terminator
+        if (serializeJson(jsonObject, json, jsonSize) < jsonSize - 1) {
+          Logger::log(UNABLE_TO_SERIALIZE_JSON);
+          return result;
+        }
+        result = sendAttributeJSON(json);
+      }
+      return result;
+    }
+
+    /// @brief Attempts to send custom attribute JsonVariant
+    /// @param jsonVariant JsonVariant containing our json key value pairs we want to send
+    /// @param jsonSize Size of the data inside the JsonVariant
+    /// @return Whether sending the data was successful or not
+    inline bool sendAttributeJSON(const JsonVariant& jsonVariant, const uint32_t& jsonSize) {
+      // Check if allocating needed memory failed when trying to create the JsonObject,
+      // if it did the method will return true. See https://arduinojson.org/v6/api/jsonvariant/isnull/ for more information.
+      if (jsonVariant.isNull()) {
+        Logger::log(UNABLE_TO_ALLOCATE_MEMORY);
+        return false;
+      }
+#if !THINGSBOARD_ENABLE_DYNAMIC
+      const uint32_t jsonVariantSize = jsonVariant.size();
+      if (MaxFieldsAmt < jsonVariantSize) {
+        char message[detectSize(TOO_MANY_JSON_FIELDS, jsonVariantSize, MaxFieldsAmt)];
+        snprintf_P(message, sizeof(message), TOO_MANY_JSON_FIELDS, jsonVariantSize, MaxFieldsAmt);
+        Logger::log(message);
+        return false;
+      }
+#endif // !THINGSBOARD_ENABLE_DYNAMIC
+      bool result = false;
+
+      // Check if the remaining stack size of the current task would overflow the stack,
+      // if it would allocate the memory on the heap instead to ensure no stack overflow occurs.
+      if (getMaximumStackSize() < jsonSize) {
+        char* json = new char[jsonSize];
+        // Serialize json does not include size of the string null terminator
+        if (serializeJson(jsonVariant, json, jsonSize) < jsonSize - 1) {
+          Logger::log(UNABLE_TO_SERIALIZE_JSON);
+        }
+        else {
+          result = sendAttributeJSON(json);
+        }
+        // Ensure to actually delete the memory placed onto the heap, to make sure we do not create a memory leak
+        // and set the pointer to null so we do not have a dangling reference.
+        delete[] json;
+        json = nullptr;
+      }
+      else {
+        char json[jsonSize];
+        // Serialize json does not include size of the string null terminator
+        if (serializeJson(jsonVariant, json, jsonSize) < jsonSize - 1) {
+          Logger::log(UNABLE_TO_SERIALIZE_JSON);
+          return result;
+        }
+        result = sendAttributeJSON(json);
+      }
+      return result;
+    }
+
+    /// @brief Requests one client-side attribute calllback,
+    /// that will be called if the key-value pair from the server for the given client-side attributes is received
+    /// @param callback Callback method that will be called
+    /// @return Whether requesting the given callback was successful or not
+    inline bool Client_Attributes_Request(const Attribute_Request_Callback& callback) {
+      return Attributes_Request(callback, CLIENT_REQUEST_KEYS, CLIENT_RESPONSE_KEY);
+    }
+
+    //----------------------------------------------------------------------------
+    // Server-side RPC API
+
+
+#if THINGSBOARD_ENABLE_STL
+
+    /// @brief Subscribes multiple server-side RPC callbacks,
+    /// that will be called if a request from the server for the method with the given name is received
+    /// @tparam InputIterator Class that points to the begin and end iterator
+    /// of the given data container, allows for using / passing either std::vector or std::array
+    /// @param first_itr Iterator pointing to the first element in the data container
+    /// @param last_itr Iterator pointing to the end of the data container (last element + 1)
+    /// @return Whether subscribing the given callbacks was successful or not
+    template<class InputIterator>
+    inline bool RPC_Subscribe(const InputIterator& first_itr, const InputIterator& last_itr) {
+#if !THINGSBOARD_ENABLE_DYNAMIC
+      const uint32_t size = std::distance(first_itr, last_itr);
+      if (m_rpcCallbacks.size() + size > m_rpcCallbacks.capacity()) {
+        Logger::log(MAX_RPC_EXCEEDED);
+        return false;
+      }
+#endif // !THINGSBOARD_ENABLE_DYNAMIC
+      if (!m_client.subscribe(RPC_SUBSCRIBE_TOPIC, m_qos ? 1 : 0)) {
+        Logger::log(SUBSCRIBE_TOPIC_FAILED);
+        return false;
+      }
+
+      // Push back complete vector into our local m_rpcCallbacks vector.
+      m_rpcCallbacks.insert(m_rpcCallbacks.end(), first_itr, last_itr);
+      return true;
+    }
+
+#else
+
+    /// @brief Subscribes multiple server-side RPC callbacks,
+    /// that will be called if a request from the server for the method with the given name is received
+    /// @param callbacks Pointer to the c-style array
+    /// @param callbacksSize Amount of values that should be subscribed, ensure size matches the actual array,
+    /// if not the system might crash unexpectedly at a later point
+    /// @return Whether subscribing the given callbacks was successful or not
+    inline bool RPC_Subscribe(const RPC_Callback *callbacks, const size_t& callbacksSize) {
+#if !THINGSBOARD_ENABLE_DYNAMIC
+      if (m_rpcCallbacks.size() + callbacksSize > m_rpcCallbacks.capacity()) {
+        Logger::log(MAX_RPC_EXCEEDED);
+        return false;
+      }
+#endif // !THINGSBOARD_ENABLE_DYNAMIC
+      if (!m_client.subscribe(RPC_SUBSCRIBE_TOPIC, m_qos ? 1 : 0)) {
+        Logger::log(SUBSCRIBE_TOPIC_FAILED);
+        return false;
+      }
+
+      for (size_t i = 0; i < callbacksSize; i++) {
+        m_rpcCallbacks.push_back(callbacks[i]);
+      }
+      return true;
+    }
+
+#endif // THINGSBOARD_ENABLE_STL
+
+    /// @brief Subscribe one server-side RPC callback,
+    /// that will be called if a request from the server for the method with the given name is received
+    /// @param callback Callback method that will be called
+    /// @return Whether subscribing the given callback was successful or not
+    inline bool RPC_Subscribe(const RPC_Callback& callback) {
+#if !THINGSBOARD_ENABLE_DYNAMIC
+      if (m_rpcCallbacks.size() + 1 > m_rpcCallbacks.capacity()) {
+        Logger::log(MAX_RPC_EXCEEDED);
+        return false;
+      }
+#endif // !THINGSBOARD_ENABLE_DYNAMIC
+      if (!m_client.subscribe(RPC_SUBSCRIBE_TOPIC, m_qos ? 1 : 0)) {
+        Logger::log(SUBSCRIBE_TOPIC_FAILED);
+        return false;
+      }
+
+      // Push back given callback into our local vector
+      m_rpcCallbacks.push_back(callback);
+      return true;
+    }
+
+    /// @brief Unsubcribes all server-side RPC callbacks
+    /// @return Whether unsubcribing all the previously subscribed callbacks
+    /// and from the rpc topic, was successful or not
+    inline bool RPC_Unsubscribe() {
+      // Empty all callbacks
+      m_rpcCallbacks.clear();
+      return m_client.unsubscribe(RPC_SUBSCRIBE_TOPIC);
+    }
+
+    //----------------------------------------------------------------------------
+    // Client-side RPC API
+
+    /// @brief Requests one client-side RPC callback,
+    /// that will be called if a response from the server for the method with the given name is received
+    /// @param callback Callback method that will be called
+    /// @return Whether requesting the given callback was successful or not
+    inline bool RPC_Request(const RPC_Request_Callback& callback) {
+      const char *methodName = callback.Get_Name();
+
+      if (methodName == nullptr) {
+        Logger::log(RPC_METHOD_NULL);
+        return false;
+      }
+      RPC_Request_Callback* registeredCallback = nullptr;
+      // Ensure the response topic has been subscribed
+      if (!RPC_Request_Subscribe(callback, registeredCallback)) {
+        return false;
+      }
+      else if (registeredCallback == nullptr) {
+        return false;
+      }
+
+      const JsonArray* parameters = callback.Get_Parameters();
+
+#if THINGSBOARD_ENABLE_DYNAMIC
+      // String are const char* and therefore stored as a pointer --> zero copy, meaning the size for the strings is 0 bytes,
+      // Data structure size depends on the amount of key value pairs passed + the default methodName and params key needed for the request.
+      // See https://arduinojson.org/v6/assistant/ for more information on the needed size for the JsonDocument
+      const uint32_t dataStructureMemoryUsage = JSON_OBJECT_SIZE(parameters != nullptr ? parameters->size() + 2U : 2U);
+      TBJsonDocument requestBuffer(dataStructureMemoryUsage);
+#else
+      // Ensure to have enough size for the infinite amount of possible parameters that could be sent to the cloud,
+      // therefore we set the size to the MaxFieldsAmt instead of JSON_OBJECT_SIZE(1), which will result in a JsonDocument with a size of 16 bytes
+      StaticJsonDocument<JSON_OBJECT_SIZE(MaxFieldsAmt)> requestBuffer;
+#endif // !THINGSBOARD_ENABLE_DYNAMIC
+      // The .template variant of createing the JsonVariant has to be used,
+      // because we are passing a template to the StaticJsonDocument template list
+      // and it will generate a compile time error if not used
+      const JsonVariant requestVariant = requestBuffer.template as<JsonVariant>();
+
+      requestVariant[RPC_METHOD_KEY] = methodName;
+
+      // Make the parameters for the client side RPC optional,
+      // meaning if it is an empty array or null instead we don't send it at all.
+      if (parameters != nullptr && !parameters->isNull()) {
+        requestVariant[RPC_PARAMS_KEY] = *parameters;
+      }
+      else {
+        requestVariant[RPC_PARAMS_KEY] = RPC_EMPTY_PARAMS_VALUE;
+      }
+
+      const uint16_t currentBufferSize = m_client.getBufferSize();
+      const size_t objectSize = JSON_STRING_SIZE(measureJson(requestVariant));
+      char buffer[objectSize];
+      if (currentBufferSize < objectSize) {
+        char message[detectSize(INVALID_BUFFER_SIZE, currentBufferSize, objectSize)];
+        snprintf_P(message, sizeof(message), INVALID_BUFFER_SIZE, currentBufferSize, objectSize);
+        Logger::log(message);
+        return false;
+      }
+      // Serialize json does not include size of the string null terminator
+      if (serializeJson(requestVariant, buffer, objectSize) < objectSize - 1) {
+        Logger::log(UNABLE_TO_SERIALIZE_JSON);
+        return false;
+      }
+
+      // Print requested client side RPC method
+      char message[JSON_STRING_SIZE(strlen(REQUEST_RPC)) + JSON_STRING_SIZE(strlen(buffer))];
+      snprintf_P(message, sizeof(message), REQUEST_RPC, buffer);
+      Logger::log(message);
+
+      m_requestId++;
+      registeredCallback->Set_Request_ID(m_requestId);
+
+      char topic[detectSize(RPC_SEND_REQUEST_TOPIC, m_requestId)];
+      snprintf_P(topic, sizeof(topic), RPC_SEND_REQUEST_TOPIC, m_requestId);
+
+      return m_client.publish(topic, buffer, m_qos);
+    }
+
+    //----------------------------------------------------------------------------
+    // Firmware OTA API
+
+#if THINGSBOARD_ENABLE_OTA
+
+    /// @brief Immediately starts a firmware update if firmware is assigned to the given device
+    /// @param callback Callback method that will be called
+    /// @return Whether subscribing the given callback was successful or not
+    inline bool Start_Firmware_Update(const OTA_Update_Callback& callback) {
+      if (!Prepare_Firmware_Settings(callback))  {
+        Logger::log(RESETTING_FAILED);
+        return false;
+      }
+
+      // Request the firmware information
+      return Shared_Attributes_Request(m_fwRequestCallback);
+    }
+
+    /// @brief Subscribes for any assignment of firmware to the given device device,
+    /// which will then start a firmware update
+    /// @param callback Callback method that will be called
+    /// @return Whether subscribing the given callback was successful or not
+    inline bool Subscribe_Firmware_Update(const OTA_Update_Callback& callback) {
+      if (!Prepare_Firmware_Settings(callback))  {
+        Logger::log(RESETTING_FAILED);
+        return false;
+      }
+
+      // Subscribes to changes of the firmware information
+      return Shared_Attributes_Subscribe(m_fwUpdateCallback);
+    }
+
+    /// @brief Sends the given firmware title and firmware version to the cloud
+    /// @param currFwTitle Current device firmware title
+    /// @param currFwVersion Current device firmware version
+    /// @return Whether sending the current device firmware information was successful or not
+    inline bool Firmware_Send_Info(const char *currFwTitle, const char *currFwVersion) {
+      StaticJsonDocument<JSON_OBJECT_SIZE(2)> currentFirmwareInfo;
+      const JsonObject currentFirmwareInfoObject = currentFirmwareInfo.to<JsonObject>();
+
+      currentFirmwareInfoObject[CURR_FW_TITLE_KEY] = currFwTitle;
+      currentFirmwareInfoObject[CURR_FW_VER_KEY] = currFwVersion;
+      return sendTelemetryJson(currentFirmwareInfoObject, JSON_STRING_SIZE(measureJson(currentFirmwareInfoObject)));
+    }
+
+    /// @brief Sends the given firmware state to the cloud
+    /// @param currFwState Current firmware download state
+    /// @param fwError Firmware error message that describes the current firmware state,
+    /// pass nullptr or an empty string if the current state is not a failure state
+    /// and therefore does not require any firmware error messsages
+    /// @return Whether sending the current firmware download state was successful or not
+    inline bool Firmware_Send_State(const char *currFwState, const char* fwError = nullptr) {
+      StaticJsonDocument<JSON_OBJECT_SIZE(2)> currentFirmwareState;
+      const JsonObject currentFirmwareStateObject = currentFirmwareState.to<JsonObject>();
+
+      // Make the fw error optional,
+      // meaning if it is an empty string or null instead we don't send it at all.
+      if (fwError != nullptr && fwError[0] != '\0') {
+        currentFirmwareStateObject[FW_ERROR_KEY] = fwError;
+      }
+      currentFirmwareStateObject[FW_STATE_KEY] = currFwState;
+      return sendTelemetryJson(currentFirmwareStateObject, JSON_STRING_SIZE(measureJson(currentFirmwareStateObject)));
+    }
+
+#endif // THINGSBOARD_ENABLE_OTA
+
+    //----------------------------------------------------------------------------
+    // Shared attributes API
+
+    /// @brief Requests one shared attribute calllback,
+    /// that will be called if the key-value pair from the server for the given shared attributes is received
+    /// @param callback Callback method that will be called
+    /// @return Whether requesting the given callback was successful or not
+    inline bool Shared_Attributes_Request(const Attribute_Request_Callback& callback) {
+      return Attributes_Request(callback, SHARED_REQUEST_KEY, SHARED_RESPONSE_KEY);
+    }
+
+#if THINGSBOARD_ENABLE_STL
+
+    /// @brief Subscribes multiple shared attribute callbacks,
+    /// that will be called if the key-value pair from the server for the given shared attributes is received
+    /// @tparam InputIterator Class that points to the begin and end iterator
+    /// of the given data container, allows for using / passing either std::vector or std::array
+    /// @param first_itr Iterator pointing to the first element in the data container
+    /// @param last_itr Iterator pointing to the end of the data container (last element + 1)
+    /// @return Whether subscribing the given callbacks was successful or not
+    template<class InputIterator>
+    inline bool Shared_Attributes_Subscribe(const InputIterator& first_itr, const InputIterator& last_itr) {
+#if !THINGSBOARD_ENABLE_DYNAMIC
+      const uint32_t size = std::distance(first_itr, last_itr);
+      if (m_sharedAttributeUpdateCallbacks.size() + size > m_sharedAttributeUpdateCallbacks.capacity()) {
+        Logger::log(MAX_SHARED_ATT_UPDATE_EXCEEDED);
+        return false;
+      }
+#endif // !THINGSBOARD_ENABLE_DYNAMIC
+      if (!m_client.subscribe(ATTRIBUTE_TOPIC, m_qos ? 1 : 0)) {
+        Logger::log(SUBSCRIBE_TOPIC_FAILED);
+        return false;
+      }
+
+      // Push back complete vector into our local m_sharedAttributeUpdateCallbacks vector.
+      m_sharedAttributeUpdateCallbacks.insert(m_sharedAttributeUpdateCallbacks.end(), first_itr, last_itr);
+      return true;
+    }
+
+#else
+
+    /// @brief  Subscribes multiple shared attribute callbacks,
+    /// that will be called if the key-value pair from the server for the given shared attributes is received
+    /// @param callbacks Pointer to the c-style array
+    /// @param callbacksSize Amount of values that should be subscribed, ensure size matches the actual array,
+    /// if not the system might crash unexpectedly at a later point
+    /// @return Whether subscribing the given callbacks was successful or not
+    inline bool Shared_Attributes_Subscribe(const Shared_Attribute_Callback *callbacks, const size_t& callbacksSize) {
+#if !THINGSBOARD_ENABLE_DYNAMIC
+      if (m_sharedAttributeUpdateCallbacks.size() + callbacksSize > m_sharedAttributeUpdateCallbacks.capacity()) {
+        Logger::log(MAX_SHARED_ATT_UPDATE_EXCEEDED);
+        return false;
+      }
+#endif // !THINGSBOARD_ENABLE_DYNAMIC
+      if (!m_client.subscribe(ATTRIBUTE_TOPIC, m_qos ? 1 : 0)) {
+        Logger::log(SUBSCRIBE_TOPIC_FAILED);
+        return false;
+      }
+
+      for (size_t i = 0; i < callbacksSize; i++) {
+        m_sharedAttributeUpdateCallbacks.push_back(callbacks[i]);
+      }
+      return true;
+    }
+
+#endif // THINGSBOARD_ENABLE_STL
+
+    /// @brief Subscribe one shared attribute callback,
+    /// that will be called if the key-value pair from the server for the given shared attributes is received
+    /// @param callback Callback method that will be called
+    /// @return Whether subscribing the given callback was successful or not
+    inline bool Shared_Attributes_Subscribe(const Shared_Attribute_Callback& callback) {
+#if !THINGSBOARD_ENABLE_DYNAMIC
+      if (m_sharedAttributeUpdateCallbacks.size() + 1U > m_sharedAttributeUpdateCallbacks.capacity()) {
+        Logger::log(MAX_SHARED_ATT_UPDATE_EXCEEDED);
+        return false;
+      }
+#endif // !THINGSBOARD_ENABLE_DYNAMIC
+      if (!m_client.subscribe(ATTRIBUTE_TOPIC, m_qos ? 1 : 0)) {
+        Logger::log(SUBSCRIBE_TOPIC_FAILED);
+        return false;
+      }
+
+      // Push back given callback into our local vector
+      m_sharedAttributeUpdateCallbacks.push_back(callback);
+      return true;
+    }
+
+    /// @brief Unsubcribes all shared attribute callbacks
+    /// @return Whether unsubcribing all the previously subscribed callbacks
+    /// and from the attribute topic, was successful or not
+    inline bool Shared_Attributes_Unsubscribe() {
+      // Empty all callbacks
+      m_sharedAttributeUpdateCallbacks.clear();
+      return m_client.unsubscribe(ATTRIBUTE_TOPIC);
+    }
+
+    /// @brief Returns the length in characters needed for a given value with the given argument string to be displayed completly
+    /// @param msg Formating message that the given argument will be inserted into
+    /// @param ... Additional arguments that should be inserted into the message at the given points,
+    /// see https://cplusplus.com/reference/cstdio/printf/ for more information on the possible arguments
+    /// @return Length in characters, needed for the given message with the given values inserted to be displayed completly
+    inline static uint8_t detectSize(const char *msg, ...) {
+      va_list args;
+      va_start(args, msg);
+      // Result is what would have been written if the passed buffer would have been large enough not counting null character,
+      // or if an error occured while creating the string a negative number is returned instead. TO ensure this will not crash the system
+      // when creating an array with negative size we assert beforehand with a clear error message.
+      const int32_t result = JSON_STRING_SIZE(vsnprintf_P(nullptr, 0U, msg, args));
+#if THINGSBOARD_ENABLE_STL
+      assert(result >= 0);
+#else
+      if (result < 0) {
+        abort();
+      }
+#endif // THINGSBOARD_ENABLE_STL
+      va_end(args);
+      return result;
+    }
+
+    /// @brief Returns the amount of occurences of the given smybol in the given string
+    /// @param str String that we want to check the symbol in
+    /// @param symbol Symbols we want to search for
+    /// @return Amount of occurences of the given symbol
+    inline static uint32_t getOccurences(const char *str, char symbol) {
+      uint32_t count = 0;
+      if (str == nullptr) {
+        return count;
+      }
+      for (uint32_t i = 0; i < strlen(str); i++) {
+        if (str[i] != symbol) {
+          continue;
+        }
+        count++;
+      }
+      return count;
+    }
+
+  private:
+
+    /// @brief Returns the maximum amount of bytes that we want to allocate on the stack, before allocating on the heap instead
+    /// @return Maximum amount of bytes we want to allocate on the stack
+    inline const uint32_t& getMaximumStackSize() const {
+      return m_maxStack;
+    }
+
+    /// @brief Requests one client-side or shared attribute calllback,
+    /// that will be called if the key-value pair from the server for the given client-side or shared attributes is received
+    /// @param callback Callback method that will be called
+    /// @param attributeRequestKey Key of the key-value pair that will contain the attributes we want to request
+    /// @param attributeResponseKey Key of the key-value pair that will contain the attributes we got as a response
+    /// @return Whether requesting the given callback was successful or not
+    inline bool Attributes_Request(const Attribute_Request_Callback& callback, const char* attributeRequestKey, const char* attributeResponseKey) {
+#if THINGSBOARD_ENABLE_STL
+      const std::vector<const char *>& attributes = callback.Get_Attributes();
+
+      // Check if any sharedKeys were requested
+      if (attributes.empty()) {
+        Logger::log(NO_KEYS_TO_REQUEST);
+        return false;
+      }
+      else if (attributeRequestKey == nullptr || attributeResponseKey == nullptr) {
+        Logger::log(ATT_KEY_NOT_FOUND);
+        return false;
+      }
+#else
+      const char* request = callback.Get_Attributes();
+
+      if (request == nullptr) {
+        Logger::log(NO_KEYS_TO_REQUEST);
+        return false;
+      }
+#endif // THINGSBOARD_ENABLE_STL
+
+      // Ensure the response topic has been subscribed
+      Attribute_Request_Callback* registeredCallback = nullptr;
+      if (!Attributes_Request_Subscribe(callback, registeredCallback)) {
+        return false;
+      }
+      else if (registeredCallback == nullptr) {
+        return false;
+      }
+
+      // String are const char* and therefore stored as a pointer --> zero copy, meaning the size for the strings is 0 bytes,
+      // Data structure size depends on the amount of key value pairs passed + the default clientKeys or sharedKeys
+      // See https://arduinojson.org/v6/assistant/ for more information on the needed size for the JsonDocument
+      constexpr uint32_t dataStructureMemoryUsage = JSON_OBJECT_SIZE(1U);
+      StaticJsonDocument<dataStructureMemoryUsage> requestBuffer;
+      // The .template variant of createing the JsonVariant has to be used,
+      // because we are passing a template to the StaticJsonDocument template list
+      // and it will generate a compile time error if not used
+      const JsonVariant requestVariant = requestBuffer.template as<JsonVariant>();
+
+#if THINGSBOARD_ENABLE_STL
+      std::string request;
+
+      for (const char *att : attributes) {
+        // Check if the given attribute is null, if it is skip it
+        if (att == nullptr) {
+          Logger::log(ATT_IS_NULL);
+          continue;
+        }
+
+        request.append(att);
+        request.push_back(COMMA);
+      }
+
+      // Remove latest not needed ,
+      request.pop_back();
+
+      requestVariant[attributeRequestKey] = request.c_str();
+#else
+      requestVariant[attributeRequestKey] = request;
+#endif // THINGSBOARD_ENABLE_STL
+
+      const uint16_t currentBufferSize = m_client.getBufferSize();
+      const size_t objectSize = JSON_STRING_SIZE(measureJson(requestVariant));
+      char buffer[objectSize];
+      if (currentBufferSize < objectSize) {
+        char message[detectSize(INVALID_BUFFER_SIZE, currentBufferSize, objectSize)];
+        snprintf_P(message, sizeof(message), INVALID_BUFFER_SIZE, currentBufferSize, objectSize);
+        Logger::log(message);
+        return false;
+      }
+      // Serialize json does not include size of the string null terminator
+      else if (serializeJson(requestVariant, buffer, objectSize) < objectSize - 1) {
+        Logger::log(UNABLE_TO_SERIALIZE_JSON);
+        return false;
+      }
+
+      // Print requested keys
+#if THINGSBOARD_ENABLE_STL
+      char message[JSON_STRING_SIZE(strlen(REQUEST_ATT)) + request.length() + JSON_STRING_SIZE(strlen(buffer))];
+      snprintf_P(message, sizeof(message), REQUEST_ATT, request.c_str(), buffer);
+#else
+      char message[JSON_STRING_SIZE(strlen(REQUEST_ATT)) + JSON_STRING_SIZE(strlen(request)) + JSON_STRING_SIZE(strlen(buffer))];
+      snprintf_P(message, sizeof(message), REQUEST_ATT, request, buffer);
+#endif // THINGSBOARD_ENABLE_STL
+      Logger::log(message);
+
+      m_requestId++;
+      registeredCallback->Set_Request_ID(m_requestId);
+      registeredCallback->Set_Attribute_Key(attributeResponseKey);
+
+      char topic[detectSize(ATTRIBUTE_REQUEST_TOPIC, m_requestId)];
+      snprintf_P(topic, sizeof(topic), ATTRIBUTE_REQUEST_TOPIC, m_requestId);
+
+      return m_client.publish(topic, buffer, m_qos);
+    }
+
+    /// @brief Subscribes one provision callback,
+    /// that will be called if a provision response from the server is received
+    /// @param callback Callback method that will be called
+    /// @return Whether requesting the given callback was successful or not
+    inline bool Provision_Subscribe(const Provision_Callback& callback) {
+      if (!m_client.subscribe(PROV_RESPONSE_TOPIC, m_qos ? 1 : 0)) {
+        Logger::log(SUBSCRIBE_TOPIC_FAILED);
+        return false;
+      }
+      m_provisionCallback = callback;
+      return true;
+    }
+
+    /// @brief Unsubcribes the provision callback
+    /// @return Whether unsubcribing the previously subscribed callback
+    /// and from the provision response topic, was successful or not
+    inline bool Provision_Unsubscribe() {
+      m_provisionCallback = Provision_Callback();
+      return m_client.unsubscribe(PROV_RESPONSE_TOPIC);
+    }
+
+#if THINGSBOARD_ENABLE_OTA
+
+    /// @brief Checks the included information in the callback,
+    /// and attempts to sends the current device firmware information to the cloud
+    /// @param callback Callback method that will be called
+    /// @return Whether checking and sending the current device firmware information was successful or not
+    inline bool Prepare_Firmware_Settings(const OTA_Update_Callback& callback) {
+      const char *currFwTitle = callback.Get_Firmware_Title();
+      const char *currFwVersion = callback.Get_Firmware_Version();
+
+      // Send current firmware version
+      if (currFwTitle == nullptr || currFwVersion == nullptr) {
+        return false;
+      }
+      else if (!Firmware_Send_Info(currFwTitle, currFwVersion)) {
+        return false;
+      }
+
+      // Set private members needed for update
+      m_fwCallback = &callback;
+      return true;
+    }
+
+    /// @brief Subscribes to the firmware response topic
+    /// @return Whether subscribing to the firmware response topic was successful or not
+    inline bool Firmware_OTA_Subscribe() {
+      if (!m_client.subscribe(FIRMWARE_RESPONSE_SUBSCRIBE_TOPIC, m_qos ? 1 : 0)) {
+        Logger::log(SUBSCRIBE_TOPIC_FAILED);
+        return false;
+      }
+      return true;
+    }
+
+    /// @brief Unsubscribes from the firmware response topic and clears any memory associated with the firmware update,
+    /// should not be called before actually fully completing the firmware update.
+    /// @return Whether unsubscribing from the firmware response topic was successful or not
+    inline bool Firmware_OTA_Unsubscribe() {
+      // Reset now not needed private member variables
+      m_fwState = false;
+      m_fwCallback = nullptr;
+      m_fwSize = 0U;
+      m_fwChecksumAlgorithm = mbedtls_md_type_t();
+      m_fwChecksum.clear();
+      m_fwAlgorithm.clear();
+      m_fwChunkReceive = 0U;
+      // Unsubscribe from the topic
+      return m_client.unsubscribe(FIRMWARE_RESPONSE_SUBSCRIBE_TOPIC);
+    }
+
+    /// @brief Callback that will be called upon firmware shared attribute arrival
+    /// @param data Json data containing key-value pairs for the needed firmware information,
+    /// to ensure we have a firmware assigned and can start the update over MQTT
+    inline void Firmware_Shared_Attribute_Received(const Shared_Attribute_Data& data) {
+      const size_t jsonSize = JSON_STRING_SIZE(measureJson(data));
+      char buffer[jsonSize];
+      // Serialize json does not include size of the string null terminator
+      if (serializeJson(data, buffer, jsonSize) < jsonSize - 1) {
+        Logger::log(UNABLE_TO_SERIALIZE_JSON);
         return;
       }
-      const JsonObject &data = jsonBuffer.template as<JsonObject>();
-      const char *methodName = data[RPC_METHOD_KEY].as<const char *>();
-      const char *params = data[RPC_PARAMS_KEY].as<const char *>();
+      // Print out received firmware shared attributes
+      Logger::log(buffer);
 
-      if (methodName) {
+      // Check if firmware is available for our device
+      if (!data.containsKey(FW_VER_KEY) || !data.containsKey(FW_TITLE_KEY)) {
+        Logger::log(NO_FW);
+        Firmware_Send_State(FW_STATE_FAILED, NO_FW);
+        return;
+      }
+      else if (m_fwCallback == nullptr) {
+        Logger::log(OTA_CB_IS_NULL);
+        Firmware_Send_State(FW_STATE_FAILED, OTA_CB_IS_NULL);
+        return;
+      }
+
+      const char *fw_title = data[FW_TITLE_KEY].as<const char *>();
+      const char *fw_version = data[FW_VER_KEY].as<const char *>();
+      m_fwChecksum = data[FW_CHKS_KEY].as<std::string>();
+      m_fwAlgorithm = data[FW_CHKS_ALGO_KEY].as<std::string>();
+      m_fwSize = data[FW_SIZE_KEY].as<const uint32_t>();
+
+      const char *currFwTitle = m_fwCallback->Get_Firmware_Title();
+      const char *currFwVersion = m_fwCallback->Get_Firmware_Version();
+
+      if (fw_title == nullptr || fw_version == nullptr || currFwTitle == nullptr || currFwVersion == nullptr || m_fwAlgorithm.empty() || m_fwChecksum.empty()) {
+        Logger::log(EMPTY_FW);
+        Firmware_Send_State(FW_STATE_FAILED, EMPTY_FW);
+        return;
+      }
+      // If firmware version and title is the same, we do not initiate an update, because we expect the binary to be the same one we are currently using
+      else if (strncmp_P(currFwTitle, fw_title, JSON_STRING_SIZE(strlen(currFwTitle))) == 0 && strncmp_P(currFwVersion, fw_version, JSON_STRING_SIZE(strlen(currFwVersion))) == 0) {
+        Logger::log(FW_UP_TO_DATE);
+        Firmware_Send_State(FW_STATE_FAILED, FW_UP_TO_DATE);
+        return;
+      }
+      // If firmware title is not the same, we do not initiate an update, because we expect the binary to be for another device type 
+      else if (strncmp_P(currFwTitle, fw_title, JSON_STRING_SIZE(strlen(currFwTitle))) != 0) {
+        Logger::log(FW_NOT_FOR_US);
+        Firmware_Send_State(FW_STATE_FAILED, FW_NOT_FOR_US);
+        return;
+      }
+
+      // Change the used firmware algorithm, depending on which type is set for the given firmware information
+      if (m_fwAlgorithm.compare(CHECKSUM_AGORITM_MD5) == 0) {
+        m_fwChecksumAlgorithm = mbedtls_md_type_t::MBEDTLS_MD_MD5;
+      }
+      else if (m_fwAlgorithm.compare(CHECKSUM_AGORITM_SHA256) == 0) {
+        m_fwChecksumAlgorithm = mbedtls_md_type_t::MBEDTLS_MD_SHA256;
+      }
+      else if (m_fwAlgorithm.compare(CHECKSUM_AGORITM_SHA384) == 0) {
+        m_fwChecksumAlgorithm = mbedtls_md_type_t::MBEDTLS_MD_SHA384;
+      }
+      else if (m_fwAlgorithm.compare(CHECKSUM_AGORITM_SHA512) == 0) {
+        m_fwChecksumAlgorithm = mbedtls_md_type_t::MBEDTLS_MD_SHA512;
+      }
+      else {
+        char message[JSON_STRING_SIZE(strlen(FW_CHKS_ALGO_NOT_SUPPORTED)) + JSON_STRING_SIZE(m_fwAlgorithm.size())];
+        snprintf_P(message, sizeof(message), FW_CHKS_ALGO_NOT_SUPPORTED, m_fwAlgorithm.c_str());
+        Logger::log(message);
+        Firmware_Send_State(FW_STATE_FAILED, message);
+        return;
+      }
+
+      if (!Firmware_OTA_Subscribe()) {
+        return;
+      }
+
+      Logger::log(PAGE_BREAK);
+      Logger::log(NEW_FW);
+      char firmware[JSON_STRING_SIZE(strlen(FROM_TOO)) + JSON_STRING_SIZE(strlen(currFwVersion)) + JSON_STRING_SIZE(strlen(fw_version))];
+      snprintf_P(firmware, sizeof(firmware), FROM_TOO, currFwVersion, fw_version);
+      Logger::log(firmware);
+      Logger::log(DOWNLOADING_FW);
+
+      // Calculate the number of chuncks we need to request,
+      // in order to download the complete firmware binary
+      const uint16_t& chunckSize = m_fwCallback->Get_Chunk_Size();
+      const uint32_t numberOfChunk = (m_fwSize / chunckSize) + 1U;
+      uint32_t currChunk = 0U;
+      uint8_t retries = m_fwCallback->Get_Chunk_Retries();
+
+      // Get the previous buffer size and cache it so the previous settings can be restored.
+      const uint16_t previousBufferSize = m_client.getBufferSize();
+      const bool changeBufferSize = previousBufferSize < (chunckSize + 50U);
+
+      // Increase size of receive buffer
+      if (changeBufferSize && !m_client.setBufferSize(chunckSize + 50U)) {
+        Logger::log(NOT_ENOUGH_RAM);
+        return;
+      }
+
+      // Update state
+      m_fwState = true;
+      Firmware_Send_State(FW_STATE_DOWNLOADING);
+
+      // Convert the interger size into a readable string
+      char size[detectSize(NUMBER_PRINTF, chunckSize)];
+      snprintf_P(size, sizeof(size), NUMBER_PRINTF, chunckSize);
+
+      // Start the firmware download
+      do {
+        // Size adjuts dynamically to the current length of the currChunk number to ensure we don't cut it out of the topic string.
+        char topic[detectSize(FIRMWARE_REQUEST_TOPIC, currChunk)];
+        snprintf_P(topic, sizeof(topic), FIRMWARE_REQUEST_TOPIC, currChunk);
+
+        const bool result = m_client.publish(topic, size, m_qos);
+        if (!result) {
+          Logger::log("Failed chunk request...");        
+          retries--;
+          if(!connected()){
+          Logger::log("Disconnected from server, reconnecting...");        
+          const bool connectResult = connect(TB_host, TB_token);
+          if(connectResult){
+            Logger::log("Reconnection success");          
+          }
+          else{
+            Logger::log("Reconnection failed");        
+          }
+        }
+          if (retries == 0) {
+            Logger::log(UNABLE_TO_REQUEST_CHUNCKS);
+            retries++;
+            //Firmware_Send_State(FW_STATE_FAILED, UNABLE_TO_REQUEST_CHUNCKS);
+            //break;
+          }
+          continue;
+        }
+
+        // Amount of time we wait until we declare the download as failed in milliseconds
+        const uint32_t startTime = millis();
+        const uint16_t& timeout = m_fwCallback->Get_Timeout();
+        do {
+          delay(5);
+        if(!loop()){
+          Logger::log("Disconnected from server, reconnecting...");        
+          const bool connectResult = connect(TB_host, TB_token);
+          if(connectResult){
+            Logger::log("Reconnection success");          
+          }
+          else{
+            Logger::log("Reconnection failed");        
+          }
+        }
+        } while ((m_fwChunkReceive != currChunk) && (millis() - startTime < timeout));
+
+        // Check if downloaded the currentChunk timed out, before the packet was received
+        if (m_fwChunkReceive != currChunk) {
+          retries--;
+          if (retries == 0) {
+            Logger::log(UNABLE_TO_DOWNLOAD);
+            Firmware_Send_State(FW_STATE_FAILED, UNABLE_TO_DOWNLOAD);
+            break;
+          }
+          continue;
+        }
+
+        // Check if the current chunk is the last one
+        if (numberOfChunk == (currChunk + 1)) {
+          currChunk++;
+          break;
+        }
+
+        // Check if downloading the last chunk failed somehow
+        if (!m_fwState) {
+          retries--;
+          if (retries == 0) {
+            Logger::log(UNABLE_TO_WRITE);
+            Firmware_Send_State(FW_STATE_FAILED, UNABLE_TO_WRITE);
+            break;
+          }
+          // Reset any possible errors that might have occured and retry them.
+          // Until we run out of retries.
+          m_fwState = true;
+          Firmware_Send_State(FW_STATE_DOWNLOADING);
+          continue;
+        }
+
+        currChunk++;
+        m_fwCallback->Call_Progress_Callback<Logger>(currChunk, numberOfChunk);
+        // Current chunck was downloaded successfully, resetting retries accordingly.
+        retries = m_fwCallback->Get_Chunk_Retries();
+      } while (numberOfChunk != currChunk);
+
+      // Buffer size has been set to another value before the update,
+      // to allow to receive ota chunck packets that might be much bigger than the normal
+      // buffer size would allow, therefore we return to the previous value to decrease overall memory usage
+      if (changeBufferSize) {
+        m_client.setBufferSize(previousBufferSize);
+      }
+
+      // Send the current firmware information, because the update was succesful
+      if (m_fwState) {
+        Firmware_Send_State(FW_STATE_UPDATING);
+      }
+      else {
+        Firmware_Send_State(FW_STATE_FAILED);
+      }
+
+      m_fwCallback->Call_End_Callback<Logger>(m_fwState);
+
+      // Unsubscribe from now not needed topics anymore,
+      // call after everything has been handled, because this method
+      // additionaly clears and resets all variables connected to the update itself
+      Firmware_OTA_Unsubscribe();
+    }
+
+#endif // THINGSBOARD_ENABLE_OTA
+    /// @brief Connects to the previously set ThingsBoard server, as the given client with the given access token
+    /// @param access_token Access token that connects this device with a created device on the ThingsBoard server,
+    /// can be "provision", if the device creates itself instead
+    /// @param client_id Client username that can be used to differentiate the user that is connecting the given device to ThingsBoard
+    /// @param password Client password that can be used to authenticate the user that is connecting the given device to ThingsBoard
+    /// @return Whether connecting to ThingsBoard was successful or not
+    inline bool connect_to_host(const char *access_token, const char *client_id, const char *password) {
+      const bool connection_result = m_client.connect(client_id, access_token, password);
+      if (!connection_result) {
+        Logger::log(CONNECT_FAILED);
+        return connection_result;
+      }
+
+      this->RPC_Unsubscribe(); // Cleanup all server-side RPC subscriptions
+      this->RPC_Request_Unsubscribe(); // Cleanup all client-side RPC requests
+      this->Shared_Attributes_Unsubscribe(); // Cleanup all shared attributes subscriptions
+      this->Attributes_Request_Unsubscribe(); // Cleanup all client-side or shared attributes requests
+      this->Provision_Unsubscribe(); // Cleanup all provision subscriptions
+#if THINGSBOARD_ENABLE_OTA
+      this->Firmware_OTA_Unsubscribe(); // Cleanup all firmware subscriptions
+#endif // THINGSBOARD_ENABLE_OTA
+      return connection_result;
+    }
+
+#if !THINGSBOARD_ENABLE_DYNAMIC
+    /// @brief Reserves size for the given amount of items in our internal callback vectors beforehand for performance reasons,
+    /// this ensures the internal memory blocks do not have to move if new data is inserted,
+    /// because the current memory block is too small to hold the data for all the values
+    /// @param reservedSize Size we want to reserve and should not use more if we do,
+    /// the internal memory blocks might need to be moved to a new location
+    inline void reserve_callback_size(const size_t& reservedSize) {
+      m_rpcCallbacks.reserve(reservedSize);
+      m_rpcRequestCallbacks.reserve(reservedSize);
+      m_sharedAttributeUpdateCallbacks.reserve(reservedSize);
+      m_attributeRequestCallbacks.reserve(reservedSize);
+    }
+#endif // !THINGSBOARD_ENABLE_DYNAMIC
+
+    /// @brief Subscribes to the client-side RPC response topic
+    /// @param callback Callback method that will be called
+    /// @param registeredCallback Editable pointer to a reference of the local version that was copied from the passed callback
+    /// @return Whether requesting the given callback was successful or not
+    inline bool RPC_Request_Subscribe(const RPC_Request_Callback& callback, RPC_Request_Callback*& registeredCallback = nullptr) {
+#if !THINGSBOARD_ENABLE_DYNAMIC
+      if (m_rpcRequestCallbacks.size() + 1 > m_rpcRequestCallbacks.capacity()) {
+        Logger::log(MAX_RPC_REQUEST_EXCEEDED);
+        return false;
+      }
+#endif // !THINGSBOARD_ENABLE_DYNAMIC
+      if (!m_client.subscribe(RPC_RESPONSE_SUBSCRIBE_TOPIC, m_qos ? 1 : 0)) {
+        Logger::log(SUBSCRIBE_TOPIC_FAILED);
+        return false;
+      }
+
+      // Push back given callback into our local vector
+      m_rpcRequestCallbacks.push_back(callback);
+      registeredCallback = &m_rpcRequestCallbacks.back();
+      return true;
+    }
+
+    /// @brief Unsubscribes all client-side RPC request callbacks
+    /// @return Whether unsubcribing the previously subscribed callbacks
+    /// and from the client-side RPC response topic, was successful or not
+    inline bool RPC_Request_Unsubscribe() {
+      // Empty all callbacks
+      m_rpcRequestCallbacks.clear();
+      return m_client.unsubscribe(RPC_RESPONSE_SUBSCRIBE_TOPIC);
+    }
+
+    /// @brief Subscribes to attribute response topic
+    /// @param callback Callback method that will be called
+    /// @param registeredCallback Editable pointer to a reference of the local version that was copied from the passed callback
+    /// @return Whether requesting the given callback was successful or not
+    inline bool Attributes_Request_Subscribe(const Attribute_Request_Callback& callback, Attribute_Request_Callback*& registeredCallback = nullptr) {
+#if !THINGSBOARD_ENABLE_DYNAMIC
+      if (m_attributeRequestCallbacks.size() + 1 > m_attributeRequestCallbacks.capacity()) {
+        Logger::log(MAX_SHARED_ATT_REQUEST_EXCEEDED);
+        return false;
+      }
+#endif // !THINGSBOARD_ENABLE_DYNAMIC
+      if (!m_client.subscribe(ATTRIBUTE_RESPONSE_SUBSCRIBE_TOPIC, m_qos ? 1 : 0)) {
+        Logger::log(SUBSCRIBE_TOPIC_FAILED);
+        return false;
+      }
+
+      // Push back given callback into our local vector
+      m_attributeRequestCallbacks.push_back(callback);
+      registeredCallback = &m_attributeRequestCallbacks.back();
+      return true;
+    }
+
+    /// @brief Unsubscribes all client-side or shared attributes request callbacks
+    /// @return Whether unsubcribing the previously subscribed callbacks
+    /// and from the  attribute response topic, was successful or not
+    inline bool Attributes_Request_Unsubscribe() {
+      // Empty all callbacks
+      m_attributeRequestCallbacks.clear();
+      return m_client.unsubscribe(ATTRIBUTE_RESPONSE_SUBSCRIBE_TOPIC);
+    }
+
+    /// @brief Attempts to send a single key-value pair with the given key and value of the given type
+    /// @tparam T Type of the passed value
+    /// @param key Key of the key value pair we want to send
+    /// @param value Value of the key value pair we want to send
+    /// @param telemetry Whether the data we want to send should be sent as an attribute or telemetry data value
+    /// @return Whether sending the data was successful or not
+    template<typename T>
+    inline bool sendKeyValue(const char *key, T value, bool telemetry = true) {
+      const Telemetry t(key, value);
+      if (t.IsEmpty()) {
+        // Message is ignored and not sent at all.
+        return false;
+      }
+
+      StaticJsonDocument<JSON_OBJECT_SIZE(1)>jsonBuffer;
+
+      const JsonVariant object = jsonBuffer.to<JsonVariant>();
+      if (!t.SerializeKeyValue(object)) {
+        Logger::log(UNABLE_TO_SERIALIZE);
+        return false;
+      }
+
+      return telemetry ? sendTelemetryJson(object, JSON_STRING_SIZE(measureJson(object))) : sendAttributeJSON(object, JSON_STRING_SIZE(measureJson(object)));
+    }
+
+    /// @brief Process callback that will be called upon client-side RPC response arrival
+    /// and is responsible for handling the payload and calling the appropriate previously subscribed callbacks
+    /// @param topic Previously subscribed topic, we got the response over
+    /// @param payload Payload that was sent over the cloud and received over the given topic
+    /// @param length Total length of the received payload
+    inline void process_rpc_request_message(char *topic, uint8_t *payload, const uint32_t length) {
+#if THINGSBOARD_ENABLE_DYNAMIC
+      // Buffer that we deserialize is writeable and not read only --> zero copy, meaning the size for the data is 0 bytes,
+      // Data structure size depends on the amount of key value pairs received.
+      // See https://arduinojson.org/v6/assistant/ for more information on the needed size for the JsonDocument
+      const uint32_t dataStructureMemoryUsage = JSON_OBJECT_SIZE(getOccurences(reinterpret_cast<char*>(payload), COLON));
+      TBJsonDocument jsonBuffer(dataStructureMemoryUsage);
+#else
+      StaticJsonDocument<JSON_OBJECT_SIZE(MaxFieldsAmt)> jsonBuffer;
+#endif // !THINGSBOARD_ENABLE_DYNAMIC
+
+      // The deserializeJson method we use, can use the zero copy mode because a writeable input was passed,
+      // if that were not the case the needed allocated memory would drastically increase, because the keys would need to be copied as well.
+      // See https://arduinojson.org/v6/doc/deserialization/ for more info on ArduinoJson deserialization
+      const DeserializationError error = deserializeJson(jsonBuffer, payload, length);
+      if (error) {
+          char message[detectSize(UNABLE_TO_DE_SERIALIZE_JSON, error.c_str())];
+          snprintf_P(message, sizeof(message), UNABLE_TO_DE_SERIALIZE_JSON, error.c_str());
+          Logger::log(message);
+          return;
+      }
+      // .as() is used instead of .to(), because it is meant to cast the JsonDocument to the given type,
+      // but it does not change the actual content of the JsonDocument, we don't want that because it already contents content
+      // and would result in the data simply being "null", instead .as() allows accessing the data over a JsonVariantConst instead.
+      const JsonVariantConst data = jsonBuffer.template as<JsonVariantConst>();
+
+      // Remove the not needed part of the topic
+      const size_t index = strlen(RPC_RESPONSE_TOPIC) + 1U;
+#if THINGSBOARD_ENABLE_STL
+      std::string response = topic;
+      response = response.substr(index, response.length() - index);
+#else
+      String response = topic;
+      response = response.substring(index);
+#endif // THINGSBOARD_ENABLE_STL
+
+      // Convert the remaining text to an integer
+      const uint32_t responseId = atoi(response.c_str());
+
+      for (size_t i = 0; i < m_rpcRequestCallbacks.size(); i++) {
+        const RPC_Request_Callback& callback = m_rpcRequestCallbacks.at(i);
+
+        if (callback.Get_Request_ID() != responseId) {
+          continue;
+        }
+
+        char message[detectSize(CALLING_REQUEST_CB, responseId)];
+        snprintf_P(message, sizeof(message), CALLING_REQUEST_CB, responseId);
+        Logger::log(message);
+
+        // Getting non-existing field from JSON should automatically
+        // set JSONVariant to null
+        callback.Call_Callback<Logger>(data);
+        // Delete callback because the changes have been requested and the callback is no longer needed
+#if THINGSBOARD_ENABLE_STL
+        m_rpcRequestCallbacks.erase(std::next(m_rpcRequestCallbacks.begin(), i));
+#else
+        m_rpcRequestCallbacks.erase(i);
+#endif // THINGSBOARD_ENABLE_STL
+        break;
+      }
+
+      // Attempt to unsubscribe from the shared attribute request topic,
+      // if we are not waiting for any further responses with shared attributes from the server.
+      // Will be resubscribed if another request is sent anyway
+      if (m_rpcRequestCallbacks.empty()) {
+        RPC_Request_Unsubscribe();
+      }
+    }
+
+    /// @brief Process callback that will be called upon server-side RPC request arrival
+    /// and is responsible for handling the payload and calling the appropriate previously subscribed callbacks
+    /// @param topic Previously subscribed topic, we got the response over
+    /// @param payload Payload that was sent over the cloud and received over the given topic
+    /// @param length Total length of the received payload
+    inline void process_rpc_message(char *topic, uint8_t *payload, const uint32_t length) {
+      RPC_Response respVariant;
+#if THINGSBOARD_ENABLE_DYNAMIC
+      // Buffer that we deserialize is writeable and not read only --> zero copy, meaning the size for the data is 0 bytes,
+      // Data structure size depends on the amount of key value pairs received.
+      // See https://arduinojson.org/v6/assistant/ for more information on the needed size for the JsonDocument
+      const uint32_t dataStructureMemoryUsage = JSON_OBJECT_SIZE(getOccurences(reinterpret_cast<char*>(payload), COLON));
+      TBJsonDocument jsonBuffer(dataStructureMemoryUsage);
+#else
+      StaticJsonDocument<JSON_OBJECT_SIZE(MaxFieldsAmt)> jsonBuffer;
+#endif // !THINGSBOARD_ENABLE_DYNAMIC
+
+      // The deserializeJson method we use, can use the zero copy mode because a writeable input was passed,
+      // if that were not the case the needed allocated memory would drastically increase, because the keys would need to be copied as well.
+      // See https://arduinojson.org/v6/doc/deserialization/ for more info on ArduinoJson deserialization
+      const DeserializationError error = deserializeJson(jsonBuffer, payload, length);
+      if (error) {
+        char message[detectSize(UNABLE_TO_DE_SERIALIZE_JSON, error.c_str())];
+        snprintf_P(message, sizeof(message), UNABLE_TO_DE_SERIALIZE_JSON, error.c_str());
+        Logger::log(message);
+        return;
+      }
+
+      const JsonObjectConst data = jsonBuffer.template as<JsonObjectConst>();
+      const char *methodName = data[RPC_METHOD_KEY].as<const char *>();
+
+      if (methodName != nullptr) {
         Logger::log(RECEIVED_RPC_LOG_MESSAGE);
         Logger::log(methodName);
       } else {
@@ -1119,14 +2016,15 @@ TB_token=access_token;
         return;
       }
 
-      for (const RPC_Callback &callback : m_rpcCallbacks) {
-        if (callback.m_cb == nullptr || callback.m_name == nullptr) {
-          Logger::log(RPC_CB_NULL);
+      for (const RPC_Callback& callback : m_rpcCallbacks) {
+        const char *subscribedMethodName = callback.Get_Name();
+        if (subscribedMethodName == nullptr) {
+          Logger::log(RPC_METHOD_NULL);
           continue;
         }
         // Strncmp returns the ascis value difference of the ascii characters that are different,
         // meaning 0 is the same string and less and more than 0 is the difference in ascci values between the 2 chararacters.
-        else if (strncmp(callback.m_name, methodName, strlen(callback.m_name)) != 0) {
+        else if (strncmp(subscribedMethodName, methodName, strlen(subscribedMethodName)) != 0) {
           continue;
         }
 
@@ -1137,499 +2035,514 @@ TB_token=access_token;
           Logger::log(NO_RPC_PARAMS_PASSED);
         }
 
-        // try to de-serialize params
-        StaticJsonDocument<JSON_OBJECT_SIZE(MaxFieldsAmt)> doc;
-        DeserializationError err_param = deserializeJson(doc, params);
-        // if failed to de-serialize params then send JsonObject instead
         Logger::log(RPC_PARAMS_KEY);
-        if (err_param) {
-          const JsonVariant &param = data[RPC_PARAMS_KEY].as<JsonVariant>();
-          const uint32_t json_size = JSON_STRING_SIZE(measureJson(param));
-          char json[json_size];
-          serializeJson(param, json, json_size);
-          Logger::log(json);
-          r = callback.m_cb(param);
-        } else {
-          Logger::log(params);
-          const JsonObject &param = doc.template as<JsonObject>();
-          // Getting non-existing field from JSON should automatically
-          // set JSONVariant to null
-          r = callback.m_cb(param);
+        const JsonVariantConst param = data[RPC_PARAMS_KEY].as<JsonVariantConst>();
+        const size_t jsonSize = JSON_STRING_SIZE(measureJson(param));
+        char json[jsonSize];
+        // Serialize json does not include size of the string null terminator
+        if (serializeJson(param, json, jsonSize) < jsonSize - 1) {
+          Logger::log(UNABLE_TO_SERIALIZE_JSON);
+          return;
         }
+        Logger::log(json);
+        respVariant = callback.Call_Callback<Logger>(param);
         break;
       }
-    }
-    // Fill in response
-    char responsePayload[PayloadSize] = {0};
-    StaticJsonDocument<JSON_OBJECT_SIZE(1)> respBuffer;
-    JsonVariant resp_obj = respBuffer.template to<JsonVariant>();
 
-    if (r.serializeKeyval(resp_obj) == false) {
-      Logger::log(UNABLE_TO_SERIALIZE);
-      return;
-    }
-
-    const uint32_t json_size = JSON_STRING_SIZE(measureJson(respBuffer));
-    if (PayloadSize < json_size) {
-      char message[detect_size(INVALID_BUFFER_SIZE, PayloadSize, json_size)];
-      snprintf_P(message, sizeof(message), INVALID_BUFFER_SIZE, PayloadSize, json_size);
-      Logger::log(message);
-      return;
-    }
-    serializeJson(resp_obj, responsePayload, sizeof(responsePayload));
-
-    String responseTopic = topic;
-    responseTopic.replace(RPC_REQUEST_KEY, RPC_RESPONSE_KEY);
-    Logger::log(RPC_RESPONSE_KEY);
-    Logger::log(responseTopic.c_str());
-    Logger::log(responsePayload);
-    m_client.publish(responseTopic.c_str(), responsePayload, m_qos);
-  }
-
-#if defined(ESP8266) || defined(ESP32)
-
-  // Processes firmware response
-  inline void process_firmware_response(char *topic, uint8_t *payload, uint32_t length) {
-    static uint32_t sizeReceive = 0;
-    static MD5Builder md5;
-
-    m_fwChunkReceive = atoi(strrchr(topic, SLASH) + 1U);
-
-    char message[detect_size(FW_CHUNK, m_fwChunkReceive, length)];
-    snprintf_P(message, sizeof(message), FW_CHUNK, m_fwChunkReceive, length);
-    Logger::log(message);
-
-    m_fwState = FW_STATE_DOWNLOADING;
-
-    if (m_fwChunkReceive == 0) {
-      sizeReceive = 0;
-      md5 = MD5Builder();
-      md5.begin();
-
-      // Initialize Flash
-      if (!Update.begin(m_fwSize)) {
-        Logger::log(ERROR_UPDATE_BEGIN);
-        m_fwState = FW_STATE_UPDATE_ERROR;
-        Update.abort();
+      if (respVariant.isNull()) {
+        // Message is ignored and not sent at all.
         return;
       }
+
+      const uint16_t currentBufferSize = m_client.getBufferSize();
+      const uint32_t jsonSize = JSON_STRING_SIZE(measureJson(respVariant));
+
+      if (currentBufferSize < jsonSize) {
+        char message[detectSize(INVALID_BUFFER_SIZE, currentBufferSize, jsonSize)];
+        snprintf_P(message, sizeof(message), INVALID_BUFFER_SIZE, currentBufferSize, jsonSize);
+        Logger::log(message);
+        return;
+      }
+      char responsePayload[jsonSize];
+      // Serialize json does not include size of the string null terminator
+      if (serializeJson(respVariant, responsePayload, jsonSize) < jsonSize - 1) {
+        Logger::log(UNABLE_TO_SERIALIZE_JSON);
+        return;
+      }
+
+      // Remove the not needed part of the topic
+      const size_t index = strlen(RPC_REQUEST_TOPIC) + 1U;
+#if THINGSBOARD_ENABLE_STL
+      std::string request = topic;
+      request = request.substr(index, request.length() - index);
+#else
+      String request = topic;
+      request = request.substring(index);
+#endif // THINGSBOARD_ENABLE_STL
+
+      // Convert the remaining text to an integer
+      const uint32_t requestId = atoi(request.c_str());
+
+      char responseTopic[detectSize(RPC_SEND_RESPONSE_TOPIC, requestId)];
+      snprintf_P(responseTopic, sizeof(responseTopic), RPC_SEND_RESPONSE_TOPIC, requestId);
+
+      Logger::log(responseTopic);
+      Logger::log(responsePayload);
+
+      m_client.publish(responseTopic, responsePayload, m_qos);
     }
 
-    // Write data to Flash
-    if (Update.write(payload, length) != length) {
-      Logger::log(ERROR_UPDATE_BEGIN);
-      m_fwState = FW_STATE_UPDATE_ERROR;
-      return;
-    }
+#if THINGSBOARD_ENABLE_OTA
 
-    // Update value only if write flash success
-    md5.add(payload, length);
-    sizeReceive += length;
+    /// @brief Process callback that will be called upon firmware response arrival
+    /// and is responsible for handling the payload and calling the appropriate previously subscribed callback
+    /// @param topic Previously subscribed topic, we got the response over
+    /// @param payload Payload that was sent over the cloud and received over the given topic
+    /// @param length Total length of the received payload
+    inline void process_firmware_response(char *topic, uint8_t *payload, const uint32_t length) {
+      static uint32_t sizeReceive = 0;
+      static HashGenerator hash(m_fwChecksumAlgorithm);
 
-    // Receive Full Firmware
-    if (m_fwSize == sizeReceive) {
-      md5.calculate();
-      String md5Str = md5.toString();
-      char actual[JSON_STRING_SIZE(strlen(MD5_ACTUAL)) + md5Str.length()];
-      snprintf_P(actual, sizeof(actual), MD5_ACTUAL, md5Str.c_str());
+      m_fwChunkReceive = atoi(strrchr(topic, SLASH) + 1U);
+
+      char message[detectSize(FW_CHUNK, m_fwChunkReceive, length)];
+      snprintf_P(message, sizeof(message), FW_CHUNK, m_fwChunkReceive, length);
+      Logger::log(message);
+
+      if (m_fwChunkReceive == 0) {
+        sizeReceive = 0;
+
+        // Initialize Flash
+        if (!Update.begin(m_fwSize)) {
+          Logger::log(ERROR_UPDATE_BEGIN);
+          m_fwState = false;
+          Firmware_Send_State(FW_STATE_FAILED, ERROR_UPDATE_BEGIN);
+          // Ensure to call Update.abort after calling Update.begin even if it failed,
+          // to make sure that any possibly started processes are stopped and freed.
+#ifdef ESP32
+          Update.abort();
+#endif
+          return;
+        }
+      }
+
+      // Write received binary data to flash partition
+      if (Update.write(payload, length) != length) {
+        Logger::log(ERROR_UPDATE_WRITE);
+#ifdef ESP32
+          Update.abort();
+#endif
+        m_fwState = false;
+        Firmware_Send_State(FW_STATE_FAILED, ERROR_UPDATE_WRITE);
+        return;
+      }
+
+      // Update value only if writing to flash was a success
+      hash.update(payload, length);
+      sizeReceive += length;
+
+      // Check if we received the full firmware already
+      if (m_fwSize != sizeReceive) {
+        return;
+      }
+
+      Firmware_Send_State(FW_STATE_DOWNLOADED);
+
+      const std::string calculatedHash = hash.get_hash_string();
+      char actual[JSON_STRING_SIZE(strlen(HASH_ACTUAL)) + JSON_STRING_SIZE(m_fwAlgorithm.size()) + JSON_STRING_SIZE(calculatedHash.size())];
+      snprintf_P(actual, sizeof(actual), HASH_ACTUAL, m_fwAlgorithm.c_str(), calculatedHash.c_str());
       Logger::log(actual);
-      char expected[JSON_STRING_SIZE(strlen(MD5_EXPECTED)) + JSON_STRING_SIZE(strlen(m_fwChecksum.c_str()))];
-      snprintf_P(expected, sizeof(expected), MD5_EXPECTED, m_fwChecksum.c_str());
+
+      char expected[JSON_STRING_SIZE(strlen(HASH_EXPECTED)) + JSON_STRING_SIZE(m_fwAlgorithm.size()) + JSON_STRING_SIZE(m_fwChecksum.size())];
+      snprintf_P(expected, sizeof(expected), HASH_EXPECTED, m_fwAlgorithm.c_str(), m_fwChecksum.c_str());
       Logger::log(expected);
-      // Check MD5
-      if (strncmp(md5Str.c_str(), m_fwChecksum.c_str(),
-                  md5Str.length()) != 0) {
+
+      // Check if the initally received checksum is the same as the one we calculated from the received binary data,
+      // if not we assume the binary data has been changed or not completly downloaded --> Firmware update failed
+      if (m_fwChecksum.compare(calculatedHash) != 0) {
         Logger::log(CHKS_VER_FAILED);
-#if defined(ESP32)
+#ifdef ESP32
         Update.abort();
 #endif
-        m_fwState = FW_STATE_CHKS_ERROR;
-      } else {
-        Logger::log(CHKS_VER_SUCCESS);
-        if (Update.end(true)) {
-          Logger::log(FW_UPDATE_SUCCESS);
-          m_fwState = STATUS_SUCCESS;
-        }
+        m_fwState = false;
+        Firmware_Send_State(FW_STATE_FAILED, CHKS_VER_FAILED);
+        return;
       }
-    }
-  }
-#endif
 
-  // Processes shared attribute update message
-  inline void process_shared_attribute_update_message(char *topic, uint8_t *payload, uint32_t length) {
-    StaticJsonDocument<JSON_OBJECT_SIZE(MaxFieldsAmt)> jsonBuffer;
-    DeserializationError error = deserializeJson(jsonBuffer, payload, length);
-    if (error) {
-      Logger::log(UNABLE_TO_DE_SERIALIZE_ATT_UPDATE);
-      return;
+      Logger::log(CHKS_VER_SUCCESS);
+      if (!Update.end()) {
+        Logger::log(ERROR_UPDATE_END);
+        m_fwState = false;
+        Firmware_Send_State(FW_STATE_FAILED, ERROR_UPDATE_END);
+        return;
+      }
+      Logger::log(FW_UPDATE_SUCCESS);
+      m_fwState = true;
+      Firmware_Send_State(FW_STATE_VERIFIED);
     }
-    JsonObject data = jsonBuffer.template as<JsonObject>();
 
-    if (data && (data.size() >= 1)) {
+#endif // THINGSBOARD_ENABLE_OTA
+
+    /// @brief Process callback that will be called upon shared attribute update arrival
+    /// and is responsible for handling the payload and calling the appropriate previously subscribed callbacks
+    /// @param topic Previously subscribed topic, we got the response over
+    /// @param payload Payload that was sent over the cloud and received over the given topic
+    /// @param length Total length of the received payload
+    inline void process_shared_attribute_update_message(char *topic, uint8_t *payload, const uint32_t length) {
+#if THINGSBOARD_ENABLE_DYNAMIC
+      // Buffer that we deserialize is writeable and not read only --> zero copy, meaning the size for the data is 0 bytes,
+      // Data structure size depends on the amount of key value pairs received.
+      // See https://arduinojson.org/v6/assistant/ for more information on the needed size for the JsonDocument
+      const uint32_t dataStructureMemoryUsage = JSON_OBJECT_SIZE(getOccurences(reinterpret_cast<char*>(payload), COLON));
+      TBJsonDocument jsonBuffer(dataStructureMemoryUsage);
+#else
+      StaticJsonDocument<JSON_OBJECT_SIZE(MaxFieldsAmt)> jsonBuffer;
+#endif // !THINGSBOARD_ENABLE_DYNAMIC
+
+      // The deserializeJson method we use, can use the zero copy mode because a writeable input was passed,
+      // if that were not the case the needed allocated memory would drastically increase, because the keys would need to be copied as well.
+      // See https://arduinojson.org/v6/doc/deserialization/ for more info on ArduinoJson deserialization
+      const DeserializationError error = deserializeJson(jsonBuffer, payload, length);
+      if (error) {
+        char message[detectSize(UNABLE_TO_DE_SERIALIZE_JSON, error.c_str())];
+        snprintf_P(message, sizeof(message), UNABLE_TO_DE_SERIALIZE_JSON, error.c_str());
+        Logger::log(message);
+        return;
+      }
+      JsonObjectConst data = jsonBuffer.template as<JsonObjectConst>();
+
+      if (!data) {
+        Logger::log(NOT_FOUND_ATT_UPDATE);
+        return;
+      }
+
       Logger::log(RECEIVED_ATT_UPDATE);
-      if (data.containsKey(SHARED_KEY)) {
-        data = data[SHARED_KEY];
-      }
-    } else {
-      Logger::log(NOT_FOUND_ATT_UPDATE);
-      return;
-    }
-
-    for (size_t i = 0; i < m_sharedAttributeUpdateCallbacks.size(); i++) {
-      char id_message[detect_size(ATT_CB_ID, i)];
-      snprintf_P(id_message, sizeof(id_message), ATT_CB_ID, i);
-      Logger::log(id_message);
-
-      if (m_sharedAttributeUpdateCallbacks.at(i).m_cb == nullptr) {
-        Logger::log(ATT_CB_IS_NULL);
-        continue;
-      } else if (m_sharedAttributeUpdateCallbacks.at(i).m_att.empty()) {
-        Logger::log(ATT_CB_NO_KEYS);
-        // No specifc keys were subscribed so we call the callback anyway.
-        m_sharedAttributeUpdateCallbacks.at(i).m_cb(data);
-        continue;
+      if (data.containsKey(SHARED_RESPONSE_KEY)) {
+        data = data[SHARED_RESPONSE_KEY];
       }
 
-      bool containsKey = false;
-      const char *requested_att;
-      for (const char *att : m_sharedAttributeUpdateCallbacks.at(i).m_att) {
-        if (att == nullptr) {
-          Logger::log(ATT_IS_NULL);
+      for (const Shared_Attribute_Callback& callback : m_sharedAttributeUpdateCallbacks) {
+#if THINGSBOARD_ENABLE_STL
+        if (callback.Get_Attributes().empty()) {
+#else
+        if (callback.Get_Attributes() == nullptr) {
+#endif // THINGSBOARD_ENABLE_STL
+          Logger::log(ATT_CB_NO_KEYS);
+          // No specifc keys were subscribed so we call the callback anyway.
+          callback.Call_Callback<Logger>(data);
           continue;
         }
-        // Check if the request contained any of our requested keys.
-        containsKey = containsKey || data.containsKey(att);
-        // Break early if the key was requested from this callback.
-        if (containsKey) {
-          char contained_message[JSON_STRING_SIZE(strlen(ATT_IN_ARRAY)) + JSON_STRING_SIZE(strlen(att))];
-          snprintf_P(contained_message, sizeof(contained_message), ATT_IN_ARRAY, att);
-          Logger::log(contained_message);
-          requested_att = att;
-          break;
+
+        bool containsKey = false;
+        const char *requested_att = nullptr;
+
+#if THINGSBOARD_ENABLE_STL
+        for (const char *att : callback.Get_Attributes()) {
+#else
+        String stringToSplit = callback.Get_Attributes();
+        int32_t previousIndex = 0;
+        int32_t currentIndex = 0;
+
+        do {
+          // Find the index of the next comma in the string
+          currentIndex = stringToSplit.indexOf(COMMA, previousIndex);
+        
+          // If no more commas are found, set the currentIndex to the end of the string
+          if (currentIndex == -1) {
+            currentIndex = stringToSplit.length();
+          }
+
+          // Extract the attribute from the original string
+          const char *att = stringToSplit.substring(previousIndex, currentIndex).c_str();
+#endif // THINGSBOARD_ENABLE_STL
+          if (att == nullptr) {
+            Logger::log(ATT_IS_NULL);
+            continue;
+          }
+          // Check if the request contained any of our requested keys.
+          containsKey = containsKey || data.containsKey(att);
+          // Break early if the key was requested from this callback.
+          if (containsKey) {
+            char contained_message[JSON_STRING_SIZE(strlen(ATT_IN_ARRAY)) + JSON_STRING_SIZE(strlen(att))];
+            snprintf_P(contained_message, sizeof(contained_message), ATT_IN_ARRAY, att);
+            Logger::log(contained_message);
+            requested_att = att;
+            break;
+          }
+#if THINGSBOARD_ENABLE_STL
+        }
+#else
+          previousIndex = currentIndex + 1;
+        } while (currentIndex != stringToSplit.length());
+#endif // THINGSBOARD_ENABLE_STL
+
+        // This callback did not request any keys that were in this response,
+        // therefore we continue with the next element in the loop.
+        if (!containsKey || requested_att == nullptr) {
+          Logger::log(ATT_NO_CHANGE);
+          continue;
+        }
+
+        char calling_message[JSON_STRING_SIZE(strlen(CALLING_ATT_CB)) + JSON_STRING_SIZE(strlen(requested_att))];
+        snprintf_P(calling_message, sizeof(calling_message), CALLING_ATT_CB, requested_att);
+        Logger::log(calling_message);
+        // Getting non-existing field from JSON should automatically
+        // set JSONVariant to null
+        callback.Call_Callback<Logger>(data);
+      }
+    }
+
+    /// @brief Process callback that will be called upon client-side or shared attribute request arrival
+    /// and is responsible for handling the payload and calling the appropriate previously subscribed callbacks
+    /// @param topic Previously subscribed topic, we got the response over
+    /// @param payload Payload that was sent over the cloud and received over the given topic
+    /// @param length Total length of the received payload
+    inline void process_attribute_request_message(char *topic, uint8_t *payload, const uint32_t length) {
+#if THINGSBOARD_ENABLE_DYNAMIC
+      // Buffer that we deserialize is writeable and not read only --> zero copy, meaning the size for the data is 0 bytes,
+      // Data structure size depends on the amount of key value pairs received.
+      // See https://arduinojson.org/v6/assistant/ for more information on the needed size for the JsonDocument
+      const uint32_t dataStructureMemoryUsage = JSON_OBJECT_SIZE(getOccurences(reinterpret_cast<char*>(payload), COLON));
+      TBJsonDocument jsonBuffer(dataStructureMemoryUsage);
+#else
+      StaticJsonDocument<JSON_OBJECT_SIZE(MaxFieldsAmt)> jsonBuffer;
+#endif // !THINGSBOARD_ENABLE_DYNAMIC
+
+      // The deserializeJson method we use, can use the zero copy mode because a writeable input was passed,
+      // if that were not the case the needed allocated memory would drastically increase, because the keys would need to be copied as well.
+      // See https://arduinojson.org/v6/doc/deserialization/ for more info on ArduinoJson deserialization
+      const DeserializationError error = deserializeJson(jsonBuffer, payload, length);
+      if (error) {
+        char message[detectSize(UNABLE_TO_DE_SERIALIZE_JSON, error.c_str())];
+        snprintf_P(message, sizeof(message), UNABLE_TO_DE_SERIALIZE_JSON, error.c_str());
+        Logger::log(message);
+        return;
+      }
+      JsonObjectConst data = jsonBuffer.template as<JsonObjectConst>();
+
+      // Remove the not needed part of the topic
+      const size_t index = strlen(ATTRIBUTE_RESPONSE_TOPIC) + 1U;
+#if THINGSBOARD_ENABLE_STL
+      std::string response = topic;
+      response = response.substr(index, response.length() - index);
+#else
+      String response = topic;
+      response = response.substring(index);
+#endif // THINGSBOARD_ENABLE_STL
+
+      // Convert the remaining text to an integer
+      const uint32_t response_id = atoi(response.c_str());
+
+      char message[detectSize(CALLING_REQUEST_CB, response_id)];
+      for (size_t i = 0; i < m_attributeRequestCallbacks.size(); i++) {
+        const Attribute_Request_Callback& callback = m_attributeRequestCallbacks.at(i);
+
+        if (callback.Get_Request_ID() != response_id) {
+          continue;
+        }
+        const char *attributeResponseKey = callback.Get_Attribute_Key();
+        if (attributeResponseKey == nullptr) {
+          Logger::log(ATT_KEY_NOT_FOUND);
+          goto delete_callback;
+        }
+        else if (!data) {
+          Logger::log(ATT_KEY_NOT_FOUND);
+          goto delete_callback;
+        }
+
+        Logger::log(RECEIVED_ATT);
+        if (data.containsKey(attributeResponseKey)) {
+          data = data[attributeResponseKey];
+        }
+
+        snprintf_P(message, sizeof(message), CALLING_REQUEST_CB, response_id);
+        Logger::log(message);
+        // Getting non-existing field from JSON should automatically
+        // set JSONVariant to null
+        callback.Call_Callback<Logger>(data);
+
+        delete_callback:
+#if THINGSBOARD_ENABLE_STL
+        // Delete callback because the changes have been requested and the callback is no longer needed
+        m_attributeRequestCallbacks.erase(std::next(m_attributeRequestCallbacks.begin(), i));
+#else
+        // Delete callback because the changes have been requested and the callback is no longer needed
+        m_attributeRequestCallbacks.erase(i);
+#endif // THINGSBOARD_ENABLE_STL
+        break;
+      }
+
+      // Unsubscribe from the shared attribute request topic,
+      // if we are not waiting for any further responses with shared attributes from the server.
+      // Will be resubscribed if another request is sent anyway
+      if (m_attributeRequestCallbacks.empty()) {
+        Attributes_Request_Unsubscribe();
+      }
+    }
+
+    /// @brief Process callback that will be called upon provision response arrival
+    /// and is responsible for handling the payload and calling the appropriate previously subscribed callback
+    /// @param topic Previously subscribed topic, we got the response over
+    /// @param payload Payload that was sent over the cloud and received over the given topic
+    /// @param length Total length of the received payload
+    inline void process_provisioning_response(char *topic, uint8_t *payload, const uint32_t length) {
+      Logger::log(PROV_RESPONSE);
+
+#if THINGSBOARD_ENABLE_DYNAMIC
+      // Buffer that we deserialize is writeable and not read only --> zero copy, meaning the size for the data is 0 bytes,
+      // Data structure size depends on the amount of key value pairs received.
+      // See https://arduinojson.org/v6/assistant/ for more information on the needed size for the JsonDocument
+      const uint32_t dataStructureMemoryUsage = JSON_OBJECT_SIZE(getOccurences(reinterpret_cast<char*>(payload), COLON));
+      TBJsonDocument jsonBuffer(dataStructureMemoryUsage);
+#else
+      StaticJsonDocument<JSON_OBJECT_SIZE(MaxFieldsAmt)> jsonBuffer;
+#endif // !THINGSBOARD_ENABLE_DYNAMIC
+
+      // The deserializeJson method we use, can use the zero copy mode because a writeable input was passed,
+      // if that were not the case the needed allocated memory would drastically increase, because the keys would need to be copied as well.
+      // See https://arduinojson.org/v6/doc/deserialization/ for more info on ArduinoJson deserialization
+      const DeserializationError error = deserializeJson(jsonBuffer, payload, length);
+      if (error) {
+        char message[detectSize(UNABLE_TO_DE_SERIALIZE_JSON, error.c_str())];
+        snprintf_P(message, sizeof(message), UNABLE_TO_DE_SERIALIZE_JSON, error.c_str());
+        Logger::log(message);
+        return;
+      }
+      const JsonObjectConst data = jsonBuffer.template as<JsonObjectConst>();
+
+      Logger::log(RECEIVED_PROV_RESPONSE);
+      m_provisionCallback.Call_Callback<Logger>(data);
+
+      // Unsubscribe from the provision response topic,
+      // Will be resubscribed if another request is sent anyway
+      Provision_Unsubscribe();
+    }
+
+    /// @brief Attempts to send aggregated attribute or telemetry data
+    /// @param data Array containing all the data we want to send
+    /// @param data_count Amount of data entries in the array that we want to send
+    /// @param telemetry Whether the data we want to send should be sent as an attribute or telemetry data value
+    /// @return Whether sending the data was successful or not
+    inline bool sendDataArray(const Telemetry *data, size_t data_count, bool telemetry = true) {
+#if THINGSBOARD_ENABLE_DYNAMIC
+      // String are const char* and therefore stored as a pointer --> zero copy, meaning the size for the strings is 0 bytes,
+      // Data structure size depends on the amount of key value pairs passed.
+      // See https://arduinojson.org/v6/assistant/ for more information on the needed size for the JsonDocument
+      const uint32_t dataStructureMemoryUsage = JSON_OBJECT_SIZE(data_count);
+      TBJsonDocument jsonBuffer(dataStructureMemoryUsage);
+#else
+      StaticJsonDocument<JSON_OBJECT_SIZE(MaxFieldsAmt)> jsonBuffer;
+#endif // !THINGSBOARD_ENABLE_DYNAMIC
+
+      const JsonVariant object = jsonBuffer.template to<JsonVariant>();
+
+      for (size_t i = 0; i < data_count; i++) {
+        if (!data[i].SerializeKeyValue(object)) {
+          Logger::log(UNABLE_TO_SERIALIZE);
+          return false;
         }
       }
 
-      // This callback did not request any keys that were in this response,
-      // therefore we continue with the next element in the loop.
-      if (!containsKey || requested_att == nullptr) {
-        Logger::log(ATT_NO_CHANGE);
-        continue;
-      }
-
-      char calling_message[JSON_STRING_SIZE(strlen(CALLING_ATT_CB)) + JSON_STRING_SIZE(strlen(requested_att))];
-      snprintf_P(calling_message, sizeof(calling_message), CALLING_ATT_CB, requested_att);
-      Logger::log(calling_message);
-      // Getting non-existing field from JSON should automatically
-      // set JSONVariant to null
-      m_sharedAttributeUpdateCallbacks.at(i).m_cb(data);
-    }
-  }
-
-  // Processes shared attribute request message
-  inline void process_shared_attribute_request_message(char *topic, uint8_t *payload, uint32_t length) {
-    StaticJsonDocument<JSON_OBJECT_SIZE(MaxFieldsAmt)> jsonBuffer;
-    DeserializationError error = deserializeJson(jsonBuffer, payload, length);
-    if (error) {
-      Logger::log(UNABLE_TO_DE_SERIALIZE_ATT_REQUEST);
-      return;
-    }
-    JsonObject data = jsonBuffer.template as<JsonObject>();
-
-    if (data && (data.size() >= 1)) {
-      Logger::log(RECEIVED_ATT);
-      if (data.containsKey(SHARED_KEY)) {
-        data = data[SHARED_KEY];
-      }
-    } else {
-      Logger::log(ATT_KEY_NOT_FOUND);
-      return;
+      return telemetry ? sendTelemetryJson(object, JSON_STRING_SIZE(measureJson(object))) : sendAttributeJSON(object, JSON_STRING_SIZE(measureJson(object)));
     }
 
-    std::string response = topic;
-    // Remove the not needed part of the topic.
-    size_t index = strlen(ATTRIBUTE_RESPONSE_TOPIC) + 1U;
-    response = response.substr(index, response.length() - index);
-    // convert the remaining text to an integer
-    uint32_t response_id = atoi(response.c_str());
+    PubSubClient m_client; // PubSub MQTT client instance.
+    uint32_t m_maxStack; // Maximum stack size we allocate at once on the stack.
 
-    for (size_t i = 0; i < m_sharedAttributeRequestCallbacks.size(); i++) {
-      if (m_sharedAttributeRequestCallbacks.at(i).m_cb == nullptr) {
-        Logger::log(ATT_REQUEST_CB_IS_NULL);
-        continue;
-      } else if (m_sharedAttributeRequestCallbacks.at(i).m_request_id != response_id) {
-        continue;
-      }
+#if THINGSBOARD_ENABLE_STL
+    // Vectors hold copy of the actual passed data, this is to ensure they stay valid,
+    // even if the user only temporarily created the object before the method was called.
+    // This can be done because all Callback methods mostly consists of pointers to actual object so copying them
+    // does not require a huge memory overhead and is acceptable especially in comparsion to possible problems that could
+    // arise if references were used and the end user does not take care to ensure the Callbacks live on for the entirety
+    // of its usage, which will lead to dangling references and undefined behaviour
+    std::vector<RPC_Callback> m_rpcCallbacks; // Server side RPC callbacks vector
+    std::vector<RPC_Request_Callback> m_rpcRequestCallbacks; // Client side RPC callbacks vector
+    std::vector<Shared_Attribute_Callback> m_sharedAttributeUpdateCallbacks; // Shared attribute update callbacks vector
+    std::vector<Attribute_Request_Callback> m_attributeRequestCallbacks; // Client-side or shared attribute request callbacks vector
+#else
+    Vector<RPC_Callback> m_rpcCallbacks; // Server side RPC callbacks vector, replacement for non C++ STL boards
+    Vector<RPC_Request_Callback> m_rpcRequestCallbacks; // Client side RPC callbacks vector, replacement for non C++ STL boards
+    Vector<Shared_Attribute_Callback> m_sharedAttributeUpdateCallbacks; // Shared attribute update callbacks vector, replacement for non C++ STL boards
+    Vector<Attribute_Request_Callback> m_attributeRequestCallbacks; // Client-side or shared attribute request callback vector, replacement for non C++ STL boards
+#endif
 
-      char message[detect_size(CALLING_REQUEST_ATT_CB, response_id)];
-      snprintf_P(message, sizeof(message), CALLING_REQUEST_ATT_CB, response_id);
+    Provision_Callback m_provisionCallback; // Provision response callback
+    uint32_t m_requestId; // Allows nearly 4.3 million requests before wrapping back to 0.
+    bool m_qos; // Whether QoS level 1 should be enabled or disabled (Resends the packet until the message was received and a PUBACK packet was returned).
+
+#if THINGSBOARD_ENABLE_OTA
+
+    bool m_fwState;
+    const OTA_Update_Callback* m_fwCallback;
+    // Allows for a binary size of up to theoretically 4 GB.
+    uint32_t m_fwSize;
+    mbedtls_md_type_t m_fwChecksumAlgorithm;
+    std::string m_fwAlgorithm;
+    std::string m_fwChecksum;
+    const std::vector<const char *> m_fwSharedKeys;
+    const Attribute_Request_Callback m_fwRequestCallback;
+    const Shared_Attribute_Callback m_fwUpdateCallback;
+    uint16_t m_fwChunkReceive;
+
+#endif // THINGSBOARD_ENABLE_OTA
+
+    /// @brief MQTT callback that will be called if a publish message is received from the server
+    /// @param topic Previously subscribed topic, we got the response over
+    /// @param payload Payload that was sent over the cloud and received over the given topic
+    /// @param length Total length of the received payload
+    inline void onMQTTMessage(char *topic, uint8_t *payload, uint32_t length) {
+      char message[JSON_STRING_SIZE(strlen(CB_ON_MESSAGE)) + JSON_STRING_SIZE(strlen(topic))];
+      snprintf_P(message, sizeof(message), CB_ON_MESSAGE, topic);
       Logger::log(message);
-      // Getting non-existing field from JSON should automatically
-      // set JSONVariant to null
-      m_sharedAttributeRequestCallbacks.at(i).m_cb(data);
-      // Delete callback because the changes have been requested and the callback is no longer needed.
-      m_sharedAttributeRequestCallbacks.erase(std::next(m_sharedAttributeRequestCallbacks.begin(), i));
-    }
-  }
 
-  // Processes provisioning response
-#if defined(ESP8266) || defined(ESP32) || defined(ARDUINO_AVR_MEGA)
-  inline void process_provisioning_response(char *topic, uint8_t *payload, uint32_t length) {
-    Logger::log(PROV_RESPONSE);
-
-    StaticJsonDocument<JSON_OBJECT_SIZE(MaxFieldsAmt)> jsonBuffer;
-    DeserializationError error = deserializeJson(jsonBuffer, payload, length);
-    if (error) {
-      Logger::log(UNABLE_TO_DE_SERIALIZE_PROV_RESPONSE);
-      return;
-    }
-
-    const JsonObject &data = jsonBuffer.template as<JsonObject>();
-
-    Logger::log(RECEIVED_PROV_RESPONSE);
-
-    if (strncmp_P(STATUS_SUCCESS, data[PROV_STATUS_KEY], strlen(STATUS_SUCCESS)) == 0 && strncmp_P(PROV_CRED_TYPE_VALUE, data[PROV_CRED_TYPE_KEY], strlen(PROV_CRED_TYPE_VALUE)) == 0) {
-      Logger::log(X509_NOT_SUPPORTED);
-      return;
-    }
-
-    if (m_provisionCallback.m_cb) {
-      m_provisionCallback.m_cb(data);
-    }
-  }
-#endif
-
-  // Sends array of attributes or telemetry to ThingsBoard
-  inline const bool sendDataArray(const Telemetry *data, size_t data_count, bool telemetry = true) {
-    StaticJsonDocument<JSON_OBJECT_SIZE(MaxFieldsAmt)> jsonBuffer;
-    JsonVariant object = jsonBuffer.template to<JsonVariant>();
-
-    for (size_t i = 0; i < data_count; ++i) {
-      if (data[i].serializeKeyval(object) == false) {
-        Logger::log(UNABLE_TO_SERIALIZE);
-        return false;
-      }
-    }
-
-    return telemetry ? sendTelemetryJson(object, JSON_STRING_SIZE(measureJson(object))) : sendAttributeJSON(object, JSON_STRING_SIZE(measureJson(object)));
-  }
-
-  PubSubClient m_client;                                                             // PubSub MQTT client instance.
-  std::vector<RPC_Callback> m_rpcCallbacks;                                          // RPC callbacks array
-  std::vector<Shared_Attribute_Callback> m_sharedAttributeUpdateCallbacks;           // Shared attribute update callbacks array
-  std::vector<Shared_Attribute_Request_Callback> m_sharedAttributeRequestCallbacks;  // Shared attribute request callbacks array
-
-#if defined(ESP8266) || defined(ESP32) || defined(ARDUINO_AVR_MEGA)
-  Provision_Callback m_provisionCallback;  // Provision response callback
-#endif
-  uint32_t m_requestId;  // Allows nearly 4.3 million requests before wrapping back to 0.
-  bool m_qos;            // Wheter QoS level 1 should be enabled or disabled (Resends the packet until the message was received and a PUBACK packet was returned).
-
-#if defined(ESP8266) || defined(ESP32)
-  // For Firmware Update
-  const char *m_currFwTitle;
-  const char *m_currFwVersion;
-  const char *m_fwState;
-  unsigned int m_fwSize;
-  String m_fwChecksum;
-  std::function<void(const bool &)> m_fwUpdatedCallback;
-  Shared_Attribute_Request_Callback m_fwResponseCallback;
-  uint16_t m_fwChunkReceive;
-#endif
-
-  // The callback for when a PUBLISH message is received from the server.
-  inline void on_message(char *topic, uint8_t *payload, uint32_t length) {
-    char message[JSON_STRING_SIZE(strlen(CB_ON_MESSAGE)) + JSON_STRING_SIZE(strlen(topic))];
-    snprintf_P(message, sizeof(message), CB_ON_MESSAGE, topic);
-    Logger::log(message);
-
-    if (strncmp_P(RPC_TOPIC, topic, strlen(RPC_TOPIC)) == 0) {
-      process_rpc_message(topic, payload, length);
-    } else if (strncmp_P(ATTRIBUTE_RESPONSE_TOPIC, topic, strlen(ATTRIBUTE_RESPONSE_TOPIC)) == 0) {
-      process_shared_attribute_request_message(topic, payload, length);
-    } else if (strncmp_P(ATTRIBUTE_TOPIC, topic, strlen(ATTRIBUTE_TOPIC)) == 0) {
-      process_shared_attribute_update_message(topic, payload, length);
-    } else {
-      if (strncmp_P(PROV_RESPONSE_TOPIC, topic, strlen(PROV_RESPONSE_TOPIC)) == 0) {
-#if defined(ESP8266) || defined(ESP32) || defined(ARDUINO_AVR_MEGA)
+      if (strncmp_P(RPC_RESPONSE_TOPIC, topic, strlen(RPC_RESPONSE_TOPIC)) == 0) {
+        process_rpc_request_message(topic, payload, length);
+      } else if (strncmp_P(RPC_REQUEST_TOPIC, topic, strlen(RPC_REQUEST_TOPIC)) == 0) {
+        process_rpc_message(topic, payload, length);
+      } else if (strncmp_P(ATTRIBUTE_RESPONSE_TOPIC, topic, strlen(ATTRIBUTE_RESPONSE_TOPIC)) == 0) {
+        process_attribute_request_message(topic, payload, length);
+      } else if (strncmp_P(ATTRIBUTE_TOPIC, topic, strlen(ATTRIBUTE_TOPIC)) == 0) {
+        process_shared_attribute_update_message(topic, payload, length);
+      } else if (strncmp_P(PROV_RESPONSE_TOPIC, topic, strlen(PROV_RESPONSE_TOPIC)) == 0) {
         process_provisioning_response(topic, payload, length);
-#endif
       } else if (strncmp_P(FIRMWARE_RESPONSE_TOPIC, topic, strlen(FIRMWARE_RESPONSE_TOPIC)) == 0) {
-#if defined(ESP8266) || defined(ESP32)
+#if THINGSBOARD_ENABLE_OTA
         process_firmware_response(topic, payload, length);
-#endif
+#endif // THINGSBOARD_ENABLE_OTA
       }
     }
-  }
+
+#if !THINGSBOARD_ENABLE_STL
+
+    // PubSub client cannot call a method when message arrives on subscribed topic.
+    // Only free-standing function is allowed.
+    // To be able to forward event to an instance, rather than to a function, this pointer exists.
+    static ThingsBoardSized *m_subscribedInstance;
+
+    static void onStaticMQTTMessage(char *topic, uint8_t *payload, unsigned int length) {
+      if (m_subscribedInstance == nullptr) {
+        return;
+      }
+      m_subscribedInstance->onMQTTMessage(topic, payload, length);
+    }
+
+#endif // !THINGSBOARD_ENABLE_STL
+
 };
 
-#if !defined(ESP8266) && !defined(ESP32)
+#if !THINGSBOARD_ENABLE_STL && !THINGSBOARD_ENABLE_DYNAMIC
 
-// ThingsBoard HTTP client class
-template <size_t PayloadSize = Default_Payload,
-          size_t MaxFieldsAmt = Default_Fields_Amt,
-          typename Logger = ThingsBoardDefaultLogger>
-class ThingsBoardHttpSized {
- public:
-  // Initializes ThingsBoardHttpSized class with network client.
-  inline ThingsBoardHttpSized(Client &client, const char *access_token,
-                              const char *host, int port = 80)
-      : m_client(client, host, port), m_host(host), m_token(access_token), m_port(port) {
-    // Nothing to do.
-  }
+template<size_t MaxFieldsAmt, typename Logger>
+ThingsBoardSized<MaxFieldsAmt, Logger> *ThingsBoardSized<MaxFieldsAmt, Logger>::m_subscribedInstance = nullptr;
 
-  // Destroys ThingsBoardHttpSized class with network client.
-  inline ~ThingsBoardHttpSized() {
-    // Nothing to do.
-  }
+#elif !THINGSBOARD_ENABLE_STL && THINGSBOARD_ENABLE_DYNAMIC
 
-  //----------------------------------------------------------------------------
-  // Telemetry API
-
-  // Sends integer telemetry data to the ThingsBoard, returns true on success.
-  inline const bool sendTelemetryInt(const char *key, int value) {
-    return sendKeyval(key, value);
-  }
-
-  // Sends boolean telemetry data to the ThingsBoard, returns true on success.
-  inline const bool sendTelemetryBool(const char *key, bool value) {
-    return sendKeyval(key, value);
-  }
-
-  // Sends float telemetry data to the ThingsBoard, returns true on success.
-  inline const bool sendTelemetryFloat(const char *key, float value) {
-    return sendKeyval(key, value);
-  }
-
-  // Sends string telemetry data to the ThingsBoard, returns true on success.
-  inline const bool sendTelemetryString(const char *key, const char *value) {
-    return sendKeyval(key, value);
-  }
-
-  // Sends aggregated telemetry to the ThingsBoard.
-  inline const bool sendTelemetry(const Telemetry *data, size_t data_count) {
-    return sendDataArray(data, data_count);
-  }
-
-  // Sends custom JSON telemetry string to the ThingsBoard, using HTTP.
-  inline const bool sendTelemetryJson(const char *json) {
-    if (!json || !m_token) {
-      return false;
-    }
-
-    if (!m_client.connected()) {
-      if (!m_client.connect(m_host, m_port)) {
-        Logger::log(CONNECT_FAILED);
-        return false;
-      }
-    }
-
-    bool rc = true;
-
-    char path[JSON_STRING_SIZE(strlen(HTTP_TELEMETRY_TOPIC)) + JSON_STRING_SIZE(strlen(m_token))];
-    snprintf_P(path, sizeof(path), HTTP_TELEMETRY_TOPIC, m_token);
-    if (!m_client.post(path, HTTP_POST_PATH, json) ||
-        (m_client.responseStatusCode() != HTTP_SUCCESS)) {
-      rc = false;
-    }
-
-    m_client.stop();
-    return rc;
-  }
-
-  //----------------------------------------------------------------------------
-  // Attribute API
-
-  // Sends integer attribute with given name and value.
-  inline const bool sendAttributeInt(const char *attrName, int value) {
-    return sendKeyval(attrName, value, false);
-  }
-
-  // Sends boolean attribute with given name and value.
-  inline const bool sendAttributeBool(const char *attrName, bool value) {
-    return sendKeyval(attrName, value, false);
-  }
-
-  // Sends float attribute with given name and value.
-  inline const bool sendAttributeFloat(const char *attrName, float value) {
-    return sendKeyval(attrName, value, false);
-  }
-
-  // Sends string attribute with given name and value.
-  inline const bool sendAttributeString(const char *attrName, const char *value) {
-    return sendKeyval(attrName, value, false);
-  }
-
-  // Sends aggregated attributes to the ThingsBoard.
-  inline const bool sendAttributes(const Attribute *data, size_t data_count) {
-    return sendDataArray(data, data_count, false);
-  }
-
-  // Sends custom JSON with attributes to the ThingsBoard, using HTTP.
-  inline const bool sendAttributeJSON(const char *json) {
-    if (!json || !m_token) {
-      return false;
-    }
-
-    if (!m_client.connected()) {
-      if (!m_client.connect(m_host, m_port)) {
-        Logger::log(CONNECT_FAILED);
-        return false;
-      }
-    }
-
-    bool rc = true;
-
-    char path[JSON_STRING_SIZE(strlen(HTTP_ATTRIBUTES_TOPIC)) + JSON_STRING_SIZE(strlen(m_token))];
-    snprintf_P(path, sizeof(path), HTTP_ATTRIBUTES_TOPIC, m_token);
-    if (!m_client.post(path, HTTP_POST_PATH, json) || (m_client.responseStatusCode() != HTTP_SUCCESS)) {
-      rc = false;
-    }
-
-    m_client.stop();
-    return rc;
-  }
-
- private:
-  // Sends array of attributes or telemetry to ThingsBoard
-  inline const bool sendDataArray(const Telemetry *data, size_t data_count, bool telemetry = true) {
-    StaticJsonDocument<JSON_OBJECT_SIZE(MaxFieldsAmt)> jsonBuffer;
-    JsonVariant object = jsonBuffer.template to<JsonVariant>();
-
-    for (size_t i = 0; i < data_count; ++i) {
-      if (data[i].serializeKeyval(object) == false) {
-        Logger::log(UNABLE_TO_SERIALIZE);
-        return false;
-      }
-    }
-
-    return telemetry ? sendTelemetryJson(object, JSON_STRING_SIZE(measureJson(object))) : sendAttributeJSON(object, JSON_STRING_SIZE(measureJson(object)));
-  }
-
-  // Sends single key-value in a generic way.
-  template <typename T>
-  inline const bool sendKeyval(const char *key, T value, bool telemetry = true) {
-    Telemetry t(key, value);
-
-    StaticJsonDocument<JSON_OBJECT_SIZE(1)> jsonBuffer;
-    JsonVariant object = jsonBuffer.template to<JsonVariant>();
-    if (t.serializeKeyval(object) == false) {
-      Logger::log(UNABLE_TO_SERIALIZE);
-      return false;
-    }
-
-    return telemetry ? sendTelemetryJson(object, JSON_STRING_SIZE(measureJson(object))) : sendAttributeJSON(object, JSON_STRING_SIZE(measureJson(object)));
-  }
-
-  HttpClient m_client;
-  const char *m_host;
-  int m_port;
-  const char *m_token;
-};
-
-using ThingsBoardHttp = ThingsBoardHttpSized<>;
+template<typename Logger>
+ThingsBoardSized<Logger> *ThingsBoardSized<Logger>::m_subscribedInstance = nullptr;
 
 #endif
 
 using ThingsBoard = ThingsBoardSized<>;
 
-#endif  // ThingsBoard_h
+#endif // ThingsBoard_h

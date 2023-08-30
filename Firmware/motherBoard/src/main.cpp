@@ -144,13 +144,6 @@ void GPRS_Task(void *pvParameters) {
   }
 }
 
-void GPRS_Task_check(void *pvParameters) {
-  for (;;) {
-    log("[GPRS] -> Connection is " + String(GPRS_CheckConnection()));
-    vTaskDelay(10000 / portTICK_PERIOD_MS);
-  }
-}
-
 void Backlight_Task(void *pvParameters) {
   for (;;) {
     backlightHandler();
@@ -201,7 +194,6 @@ void setup() {
   log("Creating GPRS task ...\n");
   while (xTaskCreatePinnedToCore(GPRS_Task, (const char *)"GPRS", 8192, NULL, 1, NULL, CORE_ID_FREERTOS) != pdPASS)
     ;
-  //while (xTaskCreatePinnedToCore(GPRS_Task_check, (const char *)"GPRS_check", 8192, NULL, 1, NULL, CORE_ID_FREERTOS) != pdPASS);
   log("GPRS task successfully created!\n");
 
   log("Creating OTA task ...\n");
