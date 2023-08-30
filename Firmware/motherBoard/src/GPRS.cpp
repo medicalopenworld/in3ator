@@ -36,7 +36,8 @@ TinyGsm modem(modemSerial);
 TinyGsmClient client(modem);
 
 // Initialize ThingsBoard instance
-//ThingsBoardSized<THINGSBOARD_BUFFER_SIZE, THINGSBOARD_FIELDS_AMOUNT> tb(client);
+// ThingsBoardSized<THINGSBOARD_BUFFER_SIZE, THINGSBOARD_FIELDS_AMOUNT>
+// tb(client);
 ThingsBoard tb(client, MAX_MESSAGE_SIZE);
 
 // Initialize ThingsBoard client provision instance
@@ -52,8 +53,10 @@ extern in3ator_parameters in3;
 GPRSstruct GPRS;
 Credentials credentials;
 
-void progressCallback(const uint32_t& currentChunk, const uint32_t& totalChuncks) {
-  Serial.printf("Progress %.2f%%\n", static_cast<float>(currentChunk * 100U) / totalChuncks);
+void progressCallback(const uint32_t &currentChunk,
+                      const uint32_t &totalChuncks) {
+  Serial.printf("Progress %.2f%%\n",
+                static_cast<float>(currentChunk * 100U) / totalChuncks);
 }
 
 void updatedCallback(const bool &success) {
@@ -65,7 +68,10 @@ void updatedCallback(const bool &success) {
   }
 }
 
-const OTA_Update_Callback OTAcallback(&progressCallback, &updatedCallback, CURRENT_FIRMWARE_TITLE, FWversion, FIRMWARE_FAILURE_RETRIES, FIRMWARE_PACKET_SIZE);
+const OTA_Update_Callback OTAcallback(&progressCallback, &updatedCallback,
+                                      CURRENT_FIRMWARE_TITLE, FWversion,
+                                      FIRMWARE_FAILURE_RETRIES,
+                                      FIRMWARE_PACKET_SIZE);
 
 void clearGPRSBuffer() {
   memset(GPRS.buffer, 0, sizeof(GPRS.buffer));
@@ -100,7 +106,8 @@ bool GPRSCheckNewEvent() {
   if (isGPRSConnected) {
     serverConnectionStatus = GPRS.serverConnectionStatus;
   }
-  if (serverConnectionStatus != GPRS.lastServerConnectionStatus || isGPRSConnected != GPRS.lastGPRSConnectionStatus) {
+  if (serverConnectionStatus != GPRS.lastServerConnectionStatus ||
+      isGPRSConnected != GPRS.lastGPRSConnectionStatus) {
     retVal = true;
   }
   GPRS.lastGPRSConnectionStatus = isGPRSConnected;
@@ -108,13 +115,9 @@ bool GPRSCheckNewEvent() {
   return (retVal);
 }
 
-bool GPRSIsAttached() {
-  return (GPRS.post);
-}
+bool GPRSIsAttached() { return (GPRS.post); }
 
-bool GPRSIsConnectedToServer() {
-  return (GPRS.serverConnectionStatus);
-}
+bool GPRSIsConnectedToServer() { return (GPRS.serverConnectionStatus); }
 
 void GPRS_get_triangulation_location() {
   int year = 0;
@@ -123,14 +126,11 @@ void GPRS_get_triangulation_location() {
   int hour = 0;
   int min = 0;
   int sec = 0;
-  modem.getGsmLocation(&GPRS.longitud, &GPRS.latitud, &GPRS.accuracy, &year, &month, &day, &hour,
-                       &min, &sec);
+  modem.getGsmLocation(&GPRS.longitud, &GPRS.latitud, &GPRS.accuracy, &year,
+                       &month, &day, &hour, &min, &sec);
 }
 
 void GPRS_get_SIM_info() {
-
-
-
   GPRS.IMEI = modem.getIMEI();
 
   GPRS.IMSI = modem.getIMSI();
@@ -138,7 +138,6 @@ void GPRS_get_SIM_info() {
   GPRS.COP = modem.getOperator();
 
   GPRS.IP = modem.localIP();
-
 
   log("[GPRS] -> IMEI is: " + GPRS.IMEI);
   log("[GPRS] -> IMSI is: " + GPRS.IMSI);
@@ -154,7 +153,8 @@ void GPRSStatusHandler() {
   if (GPRS.process) {
     if (GPRS.powerUp || GPRS.connect) {
       if (millis() - GPRS.processTime > GPRS_TIMEOUT) {
-        log("[GPRS] -> timeOut: " + String(GPRS.powerUp) + String(GPRS.connect) + String(GPRS.post) + String(GPRS.process));
+        log("[GPRS] -> timeOut: " + String(GPRS.powerUp) +
+            String(GPRS.connect) + String(GPRS.post) + String(GPRS.process));
         GPRS.timeOut = false;
         GPRS.process = false;
         GPRS.post = false;
@@ -211,7 +211,7 @@ void GPRSStablishConnection() {
   switch (GPRS.process) {
     case 0:
       GPRS.CCID = modem.getSimCCID();
-        GPRS.CCID.remove(GPRS.CCID.length() - 1);
+      GPRS.CCID.remove(GPRS.CCID.length() - 1);
       log("[GPRS] -> CCID is: " + GPRS.CCID);
       log("[GPRS] -> Stablishing connection");
       GPRS.processTime = millis();
@@ -266,8 +266,7 @@ void GPRSSetPostPeriod() {
       GPRS.sendPeriod = phototherapyGPRSPostPeriod;
     } else if (in3.phototherapy) {
       GPRS.sendPeriod = phototherapyGPRSPostPeriod;
-    }
-    else {
+    } else {
       GPRS.sendPeriod = standByGPRSPostPeriod;
     }
   } else {
@@ -277,7 +276,7 @@ void GPRSSetPostPeriod() {
 
 void GPRSProvisionResponse(const Provision_Data &data) {
   log("[GPRS] -> Received device provision response");
-    int jsonSize = JSON_STRING_SIZE(measureJson(data));
+  int jsonSize = JSON_STRING_SIZE(measureJson(data));
 
   char buffer[jsonSize];
   serializeJson(data, buffer, jsonSize);
@@ -288,7 +287,8 @@ void GPRSProvisionResponse(const Provision_Data &data) {
     return;
   }
 
-  if (strncmp(data[CREDENTIALS_TYPE], ACCESS_TOKEN_CRED_TYPE, strlen(ACCESS_TOKEN_CRED_TYPE)) == 0) {
+  if (strncmp(data[CREDENTIALS_TYPE], ACCESS_TOKEN_CRED_TYPE,
+              strlen(ACCESS_TOKEN_CRED_TYPE)) == 0) {
     credentials.client_id = "";
     credentials.username = data[CREDENTIALS_VALUE].as<std::string>();
     credentials.password = "";
@@ -298,8 +298,8 @@ void GPRSProvisionResponse(const Provision_Data &data) {
     EEPROM.write(EEPROM_THINGSBOARD_PROVISIONED, GPRS.provisioned);
     EEPROM.commit();
     log("[GPRS] -> Device provisioned successfully");
-  }
-    else if (strncmp(data[CREDENTIALS_TYPE], MQTT_BASIC_CRED_TYPE, strlen(MQTT_BASIC_CRED_TYPE)) == 0) {
+  } else if (strncmp(data[CREDENTIALS_TYPE], MQTT_BASIC_CRED_TYPE,
+                     strlen(MQTT_BASIC_CRED_TYPE)) == 0) {
     auto credentials_value = data[CREDENTIALS_VALUE].as<JsonObjectConst>();
     credentials.client_id = credentials_value[CLIENT_ID].as<std::string>();
     credentials.username = credentials_value[CLIENT_USERNAME].as<std::string>();
@@ -310,8 +310,7 @@ void GPRSProvisionResponse(const Provision_Data &data) {
     EEPROM.write(EEPROM_THINGSBOARD_PROVISIONED, GPRS.provisioned);
     EEPROM.commit();
     log("[GPRS] -> Device provisioned successfully");
-}
-  else{
+  } else {
     log("[GPRS] -> Unexpected provision credentialsType");
     return;
   }
@@ -324,15 +323,20 @@ void GPRSProvisionResponse(const Provision_Data &data) {
 void TBProvision() {
   if (!tb_provision.connected()) {
     // Connect to the ThingsBoard
-    log("[GPRS] -> Sending provision request to: " + String(THINGSBOARD_SERVER));
-    if (!tb_provision.connect(THINGSBOARD_SERVER, "provision", THINGSBOARD_PORT)) {
+    log("[GPRS] -> Sending provision request to: " +
+        String(THINGSBOARD_SERVER));
+    if (!tb_provision.connect(THINGSBOARD_SERVER, "provision",
+                              THINGSBOARD_PORT)) {
       Serial.println("Failed to connect");
       return;
     }
-      const Provision_Callback provisionCallback(Access_Token(), &GPRSProvisionResponse, PROVISION_DEVICE_KEY, PROVISION_DEVICE_SECRET, GPRS.CCID.c_str());
-      GPRS.provision_request_sent = tb_provision.Provision_Request(provisionCallback);
+    const Provision_Callback provisionCallback(
+        Access_Token(), &GPRSProvisionResponse, PROVISION_DEVICE_KEY,
+        PROVISION_DEVICE_SECRET, GPRS.CCID.c_str());
+    GPRS.provision_request_sent =
+        tb_provision.Provision_Request(provisionCallback);
   } else {
-      GPRS.provision_request_sent = true;
+    GPRS.provision_request_sent = true;
     if (GPRS.provision_request_processed) {
       Serial.println("Provision request was sent!");
     } else {
@@ -341,7 +345,8 @@ void TBProvision() {
   }
 }
 
-void addIntVariableToTelemetryJSON(JsonObject &json, const char *key, const int &value) {
+void addIntVariableToTelemetryJSON(JsonObject &json, const char *key,
+                                   const int &value) {
   if (value != 0) {
     json[key] = value;
   }
@@ -363,13 +368,22 @@ void addConfigTelemetriesToGPRSJSON() {
   addVariableToTelemetryGPRSJSON[APN_KEY] = GPRS.APN.c_str();
   addVariableToTelemetryGPRSJSON[COP_KEY] = GPRS.COP.c_str();
 
-  addVariableToTelemetryGPRSJSON[SYS_CURR_STANDBY_TEST_KEY] = roundSignificantDigits(in3.system_current_standby_test, TELEMETRIES_DECIMALS);
-  addVariableToTelemetryGPRSJSON[HEATER_CURR_TEST_KEY] = roundSignificantDigits(in3.heater_current_test, TELEMETRIES_DECIMALS);
-  addVariableToTelemetryGPRSJSON[FAN_CURR_TEST_KEY] = roundSignificantDigits(in3.fan_current_test, TELEMETRIES_DECIMALS);
-  addVariableToTelemetryGPRSJSON[PHOTOTHERAPY_CURR_KEY] = roundSignificantDigits(in3.phototherapy_current_test, TELEMETRIES_DECIMALS);
-  addVariableToTelemetryGPRSJSON[HUMIDIFIER_CURR_KEY] = roundSignificantDigits(in3.humidifier_current_test, TELEMETRIES_DECIMALS);
-  addVariableToTelemetryGPRSJSON[DISPLAY_CURR_TEST_KEY] = roundSignificantDigits(in3.display_current_test, TELEMETRIES_DECIMALS);
-  addVariableToTelemetryGPRSJSON[BUZZER_CURR_TEST_KEY] = roundSignificantDigits(in3.buzzer_current_test, TELEMETRIES_DECIMALS);
+  addVariableToTelemetryGPRSJSON[SYS_CURR_STANDBY_TEST_KEY] =
+      roundSignificantDigits(in3.system_current_standby_test,
+                             TELEMETRIES_DECIMALS);
+  addVariableToTelemetryGPRSJSON[HEATER_CURR_TEST_KEY] =
+      roundSignificantDigits(in3.heater_current_test, TELEMETRIES_DECIMALS);
+  addVariableToTelemetryGPRSJSON[FAN_CURR_TEST_KEY] =
+      roundSignificantDigits(in3.fan_current_test, TELEMETRIES_DECIMALS);
+  addVariableToTelemetryGPRSJSON[PHOTOTHERAPY_CURR_KEY] =
+      roundSignificantDigits(in3.phototherapy_current_test,
+                             TELEMETRIES_DECIMALS);
+  addVariableToTelemetryGPRSJSON[HUMIDIFIER_CURR_KEY] =
+      roundSignificantDigits(in3.humidifier_current_test, TELEMETRIES_DECIMALS);
+  addVariableToTelemetryGPRSJSON[DISPLAY_CURR_TEST_KEY] =
+      roundSignificantDigits(in3.display_current_test, TELEMETRIES_DECIMALS);
+  addVariableToTelemetryGPRSJSON[BUZZER_CURR_TEST_KEY] =
+      roundSignificantDigits(in3.buzzer_current_test, TELEMETRIES_DECIMALS);
   addVariableToTelemetryGPRSJSON[HW_TEST_KEY] = in3.HW_test_error_code;
 
   addVariableToTelemetryGPRSJSON[UI_LANGUAGE_KEY] = in3.language;
@@ -379,40 +393,60 @@ void addConfigTelemetriesToGPRSJSON() {
 }
 
 void addTelemetriesToGPRSJSON() {
+  if (GPRS.longitud || GPRS.latitud) {
+    addVariableToTelemetryGPRSJSON[LOCATION_LONGTITUD_KEY] = GPRS.longitud;
+    addVariableToTelemetryGPRSJSON[LOCATION_LATITUD_KEY] = GPRS.latitud;
+    addVariableToTelemetryGPRSJSON[TRI_ACCURACY_KEY] = GPRS.accuracy;
+  }
 
- if(GPRS.longitud||GPRS.latitud){
-  addVariableToTelemetryGPRSJSON[LOCATION_LONGTITUD_KEY] = GPRS.longitud;
-  addVariableToTelemetryGPRSJSON[LOCATION_LATITUD_KEY] = GPRS.latitud;
-  addVariableToTelemetryGPRSJSON[TRI_ACCURACY_KEY] = GPRS.accuracy;
- }
-
-  addVariableToTelemetryGPRSJSON[SKIN_TEMPERATURE_KEY] = roundSignificantDigits(in3.temperature[SKIN_SENSOR], TELEMETRIES_DECIMALS);
-  addVariableToTelemetryGPRSJSON[AIR_TEMPERATURE_KEY] = roundSignificantDigits(in3.temperature[ROOM_DIGITAL_TEMP_SENSOR], TELEMETRIES_DECIMALS);
-  if(in3.temperature[AMBIENT_DIGITAL_TEMP_SENSOR] && in3.humidity[AMBIENT_DIGITAL_HUM_SENSOR]){
-  addVariableToTelemetryGPRSJSON[AMBIENT_TEMPERATURE_KEY] = roundSignificantDigits(in3.temperature[AMBIENT_DIGITAL_TEMP_SENSOR], TELEMETRIES_DECIMALS);
-  addVariableToTelemetryGPRSJSON[HUMIDITY_AMBIENT_KEY] = roundSignificantDigits(in3.humidity[AMBIENT_DIGITAL_HUM_SENSOR], TELEMETRIES_DECIMALS);
+  addVariableToTelemetryGPRSJSON[SKIN_TEMPERATURE_KEY] = roundSignificantDigits(
+      in3.temperature[SKIN_SENSOR], TELEMETRIES_DECIMALS);
+  addVariableToTelemetryGPRSJSON[AIR_TEMPERATURE_KEY] = roundSignificantDigits(
+      in3.temperature[ROOM_DIGITAL_TEMP_SENSOR], TELEMETRIES_DECIMALS);
+  if (in3.temperature[AMBIENT_DIGITAL_TEMP_SENSOR] &&
+      in3.humidity[AMBIENT_DIGITAL_HUM_SENSOR]) {
+    addVariableToTelemetryGPRSJSON[AMBIENT_TEMPERATURE_KEY] =
+        roundSignificantDigits(in3.temperature[AMBIENT_DIGITAL_TEMP_SENSOR],
+                               TELEMETRIES_DECIMALS);
+    addVariableToTelemetryGPRSJSON[HUMIDITY_AMBIENT_KEY] =
+        roundSignificantDigits(in3.humidity[AMBIENT_DIGITAL_HUM_SENSOR],
+                               TELEMETRIES_DECIMALS);
   }
   addVariableToTelemetryGPRSJSON[PHOTOTHERAPY_ACTIVE_KEY] = in3.phototherapy;
-  addVariableToTelemetryGPRSJSON[HUMIDITY_ROOM_KEY] = roundSignificantDigits(in3.humidity[ROOM_DIGITAL_HUM_SENSOR], TELEMETRIES_DECIMALS);
-  addVariableToTelemetryGPRSJSON[SYSTEM_CURRENT_KEY] = roundSignificantDigits(in3.system_current, TELEMETRIES_DECIMALS);
-  addVariableToTelemetryGPRSJSON[SYSTEM_VOLTAGE_KEY] = roundSignificantDigits(in3.system_voltage, TELEMETRIES_DECIMALS);
+  addVariableToTelemetryGPRSJSON[HUMIDITY_ROOM_KEY] = roundSignificantDigits(
+      in3.humidity[ROOM_DIGITAL_HUM_SENSOR], TELEMETRIES_DECIMALS);
+  addVariableToTelemetryGPRSJSON[SYSTEM_CURRENT_KEY] =
+      roundSignificantDigits(in3.system_current, TELEMETRIES_DECIMALS);
+  addVariableToTelemetryGPRSJSON[SYSTEM_VOLTAGE_KEY] =
+      roundSignificantDigits(in3.system_voltage, TELEMETRIES_DECIMALS);
   addVariableToTelemetryGPRSJSON[CELL_SIGNAL_QUALITY_KEY] = GPRS.CSQ;
-    addVariableToTelemetryGPRSJSON[V5_CURRENT_KEY] = roundSignificantDigits(in3.USB_current, TELEMETRIES_DECIMALS);
-    addVariableToTelemetryGPRSJSON[V5_VOLTAGE_KEY] = roundSignificantDigits(in3.USB_voltage, TELEMETRIES_DECIMALS);
-   addVariableToTelemetryGPRSJSON[BAT_CURRENT_KEY] = roundSignificantDigits(in3.BATTERY_current, TELEMETRIES_DECIMALS);
-    addVariableToTelemetryGPRSJSON[BAT_VOLTAGE_KEY] = roundSignificantDigits(in3.BATTERY_voltage, TELEMETRIES_DECIMALS);
+  addVariableToTelemetryGPRSJSON[V5_CURRENT_KEY] =
+      roundSignificantDigits(in3.USB_current, TELEMETRIES_DECIMALS);
+  addVariableToTelemetryGPRSJSON[V5_VOLTAGE_KEY] =
+      roundSignificantDigits(in3.USB_voltage, TELEMETRIES_DECIMALS);
+  addVariableToTelemetryGPRSJSON[BAT_CURRENT_KEY] =
+      roundSignificantDigits(in3.BATTERY_current, TELEMETRIES_DECIMALS);
+  addVariableToTelemetryGPRSJSON[BAT_VOLTAGE_KEY] =
+      roundSignificantDigits(in3.BATTERY_voltage, TELEMETRIES_DECIMALS);
 
   if (in3.temperatureControl || in3.humidityControl) {
-    addVariableToTelemetryGPRSJSON[FAN_CURRENT_KEY] = roundSignificantDigits(in3.fan_current, TELEMETRIES_DECIMALS);
-    addVariableToTelemetryGPRSJSON[CONTROL_ACTIVE_TIME_KEY] = roundSignificantDigits(in3.control_active_time, TELEMETRIES_DECIMALS);
-    addVariableToTelemetryGPRSJSON[FAN_ACTIVE_TIME_KEY] = roundSignificantDigits(in3.fan_active_time, TELEMETRIES_DECIMALS);
+    addVariableToTelemetryGPRSJSON[FAN_CURRENT_KEY] =
+        roundSignificantDigits(in3.fan_current, TELEMETRIES_DECIMALS);
+    addVariableToTelemetryGPRSJSON[CONTROL_ACTIVE_TIME_KEY] =
+        roundSignificantDigits(in3.control_active_time, TELEMETRIES_DECIMALS);
+    addVariableToTelemetryGPRSJSON[FAN_ACTIVE_TIME_KEY] =
+        roundSignificantDigits(in3.fan_active_time, TELEMETRIES_DECIMALS);
     if (in3.temperatureControl) {
-    addVariableToTelemetryGPRSJSON[HEATER_CURRENT_KEY] = roundSignificantDigits(in3.heater_current, TELEMETRIES_DECIMALS);
-      addVariableToTelemetryGPRSJSON[DESIRED_TEMPERATURE_KEY] = in3.desiredControlTemperature;
-      addVariableToTelemetryGPRSJSON[HEATER_ACTIVE_TIME_KEY] = roundSignificantDigits(in3.heater_active_time, TELEMETRIES_DECIMALS);
+      addVariableToTelemetryGPRSJSON[HEATER_CURRENT_KEY] =
+          roundSignificantDigits(in3.heater_current, TELEMETRIES_DECIMALS);
+      addVariableToTelemetryGPRSJSON[DESIRED_TEMPERATURE_KEY] =
+          in3.desiredControlTemperature;
+      addVariableToTelemetryGPRSJSON[HEATER_ACTIVE_TIME_KEY] =
+          roundSignificantDigits(in3.heater_active_time, TELEMETRIES_DECIMALS);
     }
     if (in3.humidityControl) {
-      addVariableToTelemetryGPRSJSON[DESIRED_HUMIDITY_ROOM_KEY] = in3.desiredControlHumidity;
+      addVariableToTelemetryGPRSJSON[DESIRED_HUMIDITY_ROOM_KEY] =
+          in3.desiredControlHumidity;
     }
     if (!GPRS.firstConfigPost) {
       GPRS.firstConfigPost = true;
@@ -423,26 +457,37 @@ void addTelemetriesToGPRSJSON() {
         } else {
           addVariableToTelemetryGPRSJSON[CONTROL_MODE_KEY] = "SKIN";
         }
-        addVariableToTelemetryGPRSJSON[DESIRED_TEMPERATURE_KEY] = in3.desiredControlTemperature;
+        addVariableToTelemetryGPRSJSON[DESIRED_TEMPERATURE_KEY] =
+            in3.desiredControlTemperature;
       }
       if (in3.humidityControl) {
-        addVariableToTelemetryGPRSJSON[DESIRED_HUMIDITY_ROOM_KEY] = in3.desiredControlHumidity;
+        addVariableToTelemetryGPRSJSON[DESIRED_HUMIDITY_ROOM_KEY] =
+            in3.desiredControlHumidity;
       }
     }
   } else {
     GPRS.firstConfigPost = false;
     addVariableToTelemetryGPRSJSON[CONTROL_ACTIVE_KEY] = false;
-    addVariableToTelemetryGPRSJSON[STANBY_TIME_KEY] = roundSignificantDigits(in3.standby_time, TELEMETRIES_DECIMALS);
+    addVariableToTelemetryGPRSJSON[STANBY_TIME_KEY] =
+        roundSignificantDigits(in3.standby_time, TELEMETRIES_DECIMALS);
   }
   if (in3.humidityControl) {
-    addVariableToTelemetryGPRSJSON[HUMIDIFIER_CURRENT_KEY] = roundSignificantDigits(in3.humidifier_current, TELEMETRIES_DECIMALS);
-    addVariableToTelemetryGPRSJSON[HUMIDIFIER_VOLTAGE_KEY] = roundSignificantDigits(in3.humidifier_voltage, TELEMETRIES_DECIMALS);
-    addVariableToTelemetryGPRSJSON[HUMIDIFIER_ACTIVE_TIME_KEY] = roundSignificantDigits(in3.humidifier_active_time, TELEMETRIES_DECIMALS);
-    addVariableToTelemetryGPRSJSON[DESIRED_HUMIDITY_ROOM_KEY] = in3.desiredControlHumidity;
+    addVariableToTelemetryGPRSJSON[HUMIDIFIER_CURRENT_KEY] =
+        roundSignificantDigits(in3.humidifier_current, TELEMETRIES_DECIMALS);
+    addVariableToTelemetryGPRSJSON[HUMIDIFIER_VOLTAGE_KEY] =
+        roundSignificantDigits(in3.humidifier_voltage, TELEMETRIES_DECIMALS);
+    addVariableToTelemetryGPRSJSON[HUMIDIFIER_ACTIVE_TIME_KEY] =
+        roundSignificantDigits(in3.humidifier_active_time,
+                               TELEMETRIES_DECIMALS);
+    addVariableToTelemetryGPRSJSON[DESIRED_HUMIDITY_ROOM_KEY] =
+        in3.desiredControlHumidity;
   }
   if (in3.phototherapy) {
-    addVariableToTelemetryGPRSJSON[PHOTOTHERAPY_CURRENT_KEY] = roundSignificantDigits(in3.phototherapy_current, TELEMETRIES_DECIMALS);
-    addVariableToTelemetryGPRSJSON[PHOTHERAPY_ACTIVE_TIME_KEY] = roundSignificantDigits(in3.phototherapy_active_time, TELEMETRIES_DECIMALS);
+    addVariableToTelemetryGPRSJSON[PHOTOTHERAPY_CURRENT_KEY] =
+        roundSignificantDigits(in3.phototherapy_current, TELEMETRIES_DECIMALS);
+    addVariableToTelemetryGPRSJSON[PHOTHERAPY_ACTIVE_TIME_KEY] =
+        roundSignificantDigits(in3.phototherapy_active_time,
+                               TELEMETRIES_DECIMALS);
   }
 }
 
@@ -455,7 +500,8 @@ void GPRSPost() {
   } else {
     if (!tb.connected()) {
       // Connect to the ThingsBoard
-      log("[GPRS] -> Connecting over GPRS to: " + String(THINGSBOARD_SERVER) + " with token " + String(GPRS.device_token));
+      log("[GPRS] -> Connecting over GPRS to: " + String(THINGSBOARD_SERVER) +
+          " with token " + String(GPRS.device_token));
       if (!tb.connect(THINGSBOARD_SERVER, GPRS.device_token.c_str())) {
         log("[GPRS] -> Failed to connect");
         return;
@@ -467,7 +513,8 @@ void GPRSPost() {
         }
       }
     }
-    if (tb.connected() && millis() - GPRS.lastSent > secsToMillis(GPRS.sendPeriod)) {
+    if (tb.connected() &&
+        millis() - GPRS.lastSent > secsToMillis(GPRS.sendPeriod)) {
       // Send our firmware title and version
       // StaticJsonDocument<JSON_OBJECT_SIZE(2)> TB_telemetries;
       // JsonObject telemetriesObject = TB_telemetries.to<JsonObject>();
@@ -478,7 +525,9 @@ void GPRSPost() {
       if (!GPRS.firstPublish) {
         GPRS.firstPublish = true;
         addConfigTelemetriesToGPRSJSON();
-        if (tb.sendTelemetryJson(addVariableToTelemetryGPRSJSON, JSON_STRING_SIZE(measureJson(addVariableToTelemetryGPRSJSON)))) {
+        if (tb.sendTelemetryJson(addVariableToTelemetryGPRSJSON,
+                                 JSON_STRING_SIZE(measureJson(
+                                     addVariableToTelemetryGPRSJSON)))) {
           log("[GPRS] -> GPRS MQTT PUBLISH CONFIG SUCCESS");
         } else {
           log("[GPRS] -> GPRS MQTT PUBLISH CONFIG FAIL");
@@ -488,7 +537,9 @@ void GPRSPost() {
       GPRS_get_triangulation_location();
       GPRSUpdateCSQ();
       addTelemetriesToGPRSJSON();
-      if (tb.sendTelemetryJson(addVariableToTelemetryGPRSJSON, JSON_STRING_SIZE(measureJson(addVariableToTelemetryGPRSJSON)))) {
+      if (tb.sendTelemetryJson(
+              addVariableToTelemetryGPRSJSON,
+              JSON_STRING_SIZE(measureJson(addVariableToTelemetryGPRSJSON)))) {
         log("[GPRS] -> GPRS MQTT PUBLISH TELEMETRIES SUCCESS");
       } else {
         log("[GPRS] -> GPRS MQTT PUBLISH TELEMETRIES FAIL");

@@ -23,33 +23,39 @@
 
 */
 #include <Arduino.h>
+
 #include "main.h"
 
 extern TwoWire *wire;
 extern MAM_in3ator_Humidifier in3_hum;
 extern Adafruit_ILI9341 tft;
-extern SHTC3 mySHTC3; // Declare an instance of the SHTC3 class
+extern SHTC3 mySHTC3;  // Declare an instance of the SHTC3 class
 extern RotaryEncoder encoder;
 
 extern bool WIFI_EN;
 extern long loopCounts;
 extern int page;
- 
+
 extern double errorTemperature[SENSOR_TEMP_QTY], temperatureCalibrationPoint;
 extern double ReferenceTemperatureRange, ReferenceTemperatureLow;
 extern double provisionalReferenceTemperatureLow;
 extern double fineTuneSkinTemperature;
-extern double RawTemperatureLow[SENSOR_TEMP_QTY], RawTemperatureRange[SENSOR_TEMP_QTY];
+extern double RawTemperatureLow[SENSOR_TEMP_QTY],
+    RawTemperatureRange[SENSOR_TEMP_QTY];
 extern double provisionalRawTemperatureLow[SENSOR_TEMP_QTY];
-extern int temperature_array_pos;                               // temperature sensor number turn to measure
-extern float diffSkinTemperature, diffAirTemperature;           // difference between measured temperature and user input real temperature
+extern int temperature_array_pos;  // temperature sensor number turn to measure
+extern float diffSkinTemperature,
+    diffAirTemperature;  // difference between measured temperature and user
+                         // input real temperature
 extern bool humidifierState, humidifierStateChange;
-extern int previousHumidity; // previous sampled humidity
-extern float diffHumidity;   // difference between measured humidity and user input real humidity
+extern int previousHumidity;  // previous sampled humidity
+extern float diffHumidity;    // difference between measured humidity and user
+                              // input real humidity
 
 extern byte autoCalibrationProcess;
 
-// Sensor check rate (in ms). Both sensors are checked in same interrupt and they have different check rates
+// Sensor check rate (in ms). Both sensors are checked in same interrupt and
+// they have different check rates
 extern byte encoderRate;
 extern byte encoderCount;
 extern bool encPulseDetected;
@@ -64,16 +70,18 @@ extern bool roomSensorPresent;
 // room variables
 extern boolean A_set;
 extern boolean B_set;
-extern int encoderpinA;                 // pin  encoder A
-extern int encoderpinB;                 // pin  encoder B
-extern bool encPulsed, encPulsedBefore; // encoder switch status
+extern int encoderpinA;                  // pin  encoder A
+extern int encoderpinB;                  // pin  encoder B
+extern bool encPulsed, encPulsedBefore;  // encoder switch status
 extern bool updateUIData;
-extern volatile int EncMove;            // moved encoder
-extern volatile int lastEncMove;        // moved last encoder
-extern volatile int EncMoveOrientation; // set to -1 to increase values clockwise
-extern int last_encoder_move;           // moved encoder
-extern long encoder_debounce_time;      // in milliseconds, debounce time in encoder to filter signal bounces
-extern long last_encPulsed;             // last time encoder was pulsed
+extern volatile int EncMove;      // moved encoder
+extern volatile int lastEncMove;  // moved last encoder
+extern volatile int
+    EncMoveOrientation;             // set to -1 to increase values clockwise
+extern int last_encoder_move;       // moved encoder
+extern long encoder_debounce_time;  // in milliseconds, debounce time in encoder
+                                    // to filter signal bounces
+extern long last_encPulsed;         // last time encoder was pulsed
 
 // Text Graphic position variables
 extern int humidityX;
@@ -88,12 +96,15 @@ extern bool pos_text[8];
 extern bool enableSet;
 extern float temperaturePercentage, temperatureAtStart;
 extern float humidityPercentage, humidityAtStart;
-extern int barWidth, barHeight, tempBarPosX, tempBarPosY, humBarPosX, humBarPosY;
+extern int barWidth, barHeight, tempBarPosX, tempBarPosY, humBarPosX,
+    humBarPosY;
 extern int screenTextColor, screenTextBackgroundColor;
 
 // User Interface display variables
-extern bool autoLock;             // setting that enables backlight switch OFF after a given time of no user actions
-extern long lastbacklightHandler; // last time there was a encoder movement or pulse
+extern bool autoLock;  // setting that enables backlight switch OFF after a
+                       // given time of no user actions
+extern long
+    lastbacklightHandler;  // last time there was a encoder movement or pulse
 extern long sensorsUpdatePeriod;
 
 extern bool selected;
@@ -125,27 +136,21 @@ extern PID humidityControlPID;
 
 extern in3ator_parameters in3;
 
-void heatUp()
-{
+void heatUp() {
   ledcWrite(HEATER_PWM_CHANNEL, HEATER_MAX_PWM * ongoingCriticalAlarm());
 }
 
-void basictemperatureControl()
-{
+void basictemperatureControl() {
   float temperatureToControl;
   temperatureToControl = in3.temperature[in3.controlMode];
-  if (temperatureToControl < in3.desiredControlTemperature)
-  {
+  if (temperatureToControl < in3.desiredControlTemperature) {
     heatUp();
-  }
-  else
-  {
+  } else {
     ledcWrite(HEATER_PWM_CHANNEL, LOW);
   }
 }
 
-void basicHumidityControl()
-{
+void basicHumidityControl() {
   /*
   if (in3.humidity [ROOM_DIGITAL_HUM_SENSOR]< in3.desiredControlHumidity)
   {
@@ -168,36 +173,29 @@ void basicHumidityControl()
   */
 }
 
-void turnActuators(bool mode)
-{
+void turnActuators(bool mode) {
   ledcWrite(HEATER_PWM_CHANNEL, mode * HEATER_MAX_PWM * ongoingCriticalAlarm());
-  if (mode && ongoingCriticalAlarm())
-  {
+  if (mode && ongoingCriticalAlarm()) {
     in3_hum.turn(ON);
-  }
-  else
-  {
+  } else {
     in3_hum.turn(OFF);
   }
   turnFans(mode);
 }
 
-void stopActuation()
-{
+void stopActuation() {
   stopPID(airPID);
   stopPID(skinPID);
   stopPID(humidityPID);
   turnActuators(OFF);
 }
 
-void turnFans(bool mode)
-{
+void turnFans(bool mode) {
   GPIOWrite(ACTUATORS_EN, mode || in3.phototherapy);
   GPIOWrite(FAN, in3.phototherapy || mode && ongoingCriticalAlarm());
 }
 
-void UI_actuatorsProgress()
-{
+void UI_actuatorsProgress() {
   bool exitActuation = false;
   alarmTimerStart();
   byte numWords = false;
@@ -212,137 +210,120 @@ void UI_actuatorsProgress()
   setSensorsGraphicPosition(page);
   drawActuatorsSeparators();
 
-  if (in3.controlMode)
-  {
-    switch (in3.language)
-    {
-    case spanish:
-      textToWrite = convertStringToChar(cstring, "Temperatura aire");
-      break;
-    case portuguese:
-      textToWrite = convertStringToChar(cstring, "Temperatura do ar");
-      break;
-    case english:
-      textToWrite = convertStringToChar(cstring, "Air temperature");
-      break;
-    case french:
-      textToWrite = convertStringToChar(cstring, "Temperature de l'air");
-      break;
+  if (in3.controlMode) {
+    switch (in3.language) {
+      case spanish:
+        textToWrite = convertStringToChar(cstring, "Temperatura aire");
+        break;
+      case portuguese:
+        textToWrite = convertStringToChar(cstring, "Temperatura do ar");
+        break;
+      case english:
+        textToWrite = convertStringToChar(cstring, "Air temperature");
+        break;
+      case french:
+        textToWrite = convertStringToChar(cstring, "Temperature de l'air");
+        break;
+    }
+  } else {
+    switch (in3.language) {
+      case spanish:
+        textToWrite = convertStringToChar(cstring, "Temperatura piel");
+        break;
+      case portuguese:
+        textToWrite = convertStringToChar(cstring, "temperatura da pele");
+        break;
+      case english:
+        textToWrite = convertStringToChar(cstring, "Skin temperature");
+        break;
+      case french:
+        textToWrite = convertStringToChar(cstring, "Temperature de la peau");
+        break;
     }
   }
-  else
-  {
-    switch (in3.language)
-    {
-    case spanish:
-      textToWrite = convertStringToChar(cstring, "Temperatura piel");
-      break;
-    case portuguese:
-      textToWrite = convertStringToChar(cstring, "temperatura da pele");
-      break;
-    case english:
-      textToWrite = convertStringToChar(cstring, "Skin temperature");
-      break;
-    case french:
-      textToWrite = convertStringToChar(cstring, "Temperature de la peau");
-      break;
+  drawCentreString(textToWrite, tft.width() / 2,
+                   tempBarPosY - 4 * letter_height / 3, textFontSize);
+  if (!in3.controlMode) {
+    switch (in3.language) {
+      case spanish:
+        textToWrite = convertStringToChar(cstring, "Temperatura aire");
+        break;
+      case portuguese:
+        textToWrite = convertStringToChar(cstring, "Temperatura do ar");
+        break;
+      case english:
+        textToWrite = convertStringToChar(cstring, "Air temperature");
+        break;
+      case french:
+        textToWrite = convertStringToChar(cstring, "Temperature de l'air");
+        break;
+    }
+  } else {
+    switch (in3.language) {
+      case spanish:
+        textToWrite = convertStringToChar(cstring, "Temperatura piel");
+        break;
+      case portuguese:
+        textToWrite = convertStringToChar(cstring, "temperatura da pele");
+        break;
+      case english:
+        textToWrite = convertStringToChar(cstring, "Skin temperature");
+        break;
+      case french:
+        textToWrite = convertStringToChar(cstring, "Temperature de la peau");
+        break;
     }
   }
-  drawCentreString(textToWrite, tft.width() / 2, tempBarPosY - 4 * letter_height / 3, textFontSize);
-  if (!in3.controlMode)
-  {
-    switch (in3.language)
-    {
-    case spanish:
-      textToWrite = convertStringToChar(cstring, "Temperatura aire");
-      break;
-    case portuguese:
-      textToWrite = convertStringToChar(cstring, "Temperatura do ar");
-      break;
-    case english:
-      textToWrite = convertStringToChar(cstring, "Air temperature");
-      break;
-    case french:
-      textToWrite = convertStringToChar(cstring, "Temperature de l'air");
-      break;
-    }
-  }
-  else
-  {
-    switch (in3.language)
-    {
-    case spanish:
-      textToWrite = convertStringToChar(cstring, "Temperatura piel");
-      break;
-    case portuguese:
-      textToWrite = convertStringToChar(cstring, "temperatura da pele");
-      break;
-    case english:
-      textToWrite = convertStringToChar(cstring, "Skin temperature");
-      break;
-    case french:
-      textToWrite = convertStringToChar(cstring, "Temperature de la peau");
-      break;
-    }
-  }
-  drawCentreString(textToWrite, tft.width() / 2, tft.height() / 2 - letter_height, textFontSize);
+  drawCentreString(textToWrite, tft.width() / 2,
+                   tft.height() / 2 - letter_height, textFontSize);
 
-  switch (in3.language)
-  {
-  case spanish:
-    textToWrite = convertStringToChar(cstring, "Humedad");
-    break;
-  case english:
-    textToWrite = convertStringToChar(cstring, "Humidity");
-    break;
-  case french:
-    textToWrite = convertStringToChar(cstring, "Humidite");
-    break;
-  case portuguese:
-    textToWrite = convertStringToChar(cstring, "Umidade");
-    break;
+  switch (in3.language) {
+    case spanish:
+      textToWrite = convertStringToChar(cstring, "Humedad");
+      break;
+    case english:
+      textToWrite = convertStringToChar(cstring, "Humidity");
+      break;
+    case french:
+      textToWrite = convertStringToChar(cstring, "Humidite");
+      break;
+    case portuguese:
+      textToWrite = convertStringToChar(cstring, "Umidade");
+      break;
   }
-  drawCentreString(textToWrite, tft.width() / 2, humBarPosY - 4 * letter_height / 3, textFontSize);
+  drawCentreString(textToWrite, tft.width() / 2,
+                   humBarPosY - 4 * letter_height / 3, textFontSize);
   setTextColor(COLOR_WARNING_TEXT);
   drawStop();
   state_blink = true;
-  while (!GPIORead(ENC_SWITCH))
-  {
+  while (!GPIORead(ENC_SWITCH)) {
     updateData();
   }
-  if (in3.temperatureControl)
-  {
+  if (in3.temperatureControl) {
     startPID(in3.controlMode);
   }
-  if (in3.humidityControl)
-  {
+  if (in3.humidityControl) {
     startPID(humidityPID);
   }
   updateDisplaySensors();
-  if (in3.temperatureControl)
-  {
+  if (in3.temperatureControl) {
     printLoadingTemperatureBar(in3.desiredControlTemperature);
     temperatureAtStart = in3.temperature[in3.controlMode];
   }
-  if (in3.humidityControl)
-  {
+  if (in3.humidityControl) {
     printLoadingHumidityBar(in3.desiredControlHumidity);
   }
   humidityAtStart = in3.humidity[ROOM_DIGITAL_HUM_SENSOR];
   turnFans(ON);
-  while (!exitActuation)
-  {
+  while (!exitActuation) {
     updateData();
-    if (in3.temperatureControl)
-    {
+    if (in3.temperatureControl) {
       PIDHandler();
     }
-    if (in3.humidityControl)
-    {
+    if (in3.humidityControl) {
       PIDHandler();
     }
-    while (!GPIORead(ENC_SWITCH))
-    {
+    while (!GPIORead(ENC_SWITCH)) {
       updateData();
       exitActuation = back_mode();
     }
