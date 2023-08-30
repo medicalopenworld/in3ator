@@ -229,6 +229,5 @@ void setup() {
 void loop() {
   userInterfaceHandler(page);
   updateData();
-      measureNTCTemperature();
   vTaskDelay(LOOP_TASK_PERIOD / portTICK_PERIOD_MS);
 }

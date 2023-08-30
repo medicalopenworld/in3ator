@@ -53,9 +53,5 @@ dkms.conf
 
 # credentials
 .pio
+.vscode/*
 Credentials.h
-
-#vscode 
-
-.vscode/
-
