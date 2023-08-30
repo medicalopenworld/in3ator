@@ -3,10 +3,11 @@
 
 #define TINY_GSM_MODEM_SIM800
 #define modemSerial Serial2
-//#define THINGSBOARD_ENABLE_DYNAMIC 1
+// #define THINGSBOARD_ENABLE_DYNAMIC 1
 #define THINGSBOARD_ENABLE_OTA 1
 #include <Arduino.h>
 #include <TinyGsmClient.h>
+
 #include "ThingsBoard.h"
 
 #define APN_TM "TM"
@@ -19,7 +20,7 @@
 #define SERIAL_DEBUG_BAUD 115200
 #define MODEM_BAUD 115200
 #define RX_BUFFER_LENGTH 1024
-#define GPRS_TIMEOUT 30000 // in millisecs
+#define GPRS_TIMEOUT 30000  // in millisecs
 
 #define standByGPRSPostPeriod 3600
 #define actuatingGPRSPostPeriod 60
@@ -40,8 +41,7 @@
 #define CLIENT_PASSWORD "password"
 #define CLIENT_USERNAME "userName"
 
-struct GPRSstruct
-{
+struct GPRSstruct {
   int provisioned = false;
   bool OTA_requested = false;
   bool provision_request_sent = false;
@@ -96,6 +96,7 @@ void GPRS_Handler();
 void GPRS_TB_Init();
 void initGPRS();
 void GPRSSetPostPeriod();
-void progressCallback(const uint32_t& currentChunk, const uint32_t& totalChuncks);
-void updatedCallback(const bool &success);
-#endif // _GPRS_123H_
+void progressCallback(const uint32_t& currentChunk,
+                      const uint32_t& totalChuncks);
+void updatedCallback(const bool& success);
+#endif  // _GPRS_123H_

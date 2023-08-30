@@ -9,29 +9,29 @@
 // include libraries
 #include <Beastdevices_INA3221.h>
 #include <EEPROM.h>
+#include <Filters.h>
 #include <RotaryEncoder.h>
 #include <SPI.h>
 #include <Wire.h>
 
+#include <AH/Timing/MillisMicrosTimer.hpp>
+#include <Filters/Butterworth.hpp>
+
 #include "Adafruit_GFX.h"
 #include "Adafruit_ILI9341.h"
+#include "Adafruit_SHT4x.h"
+#include "Credentials.h"
 #include "ESP32_config.h"
 #include "GPRS.h"
 #include "PID.h"
 #include "SPI.h"
 #include "SparkFun_SHTC3.h"
-#include "Adafruit_SHT4x.h"
 #include "TCA9555.h"
 #include "Wifi_OTA.h"
 #include "board.h"
 #include "driver/rtc_io.h"
 #include "esp32/ulp.h"
 #include "in3ator_humidifier.h"
-#include <Filters.h> 
-#include <AH/Timing/MillisMicrosTimer.hpp>
-#include <Filters/Butterworth.hpp>
-
-#include "Credentials.h"
 
 #define WDT_TIMEOUT 45
 
@@ -123,7 +123,9 @@
 #define AIR_CONTROL true
 
 // buzzer variables
-#define buzzerStandbyPeriod 10000     // in millis, there will be a periodic tone when regulating baby's constants
+#define buzzerStandbyPeriod \
+  10000  // in millis, there will be a periodic tone when regulating baby's
+         // constants
 #define buzzerStandbyTone 500         // in micros, tone freq
 #define buzzerAlarmTone 500           // in micros, tone freq
 #define buzzerRotaryEncoderTone 2200  // in micros, tone freq
@@ -158,11 +160,13 @@
 #define EEPROM_HUMIDIFIER_ACTIVE_TIME 246
 
 // configuration variables
-#define debounceTime 30           // encoder debouncing time
-#define timePressToSettings 3000  // in millis, time to press to go to settings window in UI
-#define debugUpdatePeriod 1000    // in millis,
+#define debounceTime 30  // encoder debouncing time
+#define timePressToSettings \
+  3000  // in millis, time to press to go to settings window in UI
+#define debugUpdatePeriod 1000  // in millis,
 
-// pages number in UI. Configuration and information will be displayed depending on the page number
+// pages number in UI. Configuration and information will be displayed depending
+// on the page number
 
 #define mainMenuPage 1
 #define actuatorsProgressPage 2
@@ -178,7 +182,8 @@
 #define french 2
 #define portuguese 3
 #define numLanguages 4
-#define defaultLanguage english  // Preset number configuration when booting for first time
+#define defaultLanguage \
+  english  // Preset number configuration when booting for first time
 #define DEFAULT_CONTROL_MODE AIR_CONTROL
 
 #define NTC_MEASUREMENT_PERIOD 1  // in millis
@@ -205,15 +210,16 @@
 
 #define MAIN 0
 #define SECUNDARY 1
-//I2C addresses
+// I2C addresses
 #define MAIN_DIGITAL_CURRENT_SENSOR_I2C_ADDRESS 0x41
 #define SECUNDARY_DIGITAL_CURRENT_SENSOR_I2C_ADDRESS 0x40
 #define AMBIENT_SENSOR_I2C_ADDRESS 0x44
 #define ROOM_SENSOR_I2C_ADDRESS 0x70
 
 // #define system constants
-#define humidifierDutyCycleMax 100  // maximum humidity cycle in heater to be set
-#define humidifierDutyCycleMin 0    // minimum humidity cycle in heater to be set
+#define humidifierDutyCycleMax \
+  100                             // maximum humidity cycle in heater to be set
+#define humidifierDutyCycleMin 0  // minimum humidity cycle in heater to be set
 
 #define stepTemperatureIncrement 0.1  // maximum allowed temperature to be set
 #define stepHumidityIncrement 5       // maximum allowed temperature to be set
@@ -223,7 +229,7 @@
 
 // Encoder variables
 #define NUMENCODERS 1  // number of encoders in circuit
-#if (HW_NUM==6)
+#if (HW_NUM == 6)
 #define ENCODER_TICKS_DIV 1
 #else
 #define ENCODER_TICKS_DIV 0
@@ -314,8 +320,8 @@ typedef enum {
 #define CENTER true
 #define LEFT_MARGIN false
 
-// below are all the different variables positions that will be displayed in user interface
-// mainMenu
+// below are all the different variables positions that will be displayed in
+// user interface mainMenu
 #define controlModeGraphicPosition 0
 #define temperatureGraphicPosition 1
 #define humidityGraphicPosition 2
@@ -370,7 +376,8 @@ typedef enum {
 #define introTextColor BLACK
 #define transitionEffect BLACK
 
-#define BACKLIGHT_NO_INTERACTION_TIME 12000  // time to decrease backlight display if no user actions
+#define BACKLIGHT_NO_INTERACTION_TIME \
+  12000  // time to decrease backlight display if no user actions
 
 #define GPRS_TASK_PERIOD 1
 #define OTA_TASK_PERIOD 0
@@ -387,8 +394,7 @@ typedef enum {
 
 #define TIME_TRACK_UPDATE_PERIOD 900000  // 15 minutes
 
-typedef struct
-{
+typedef struct {
   double temperature[SENSOR_TEMP_QTY];
   double humidity[SENSOR_HUM_QTY];
   double desiredControlTemperature = false;
@@ -436,7 +442,7 @@ typedef struct
 
   float fan_rpm = false;
   bool fanEncoderUpdate = false;
-  long fanEncoderPeriod[2] = {false,false};
+  long fanEncoderPeriod[2] = {false, false};
 
   byte language;
 
@@ -469,9 +475,11 @@ int16_t drawCentreString(char *string, int16_t dX, int16_t poY, int16_t size);
 void eraseBar(int UI_menu_rows, int bar_pos);
 void UI_updateConnectivityEvents();
 void updateBar(int UI_menu_rows, int bar_pos);
-void graphics(uint8_t UI_page, uint8_t UI_language, uint8_t UI_print_text, uint8_t UI_menu_rows, uint8_t UI_var_0, uint8_t UI_var_1);
+void graphics(uint8_t UI_page, uint8_t UI_language, uint8_t UI_print_text,
+              uint8_t UI_menu_rows, uint8_t UI_var_0, uint8_t UI_var_1);
 int graphicHeight(int position);
-int16_t drawFloat(float floatNumber, int16_t decimal, int16_t poX, int16_t poY, int16_t size);
+int16_t drawFloat(float floatNumber, int16_t decimal, int16_t poX, int16_t poY,
+                  int16_t size);
 void setTextColor(int16_t color);
 int16_t getBackgroundColor();
 
@@ -491,11 +499,14 @@ bool encoderContinuousPress(int UI_page);
 
 void updateLoadingTemperatureBar(float prev, float actual);
 void updateLoadingHumidityBar(float prev, float actual);
-void drawSelectedTemperature(float temperatureToDraw, float previousTemperatureDrawn);
-void drawUnselectedTemperature(float temperatureToDraw, float previousTemperatureDrawn);
+void drawSelectedTemperature(float temperatureToDraw,
+                             float previousTemperatureDrawn);
+void drawUnselectedTemperature(float temperatureToDraw,
+                               float previousTemperatureDrawn);
 void drawHumidity(int UI_humidity, int UI_previousHumdity);
 int16_t drawRightString(char *string, int16_t dX, int16_t poY, int16_t size);
-void drawStartMessage(bool UI_enableSet, int UI_menu_rows, char *UI_helpMessage);
+void drawStartMessage(bool UI_enableSet, int UI_menu_rows,
+                      char *UI_helpMessage);
 void drawCentreNumber(int n, int x, int i);
 void drawRightNumber(int n, int x, int i);
 void drawBack();
@@ -534,7 +545,9 @@ bool back_mode();
 void setSensorsGraphicPosition(int UI_page);
 
 void basicHumidityControl();
-bool checkStableTemperatures(double *referenceSensorHistory, double *sensorToCalibrateHistory, int historyLength, double stabilityError);
+bool checkStableTemperatures(double *referenceSensorHistory,
+                             double *sensorToCalibrateHistory,
+                             int historyLength, double stabilityError);
 void initRoomSensor();
 void initAmbientSensor();
 void powerMonitor();
@@ -545,7 +558,8 @@ double roundSignificantDigits(double value, int numberOfDecimals);
 
 void initGPIO();
 void initEEPROM();
-void drawHardwareErrorMessage(long error, bool criticalError, bool calibrationError);
+void drawHardwareErrorMessage(long error, bool criticalError,
+                              bool calibrationError);
 void initAlarms();
 void IRAM_ATTR encSwitchHandler();
 void IRAM_ATTR encoderISR();

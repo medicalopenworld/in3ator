@@ -24,33 +24,39 @@
 */
 
 #include <Arduino.h>
+
 #include "main.h"
 
 extern TwoWire *wire;
 extern MAM_in3ator_Humidifier in3_hum;
 extern Adafruit_ILI9341 tft;
-extern SHTC3 mySHTC3; // Declare an instance of the SHTC3 class
+extern SHTC3 mySHTC3;  // Declare an instance of the SHTC3 class
 extern RotaryEncoder encoder;
 
 extern bool WIFI_EN;
 extern long lastDebugUpdate;
 extern long loopCounts;
 extern int page;
- 
+
 extern double errorTemperature[SENSOR_TEMP_QTY], temperatureCalibrationPoint;
 extern double ReferenceTemperatureRange, ReferenceTemperatureLow;
 extern double provisionalReferenceTemperatureLow;
 extern double fineTuneSkinTemperature;
-extern double RawTemperatureLow[SENSOR_TEMP_QTY], RawTemperatureRange[SENSOR_TEMP_QTY];
+extern double RawTemperatureLow[SENSOR_TEMP_QTY],
+    RawTemperatureRange[SENSOR_TEMP_QTY];
 extern double provisionalRawTemperatureLow[SENSOR_TEMP_QTY];
-extern float diffSkinTemperature, diffAirTemperature;           // difference between measured temperature and user input real temperature
+extern float diffSkinTemperature,
+    diffAirTemperature;  // difference between measured temperature and user
+                         // input real temperature
 extern bool humidifierState, humidifierStateChange;
-extern int previousHumidity; // previous sampled humidity
-extern float diffHumidity;   // difference between measured humidity and user input real humidity
+extern int previousHumidity;  // previous sampled humidity
+extern float diffHumidity;    // difference between measured humidity and user
+                              // input real humidity
 
 extern byte autoCalibrationProcess;
 
-// Sensor check rate (in ms). Both sensors are checked in same interrupt and they have different check rates
+// Sensor check rate (in ms). Both sensors are checked in same interrupt and
+// they have different check rates
 extern byte encoderRate;
 extern byte encoderCount;
 extern bool encPulseDetected;
@@ -63,21 +69,23 @@ extern bool WIFI_connection_status;
 extern bool roomSensorPresent;
 
 // room variables
-extern double desiredControlTemperature; // preset baby skin temperature
-extern double desiredControlHumidity;    // preset enviromental humidity
+extern double desiredControlTemperature;  // preset baby skin temperature
+extern double desiredControlHumidity;     // preset enviromental humidity
 
 extern boolean A_set;
 extern boolean B_set;
-extern int encoderpinA;                 // pin  encoder A
-extern int encoderpinB;                 // pin  encoder B
-extern bool encPulsed, encPulsedBefore; // encoder switch status
+extern int encoderpinA;                  // pin  encoder A
+extern int encoderpinB;                  // pin  encoder B
+extern bool encPulsed, encPulsedBefore;  // encoder switch status
 extern bool updateUIData;
-extern volatile int EncMove;            // moved encoder
-extern volatile int lastEncMove;        // moved last encoder
-extern volatile int EncMoveOrientation; // set to -1 to increase values clockwise
-extern int last_encoder_move;           // moved encoder
-extern long encoder_debounce_time;      // in milliseconds, debounce time in encoder to filter signal bounces
-extern long last_encPulsed;             // last time encoder was pulsed
+extern volatile int EncMove;      // moved encoder
+extern volatile int lastEncMove;  // moved last encoder
+extern volatile int
+    EncMoveOrientation;             // set to -1 to increase values clockwise
+extern int last_encoder_move;       // moved encoder
+extern long encoder_debounce_time;  // in milliseconds, debounce time in encoder
+                                    // to filter signal bounces
+extern long last_encPulsed;         // last time encoder was pulsed
 
 // Text Graphic position variables
 extern int humidityX;
@@ -92,12 +100,15 @@ extern bool pos_text[8];
 extern bool enableSet;
 extern float temperaturePercentage, temperatureAtStart;
 extern float humidityPercentage, humidityAtStart;
-extern int barWidth, barHeight, tempBarPosX, tempBarPosY, humBarPosX, humBarPosY;
+extern int barWidth, barHeight, tempBarPosX, tempBarPosY, humBarPosX,
+    humBarPosY;
 extern int screenTextColor, screenTextBackgroundColor;
 
 // User Interface display variables
-extern bool autoLock;             // setting that enables backlight switch OFF after a given time of no user actions
-extern long lastbacklightHandler; // last time there was a encoder movement or pulse
+extern bool autoLock;  // setting that enables backlight switch OFF after a
+                       // given time of no user actions
+extern long
+    lastbacklightHandler;  // last time there was a encoder movement or pulse
 extern long sensorsUpdatePeriod;
 
 extern bool selected;
@@ -116,7 +127,6 @@ extern bool state_blink;
 extern bool blinkSetMessageState;
 extern long lastBlinkSetMessage;
 
-
 extern double HeaterPIDOutput;
 extern double skinControlPIDInput;
 extern double airControlPIDInput;
@@ -130,38 +140,31 @@ extern PID humidityControlPID;
 
 extern in3ator_parameters in3;
 
-void IRAM_ATTR encoderISR()
-{
+void IRAM_ATTR encoderISR() {
   int newPos;
-  encoder.tick(); // just call tick() to check the state.
+  encoder.tick();  // just call tick() to check the state.
   newPos = encoder.getPosition();
   lastbacklightHandler = millis();
-  if (abs(lastEncMove - newPos) > ENCODER_TICKS_DIV)
-  {
+  if (abs(lastEncMove - newPos) > ENCODER_TICKS_DIV) {
     EncMove = EncMoveOrientation * int(encoder.getDirection());
     lastEncMove = newPos;
   }
 }
 
-void IRAM_ATTR fanEncoderISR()
-{
-in3.fanEncoderUpdate=true;
-in3.fanEncoderPeriod[0]=in3.fanEncoderPeriod[1];
-in3.fanEncoderPeriod[1]=micros();
+void IRAM_ATTR fanEncoderISR() {
+  in3.fanEncoderUpdate = true;
+  in3.fanEncoderPeriod[0] = in3.fanEncoderPeriod[1];
+  in3.fanEncoderPeriod[1] = micros();
 }
 
-void IRAM_ATTR encSwitchHandler()
-{
-  if (!GPIORead(ENC_SWITCH))
-  {
-    if (millis() - lastEncPulse > encPulseDebounce)
-    {
-      if (!encPulseDetected)
-      {
-        buzzerTone(buzzerStandbyToneTimes, buzzerSwitchDuration, buzzerRotaryEncoderTone);
+void IRAM_ATTR encSwitchHandler() {
+  if (!GPIORead(ENC_SWITCH)) {
+    if (millis() - lastEncPulse > encPulseDebounce) {
+      if (!encPulseDetected) {
+        buzzerTone(buzzerStandbyToneTimes, buzzerSwitchDuration,
+                   buzzerRotaryEncoderTone);
       }
-      if (ongoingAlarms())
-      {
+      if (ongoingAlarms()) {
         disableAllAlarms();
       }
       encPulseDetected = true;
@@ -172,7 +175,4 @@ void IRAM_ATTR encSwitchHandler()
   }
 }
 
-void IRAM_ATTR ON_OFF_Switch_ISR()
-{
-
-}
+void IRAM_ATTR ON_OFF_Switch_ISR() {}
