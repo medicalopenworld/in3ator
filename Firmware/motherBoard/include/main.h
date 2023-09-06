@@ -11,7 +11,6 @@
 #include <EEPROM.h>
 #include <Filters.h>
 #include <RotaryEncoder.h>
-#include <SPI.h>
 #include <Wire.h>
 
 #include <AH/Timing/MillisMicrosTimer.hpp>
