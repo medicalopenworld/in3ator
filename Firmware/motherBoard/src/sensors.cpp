@@ -235,8 +235,7 @@ float adcToCelsius(float adcReading) {
   float temp0 = 298.0;
   float r0 = 10000.0;
   // float adcReadingCorrection = 215;
-  float adcReadingCorrection = 0;
-  // Bloque de cálculo
+    // Bloque de cálculo
   // Variables used in calculus
   float vm = 0.0;
   float rntc = 0.0;

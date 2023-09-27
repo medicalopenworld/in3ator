@@ -41,6 +41,9 @@
 #define CLIENT_PASSWORD "password"
 #define CLIENT_USERNAME "userName"
 
+constexpr char ACCESS_TOKEN_CRED_TYPE[] PROGMEM = "ACCESS_TOKEN";
+constexpr char MQTT_BASIC_CRED_TYPE[] PROGMEM = "MQTT_BASIC";
+
 struct GPRSstruct {
   int provisioned = false;
   bool OTA_requested = false;

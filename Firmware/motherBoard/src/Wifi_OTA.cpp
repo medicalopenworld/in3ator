@@ -44,9 +44,11 @@ bool WIFI_connection_status = false;
 
 extern in3ator_parameters in3;
 WIFIstruct Wifi_TB;
+ESP32_Updater updater_WIFI;
 
 const OTA_Update_Callback OTAcallback(&progressCallback, &updatedCallback,
                                       CURRENT_FIRMWARE_TITLE, FWversion,
+                                      &updater_WIFI,
                                       FIRMWARE_FAILURE_RETRIES,
                                       FIRMWARE_PACKET_SIZE);
 

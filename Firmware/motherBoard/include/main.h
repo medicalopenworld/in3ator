@@ -31,6 +31,7 @@
 #include "driver/rtc_io.h"
 #include "esp32/ulp.h"
 #include "in3ator_humidifier.h"
+#include <ESP32_Updater.h>
 
 #define WDT_TIMEOUT 45
 
@@ -54,7 +55,7 @@
 #define MAX_MESSAGE_SIZE 512
 #define THINGSBOARD_QOS false
 #define TELEMETRIES_DECIMALS 2
-#define FIRMWARE_FAILURE_RETRIES 5
+#define FIRMWARE_FAILURE_RETRIES 12
 #define FIRMWARE_PACKET_SIZE 4096
 
 #define SN_KEY "SN"
