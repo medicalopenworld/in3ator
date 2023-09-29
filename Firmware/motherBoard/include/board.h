@@ -58,7 +58,7 @@
 #if (HW_NUM >= 9)
 // PINOUT
 #define TFT_DC 0
-#define AFE4490_CS 2
+#define AFE44XX_CS 2
 #define ENC_SWITCH 4
 #define BUZZER 5
 #define FAN 12
@@ -76,6 +76,7 @@
 #define FAN_SPEED_FEEDBACK 35
 #define AFE4490_ADC_READY 36
 #define BABY_NTC_PIN 39
+#define AFE44XX_PWDN_PIN NULL
 
 #define DISPLAY_CONTROLLER_IC ST7789V_CONTROLLER
 
