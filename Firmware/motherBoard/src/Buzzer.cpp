@@ -29,42 +29,35 @@
 #define BUZZER_DISABLED false
 #define BUZZER_ENABLED true
 
-bool buzzerState;
 int buzzerBeeps, buzzerToneTime;
 long buzzerTime;
 bool buzzerBuzzing;
 
-void buzzerHandler() {
-  if (millis() - buzzerTime > buzzerToneTime && buzzerBeeps) {
+void buzzerHandler()
+{
+  if (millis() - buzzerTime > buzzerToneTime && buzzerBeeps)
+  {
     buzzerBeeps -= buzzerBuzzing;
     buzzerBuzzing = !buzzerBuzzing;
     ledcWrite(BUZZER_PWM_CHANNEL, BUZZER_HALF_PWM * buzzerBuzzing);
     buzzerTime = millis();
-
-    if (buzzerBeeps) {
-      buzzerState = BUZZER_ENABLED;
-    } else {
-      buzzerState = BUZZER_DISABLED;
-    }
   }
 }
 
-void buzzerConstantTone(int freq) {
+void buzzerConstantTone(int freq)
+{
   logI("[BUZZER] -> BUZZER activated in constant Mode");
-  if (buzzerState == BUZZER_DISABLED) {
-    ledcWrite(BUZZER_PWM_CHANNEL, BUZZER_HALF_PWM);
-    buzzerState = BUZZER_ENABLED;
-  }
+  ledcWrite(BUZZER_PWM_CHANNEL, BUZZER_HALF_PWM);
 }
 
-void shutBuzzer() {
-  if (buzzerState == BUZZER_ENABLED) {
+void shutBuzzer()
+{
     // logI("[BUZZER] -> BUZZER was shutted");
     ledcWrite(BUZZER_PWM_CHANNEL, false);
-  }
 }
 
-void buzzerTone(int beepTimes, int timevTaskDelay, int freq) {
+void buzzerTone(int beepTimes, int timevTaskDelay, int freq)
+{
   // logI("[BUZZER] -> BUZZER beep mode activated  " + String(beepTimes) + "
   // times");
   buzzerBeeps += beepTimes;

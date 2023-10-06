@@ -243,6 +243,12 @@ void logE(String dataString)
     Serial.println(String(millis() / 1000) + ": " + dataString);
 }
 
+void logAlarm(String dataString)
+{
+  if (LOG_ALARMS)
+    Serial.println(String(millis() / 1000) + ": " + dataString);
+}
+
 void backlightHandler()
 {
   if (autoLock)

@@ -586,7 +586,7 @@ bool encoderContinuousPress(int UI_page) {
     long timePressed = millis();
     while (!GPIORead(ENC_SWITCH)) {
       updateData();
-      if (millis() - timePressed > timePressToSettings) {
+      if (HOLD_PRESS_TO_GO_TO_SETTINGS && millis() - timePressed > timePressToSettings) {
         UI_settings();
         return (true);
       }

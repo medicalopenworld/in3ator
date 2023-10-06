@@ -204,8 +204,20 @@ void buzzer_Task(void *pvParameters)
 
 void setup()
 {
+  bool goToSettings = false;
+  if (!GPIORead(ENC_SWITCH))
+  {
+    goToSettings = true;
+  }
   initHardware(false);
-  UI_mainMenu();
+  if (goToSettings)
+  {
+    UI_settings();
+  }
+  else
+  {
+    UI_mainMenu();
+  }
   // Task generation
   /* Task n#1 - GPRS Handler */
   logI("Creating GPRS task ...\n");

@@ -34,9 +34,10 @@
 #include <ESP32_Updater.h>
 
 #define LOG_GPRS false
-#define LOG_MODEM_DATA true
+#define LOG_MODEM_DATA false
 #define LOG_INFORMATION false
 #define LOG_ERRORS false
+#define LOG_ALARMS true
 
 #define WDT_TIMEOUT 45
 
@@ -51,6 +52,8 @@
 #define UKRAINE_MODE false
 
 #define CORE_ID_FREERTOS 1
+
+#define HOLD_PRESS_TO_GO_TO_SETTINGS 0
 
 #define BROWN_OUT_BATTERY_MODE 0
 #define BROWN_OUT_NORMAL_MODE 0
@@ -455,6 +458,7 @@ typedef struct {
 } in3ator_parameters;
 
 void logE(String dataString);
+void logAlarm(String dataString);
 void logI(String dataString);
 void logCon(String dataString);
 void logModemData(String dataString);
