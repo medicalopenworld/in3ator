@@ -202,12 +202,12 @@ TCA9555 TCA(0x20);
 void initDebug() {
   Serial.begin(115200);
   vTaskDelay(CURRENT_STABILIZE_TIME_DEFAULT / portTICK_PERIOD_MS);
-  log("in3ator debug uart, version v" + String(FWversion) + "/" +
+  logI("in3ator debug uart, version v" + String(FWversion) + "/" +
       String(HWversion) + ", SN: " + String(in3.serialNumber));
 }
 
 void initPWMGPIO() {
-  log("[HW] -> Initialiting PWM GPIOs");
+  logI("[HW] -> Initialiting PWM GPIOs");
   ledcSetup(SCREENBACKLIGHT_PWM_CHANNEL, DEFAULT_PWM_FREQUENCY,
             DEFAULT_PWM_RESOLUTION);
   ledcSetup(HEATER_PWM_CHANNEL, DEFAULT_PWM_FREQUENCY, DEFAULT_PWM_RESOLUTION);
@@ -224,11 +224,11 @@ void initPWMGPIO() {
   ledcAttachPin(HUMIDIFIER_CTL, HUMIDIFIER_PWM_CHANNEL);
   ledcWrite(HUMIDIFIER_CTL, false);
 #endif
-  log("[HW] -> PWM GPIOs initialized");
+  logI("[HW] -> PWM GPIOs initialized");
 }
 
 void initGPIO() {
-  log("[HW] -> Initializing GPIOs");
+  logI("[HW] -> Initializing GPIOs");
 #if (HW_NUM == 6)
   TCA.begin();
   for (int pin = 0; pin < 16; pin++) {
@@ -271,7 +271,7 @@ void initGPIO() {
   GPIOWrite(FAN, LOW);
   // initPin(ON_OFF_SWITCH, INPUT);
   initPWMGPIO();
-  log("[HW] -> GPIOs initilialized");
+  logI("[HW] -> GPIOs initilialized");
 }
 
 void initInterrupts() {
@@ -290,7 +290,7 @@ void initRoomSensor() {
   wire->beginTransmission(ROOM_SENSOR_I2C_ADDRESS);
   roomSensorPresent = !(wire->endTransmission());
   if (roomSensorPresent == true) {
-    log("[HW] -> Room sensor succesfully found, initializing...");
+    logI("[HW] -> Room sensor succesfully found, initializing...");
     mySHTC3.begin(Wire);
     sht4.setPrecision(SHT4X_HIGH_PRECISION);
   }
@@ -301,21 +301,21 @@ void initAmbientSensor() {
   wire->beginTransmission(AMBIENT_SENSOR_I2C_ADDRESS);
   ambientSensorPresent = !(wire->endTransmission());
   if (ambientSensorPresent == true) {
-    log("[HW] -> Ambient sensor succesfully found, initializing...");
+    logI("[HW] -> Ambient sensor succesfully found, initializing...");
     sht4.begin(&Wire);
   }
 }
 void initCurrentSensor(bool currentSensor) {
   if (currentSensor == MAIN) {
-    log("[HW] -> Initialiting MAIN current sensor");
+    logI("[HW] -> Initialiting MAIN current sensor");
     wire->beginTransmission(MAIN_DIGITAL_CURRENT_SENSOR_I2C_ADDRESS);
   } else {
-    log("[HW] -> Initialiting SECUNDARY current sensor");
+    logI("[HW] -> Initialiting SECUNDARY current sensor");
     wire->beginTransmission(SECUNDARY_DIGITAL_CURRENT_SENSOR_I2C_ADDRESS);
   }
   if (!(wire->endTransmission())) {
     digitalCurrentSensorPresent[currentSensor] = true;
-    log("[HW] ->digital sensor detected");
+    logI("[HW] ->digital sensor detected");
     if (currentSensor == MAIN) {
       mainDigitalCurrentSensor.begin();
       mainDigitalCurrentSensor.reset();
@@ -337,24 +337,24 @@ void initCurrentSensor(bool currentSensor) {
       secundaryDigitalCurrentSensor.setAveragingMode(INA3221_REG_CONF_AVG_128);
     }
   } else {
-    log("[HW] -> no digital sensor detected");
+    logE("[HW] -> no digital sensor detected");
   }
 }
 
 void initPowerAlarm() {}
 
 void initI2C() {
-  log("[HW] -> Initializing i2c port");
+  logI("[HW] -> Initializing i2c port");
   Wire.begin(I2C_SDA, I2C_SCL);
   wire = &Wire;
-  log("[HW] -> I2c port initialized");
+  logI("[HW] -> I2c port initialized");
 }
 
 void addErrorToVar(long &errorVar, int error) { errorVar |= (1 << error); }
 
 void initSensors() {
   long error = HW_error;
-  log("[HW] -> Initialiting sensors");
+  logI("[HW] -> Initialiting sensors");
   initCurrentSensor(MAIN);
   initCurrentSensor(SECUNDARY);
   initRoomSensor();
@@ -365,58 +365,58 @@ void initSensors() {
       ;
   }
   if (in3.temperature[SKIN_SENSOR] < NTC_BABY_MIN) {
-    log("[HW] -> Fail -> NTC temperature is lower than expected");
+    logE("[HW] -> Fail -> NTC temperature is lower than expected");
     addErrorToVar(HW_error, NTC_BABY_MIN_ERROR);
   }
   if (in3.temperature[SKIN_SENSOR] > NTC_BABY_MAX) {
-    log("[HW] -> Fail -> NTC temperature is higher than expected");
+    logE("[HW] -> Fail -> NTC temperature is higher than expected");
     addErrorToVar(HW_error, NTC_BABY_MAX_ERROR);
   }
   if (updateRoomSensor()) {
     if (in3.temperature[ROOM_DIGITAL_TEMP_SENSOR] < DIG_TEMP_ROOM_MIN) {
-      log("[HW] -> Fail -> Room temperature is lower than expected");
+      logE("[HW] -> Fail -> Room temperature is lower than expected");
       addErrorToVar(HW_error, DIG_TEMP_ROOM_MIN_ERROR);
     }
     if (in3.temperature[ROOM_DIGITAL_TEMP_SENSOR] > DIG_TEMP_ROOM_MAX) {
-      log("[HW] -> Fail -> Room temperature is higher than expected");
+      logE("[HW] -> Fail -> Room temperature is higher than expected");
       addErrorToVar(HW_error, DIG_TEMP_ROOM_MAX_ERROR);
     }
     if (in3.humidity[ROOM_DIGITAL_HUM_SENSOR] < DIG_HUM_ROOM_MIN) {
-      log("[HW] -> Fail -> Room humidity is lower than expected");
+      logE("[HW] -> Fail -> Room humidity is lower than expected");
       addErrorToVar(HW_error, DIG_HUM_ROOM_MIN_ERROR);
     }
     if (in3.humidity[ROOM_DIGITAL_HUM_SENSOR] > DIG_HUM_ROOM_MAX) {
-      log("[HW] -> Fail -> Room humidity is higher than expected");
+      logE("[HW] -> Fail -> Room humidity is higher than expected");
       addErrorToVar(HW_error, DIG_HUM_ROOM_MAX_ERROR);
     }
   } else {
     addErrorToVar(HW_error, DIGITAL_SENSOR_NOTFOUND);
-    log("[HW] -> Fail -> No room sensor found");
+    logE("[HW] -> Fail -> No room sensor found");
   }
   if (error == HW_error) {
-    log("[HW] -> OK -> Sensors are working as expected");
+    logI("[HW] -> OK -> Sensors are working as expected");
   }
 }
 
 void standByCurrentTest() {
   long error = HW_error;
   float testCurrent;
-  log("[HW] -> Measuring standby current...");
+  logI("[HW] -> Measuring standby current...");
 
   testCurrent = measureMeanConsumption(MAIN, SYSTEM_SHUNT_CHANNEL);
   if (testCurrent < STANDBY_CONSUMPTION_MIN) {
     addErrorToVar(HW_error, DEFECTIVE_CURRENT_SENSOR);
-    log("[HW] -> Fail -> Defective current sensor");
+    logE("[HW] -> Fail -> Defective current sensor");
   }
   if (testCurrent > STANDBY_CONSUMPTION_MAX) {
     addErrorToVar(HW_error, STANDBY_CONSUMPTION_MAX_ERROR);
-    log("[HW] -> Fail -> Maximum stanby current exceeded");
+    logE("[HW] -> Fail -> Maximum stanby current exceeded");
   }
   if (error == HW_error) {
-    log("[HW] -> OK -> Current sensor is working as expected: " +
+    logI("[HW] -> OK -> Current sensor is working as expected: " +
         String(testCurrent) + " Amps");
   } else {
-    log("[HW] -> Fail -> test current is " + String(testCurrent) + " Amps");
+    logE("[HW] -> Fail -> test current is " + String(testCurrent) + " Amps");
   }
   in3.system_current_standby_test = testCurrent;
 }
@@ -427,21 +427,21 @@ void initializeTFT() {
   tft.setController(DISPLAY_CONTROLLER_IC);
   tft.begin(DISPLAY_SPI_CLK);
   tft.setRotation(DISPLAY_DEFAULT_ROTATION);
-  uint8_t x = tft.readcommand8(ILI9341_RDMODE);
-  Serial.print("Display Power Mode: 0x");
-  Serial.println(x, HEX);
-  x = tft.readcommand8(ILI9341_RDMADCTL);
-  Serial.print("MADCTL Mode: 0x");
-  Serial.println(x, HEX);
-  x = tft.readcommand8(ILI9341_RDPIXFMT);
-  Serial.print("Pixel Format: 0x");
-  Serial.println(x, HEX);
-  x = tft.readcommand8(ILI9341_RDIMGFMT);
-  Serial.print("Image Format: 0x");
-  Serial.println(x, HEX);
-  x = tft.readcommand8(ILI9341_RDSELFDIAG);
-  Serial.print("Self Diagnostic: 0x");
-  Serial.println(x, HEX);
+  // uint8_t x = tft.readcommand8(ILI9341_RDMODE);
+  // Serial.print("Display Power Mode: 0x");
+  // Serial.println(x, HEX);
+  // x = tft.readcommand8(ILI9341_RDMADCTL);
+  // Serial.print("MADCTL Mode: 0x");
+  // Serial.println(x, HEX);
+  // x = tft.readcommand8(ILI9341_RDPIXFMT);
+  // Serial.print("Pixel Format: 0x");
+  // Serial.println(x, HEX);
+  // x = tft.readcommand8(ILI9341_RDIMGFMT);
+  // Serial.print("Image Format: 0x");
+  // Serial.println(x, HEX);
+  // x = tft.readcommand8(ILI9341_RDSELFDIAG);
+  // Serial.print("Self Diagnostic: 0x");
+  // Serial.println(x, HEX);
 }
 
 void initTFT() {
@@ -484,17 +484,17 @@ void initTFT() {
       measureMeanConsumption(MAIN, SYSTEM_SHUNT_CHANNEL) - offsetCurrent;
   if (testCurrent < SCREEN_CONSUMPTION_MIN) {
     // addErrorToVar(HW_error, DEFECTIVE_SCREEN;
-    log("[HW] -> WARNING -> Screen current is not high enough");
+    logE("[HW] -> WARNING -> Screen current is not high enough");
   }
   if (testCurrent > SCREEN_CONSUMPTION_MAX) {
     // addErrorToVar(HW_error, DEFECTIVE_SCREEN;
-    log("[HW] -> WARNING -> Screen current exceeded");
+    logE("[HW] -> WARNING -> Screen current exceeded");
   }
   if (error == HW_error) {
-    log("[HW] -> OK -> Screen is working as expected: " + String(testCurrent) +
+    logI("[HW] -> OK -> Screen is working as expected: " + String(testCurrent) +
         " Amps");
   } else {
-    log("[HW] -> Fail -> test current is " + String(testCurrent) + " Amps");
+    logE("[HW] -> Fail -> test current is " + String(testCurrent) + " Amps");
   }
   in3.display_current_test = testCurrent;
 }
@@ -512,20 +512,20 @@ void initBuzzer() {
   vTaskDelay(CURRENT_STABILIZE_TIME_DEFAULT / portTICK_PERIOD_MS);
   if (testCurrent < BUZZER_CONSUMPTION_MIN) {
     addErrorToVar(HW_error, DEFECTIVE_BUZZER);
-    log("[HW] -> Fail -> Buzzer current is not high enough");
+    logE("[HW] -> Fail -> Buzzer current is not high enough");
   }
   if (error == HW_error) {
-    log("[HW] -> OK -> Buzzer is working as expected: " + String(testCurrent) +
+    logI("[HW] -> OK -> Buzzer is working as expected: " + String(testCurrent) +
         " Amps");
   } else {
-    log("[HW] -> Fail -> test current is " + String(testCurrent) + " Amps");
+    logE("[HW] -> Fail -> test current is " + String(testCurrent) + " Amps");
   }
   in3.buzzer_current_test = testCurrent;
 }
 
 bool actuatorsTest() {
   long error = HW_error;
-  log("[HW] -> Checking actuators...");
+  logI("[HW] -> Checking actuators...");
 
   float testCurrent, offsetCurrent;
   offsetCurrent = measureMeanConsumption(MAIN, SYSTEM_SHUNT_CHANNEL);
@@ -533,18 +533,18 @@ bool actuatorsTest() {
   vTaskDelay(CURRENT_STABILIZE_TIME_HEATER / portTICK_PERIOD_MS);
   testCurrent =
       measureMeanConsumption(MAIN, SYSTEM_SHUNT_CHANNEL) - offsetCurrent;
-  log("[HW] -> Heater current consumption: " + String(testCurrent) + " Amps");
+  logI("[HW] -> Heater current consumption: " + String(testCurrent) + " Amps");
   in3.heater_current_test = testCurrent;
   ledcWrite(HEATER_PWM_CHANNEL, 0);
   if (testCurrent < HEATER_CONSUMPTION_MIN) {
     addErrorToVar(HW_error, HEATER_CONSUMPTION_MIN_ERROR);
-    log("[HW] -> Fail -> Heater current consumption is too low");
+    logE("[HW] -> Fail -> Heater current consumption is too low");
     setAlarm(HEATER_ISSUE_ALARM);
     return (true);
   }
   if (testCurrent > HEATER_CONSUMPTION_MAX) {
     addErrorToVar(HW_error, HEATER_CONSUMPTION_MAX_ERROR);
-    log("[HW] -> Fail -> Heater current consumption is too high");
+    logE("[HW] -> Fail -> Heater current consumption is too high");
     setAlarm(HEATER_ISSUE_ALARM);
     return (true);
   }
@@ -555,16 +555,16 @@ bool actuatorsTest() {
   testCurrent =
       measureMeanConsumption(MAIN, PHOTOTHERAPY_SHUNT_CHANNEL) - offsetCurrent;
   GPIOWrite(PHOTOTHERAPY, LOW);
-  log("[HW] -> Phototherapy current consumption: " + String(testCurrent) +
+  logI("[HW] -> Phototherapy current consumption: " + String(testCurrent) +
       " Amps");
   in3.phototherapy_current_test = testCurrent;
   if (testCurrent < PHOTOTHERAPY_CONSUMPTION_MIN) {
     addErrorToVar(HW_error, PHOTOTHERAPY_CONSUMPTION_MIN_ERROR);
-    log("[HW] -> Fail -> PHOTOTHERAPY current consumption is too low");
+    logE("[HW] -> Fail -> PHOTOTHERAPY current consumption is too low");
   }
   if (testCurrent > PHOTOTHERAPY_CONSUMPTION_MAX) {
     addErrorToVar(HW_error, PHOTOTHERAPY_CONSUMPTION_MAX_ERROR);
-    log("[HW] -> Fail -> PHOTOTHERAPY current consumption is too high");
+    logE("[HW] -> Fail -> PHOTOTHERAPY current consumption is too high");
     return (true);
   }
   vTaskDelay(CURRENT_STABILIZE_TIME_DEFAULT / portTICK_PERIOD_MS);
@@ -574,17 +574,17 @@ bool actuatorsTest() {
   vTaskDelay(CURRENT_STABILIZE_TIME_DEFAULT / portTICK_PERIOD_MS);
   testCurrent = measureMeanConsumption(MAIN, SYSTEM_SHUNT_CHANNEL) -
                 offsetCurrent;  // <- UPDATE THIS CODE TO ASK I2C DATA
-  log("[HW] -> Humidifier current consumption: " + String(testCurrent) +
+  logI("[HW] -> Humidifier current consumption: " + String(testCurrent) +
       " Amps");
   in3.humidifier_current_test = testCurrent;
   in3_hum.turn(OFF);
   if (testCurrent < HUMIDIFIER_CONSUMPTION_MIN) {
     addErrorToVar(HW_error, HUMIDIFIER_CONSUMPTION_MIN_ERROR);
-    log("[HW] -> Fail -> HUMIDIFIER current consumption is too low");
+    logE("[HW] -> Fail -> HUMIDIFIER current consumption is too low");
   }
   if (testCurrent > HUMIDIFIER_CONSUMPTION_MAX) {
     addErrorToVar(HW_error, HUMIDIFIER_CONSUMPTION_MAX_ERROR);
-    log("[HW] -> Fail -> HUMIDIFIER current consumption is too high");
+    logE("[HW] -> Fail -> HUMIDIFIER current consumption is too high");
     return (true);
   }
   vTaskDelay(CURRENT_STABILIZE_TIME_DEFAULT / portTICK_PERIOD_MS);
@@ -592,24 +592,24 @@ bool actuatorsTest() {
   GPIOWrite(FAN, HIGH);
   vTaskDelay(CURRENT_STABILIZE_TIME_DEFAULT / portTICK_PERIOD_MS);
   testCurrent = measureMeanConsumption(MAIN, FAN_SHUNT_CHANNEL) - offsetCurrent;
-  log("[HW] -> FAN consumption: " + String(testCurrent) + " Amps");
+  logI("[HW] -> FAN consumption: " + String(testCurrent) + " Amps");
   in3.fan_current_test = testCurrent;
   GPIOWrite(FAN, LOW);
   if (testCurrent < FAN_CONSUMPTION_MIN) {
     addErrorToVar(HW_error, FAN_CONSUMPTION_MIN_ERROR);
-    log("[HW] -> Fail -> Fan current consumption is too low");
+    logE("[HW] -> Fail -> Fan current consumption is too low");
     return (true);
   }
   if (testCurrent > FAN_CONSUMPTION_MAX &&
       testCurrent > FAN_MAX_CURRENT_OVERRIDE * FAN_CONSUMPTION_MAX * 2) {
     addErrorToVar(HW_error, FAN_CONSUMPTION_MAX_ERROR);
-    log("[HW] -> Fail -> Fan current consumption is too high");
+    logE("[HW] -> Fail -> Fan current consumption is too high");
     return (true);
   }
   if (error == HW_error) {
-    log("[HW] -> OK -> Actuators are working as expected");
+    logI("[HW] -> OK -> Actuators are working as expected");
   } else {
-    log("[HW] -> Fail -> Some actuators are not working as expected");
+    logI("[HW] -> Fail -> Some actuators are not working as expected");
   }
   return (false);
 }
@@ -637,10 +637,10 @@ void GPIOWrite(uint8_t GPIO, uint8_t Mode) {
   if (GPIO < GPIO_EXP_BASE) {
     digitalWrite(GPIO, Mode);
   } else {
-    log("[HW] -> TCA9355 writing pin" + String(GPIO - GPIO_EXP_BASE) + " -> " +
+    logI("[HW] -> TCA9355 writing pin" + String(GPIO - GPIO_EXP_BASE) + " -> " +
         String(Mode));
     if (!TCA.digitalWrite(GPIO - GPIO_EXP_BASE, Mode)) {
-      log("[HW] -> TCA9355 WRITE ERROR");
+      logE("[HW] -> TCA9355 WRITE ERROR");
     }
   }
 }
@@ -660,7 +660,7 @@ void initHardware(bool printOutputTest) {
   initI2C();
   initGPIO();
   initSensors();
-  log("[HW] -> Initialiting hardware");
+  logI("[HW] -> Initialiting hardware");
   initSenseCircuit();
   initTFT();
   initPowerAlarm();
@@ -672,14 +672,14 @@ void initHardware(bool printOutputTest) {
     wifiInit();
   }
   if (!HW_error) {
-    log("[HW] -> HARDWARE OK");
+    logI("[HW] -> HARDWARE OK");
   } else {
-    log("[HW] -> HARDWARE TEST FAIL");
-    log("[HW] -> HARDWARE ERROR CODE:" + String(HW_error, HEX));
+    logE("[HW] -> HARDWARE TEST FAIL");
+    logE("[HW] -> HARDWARE ERROR CODE:" + String(HW_error, HEX));
   }
   in3.HW_test_error_code = HW_error;
   if (printOutputTest || in3.HW_critical_error || in3.calibrationError) {
-    log("[HW] -> PRINTING ERROR TO USER");
+    logE("[HW] -> PRINTING ERROR TO USER");
     drawHardwareErrorMessage(HW_error, in3.HW_critical_error,
                              in3.calibrationError);
     while (GPIORead(ENC_SWITCH)) {

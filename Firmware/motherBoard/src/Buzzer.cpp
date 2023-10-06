@@ -50,7 +50,7 @@ void buzzerHandler() {
 }
 
 void buzzerConstantTone(int freq) {
-  log("[BUZZER] -> BUZZER activated in constant Mode");
+  logI("[BUZZER] -> BUZZER activated in constant Mode");
   if (buzzerState == BUZZER_DISABLED) {
     ledcWrite(BUZZER_PWM_CHANNEL, BUZZER_HALF_PWM);
     buzzerState = BUZZER_ENABLED;
@@ -59,13 +59,13 @@ void buzzerConstantTone(int freq) {
 
 void shutBuzzer() {
   if (buzzerState == BUZZER_ENABLED) {
-    // log("[BUZZER] -> BUZZER was shutted");
+    // logI("[BUZZER] -> BUZZER was shutted");
     ledcWrite(BUZZER_PWM_CHANNEL, false);
   }
 }
 
 void buzzerTone(int beepTimes, int timevTaskDelay, int freq) {
-  // log("[BUZZER] -> BUZZER beep mode activated  " + String(beepTimes) + "
+  // logI("[BUZZER] -> BUZZER beep mode activated  " + String(beepTimes) + "
   // times");
   buzzerBeeps += beepTimes;
   buzzerToneTime = timevTaskDelay;

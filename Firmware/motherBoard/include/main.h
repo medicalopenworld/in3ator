@@ -33,6 +33,11 @@
 #include "in3ator_humidifier.h"
 #include <ESP32_Updater.h>
 
+#define LOG_GPRS false
+#define LOG_MODEM_DATA true
+#define LOG_INFORMATION false
+#define LOG_ERRORS false
+
 #define WDT_TIMEOUT 45
 
 #define FAN_RPM_CONVERSION 13333333
@@ -294,6 +299,7 @@ typedef enum {
   SKIN_SENSOR_ISSUE_ALARM,
   FAN_ISSUE_ALARM,
   HEATER_ISSUE_ALARM,
+  POWER_SUPPLY_ALARM,
   NUM_ALARMS,
 } ALARMS_ID;
 
@@ -448,7 +454,10 @@ typedef struct {
 
 } in3ator_parameters;
 
-void log(String dataString);
+void logE(String dataString);
+void logI(String dataString);
+void logCon(String dataString);
+void logModemData(String dataString);
 long secsToMillis(long timeInMillis);
 long minsToMillis(long timeInMillis);
 float millisToHours(long timeInMillis);

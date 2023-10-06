@@ -158,13 +158,13 @@ void wifiDisable() { WiFi.mode(WIFI_OFF); }
 
 void configWifiServer() {
   // Wait for connection
-  log("Connected to " + String(ssid) + "IP address" + WiFi.localIP());
+  logI("Connected to " + String(ssid) + "IP address" + WiFi.localIP());
 
   /*use mdns for wifiHost name resolution*/
   if (!MDNS.begin(wifiHost)) {  // http://esp32.local
-    log("Error setting up MDNS responder!");
+    logI("Error setting up MDNS responder!");
   }
-  log("mDNS responder started");
+  logI("mDNS responder started");
   /*return index page which is stored in ServerIndex */
   wifiServer.on("/", HTTP_GET, []() {
     wifiServer.sendHeader("Connection", "close");
@@ -211,10 +211,10 @@ void configWifiServer() {
 
 void WIFI_UpdatedCallback(const bool &success) {
   if (success) {
-    log("[WIFI] -> Done, OTA will be implemented on next boot");
+    logI("[WIFI] -> Done, OTA will be implemented on next boot");
     // esp_restart();
   } else {
-    log("[WIFI] -> No new firmware");
+    logI("[WIFI] -> No new firmware");
     Update.abort();
   }
 }
@@ -239,7 +239,7 @@ bool WIFIIsConnectedToServer() {
 }
 
 void WIFICheckOTA() {
-  log("[WIFI] -> Checking WIFI firwmare Update...");
+  logI("[WIFI] -> Checking WIFI firwmare Update...");
   tb_wifi.Firmware_Send_Info(CURRENT_FIRMWARE_TITLE, FWversion);
   tb_wifi.Start_Firmware_Update(OTAcallback);
 }
@@ -382,10 +382,10 @@ void WIFI_TB_OTA() {
   if (WiFi.status() == WL_CONNECTED) {
     if (!tb_wifi.connected()) {
       // Connect to the ThingsBoard
-      log("[WIFI] -> Connecting over WIFI to: " + String(THINGSBOARD_SERVER) +
+      logI("[WIFI] -> Connecting over WIFI to: " + String(THINGSBOARD_SERVER) +
           " with token " + String(Wifi_TB.device_token));
       if (!tb_wifi.connect(THINGSBOARD_SERVER, Wifi_TB.device_token.c_str())) {
-        log("[WIFI] ->Failed to connect");
+        logI("[WIFI] ->Failed to connect");
         return;
       } else {
         if (!Wifi_TB.firstPublish) {
@@ -393,9 +393,9 @@ void WIFI_TB_OTA() {
           if (tb_wifi.sendTelemetryJson(addVariableToTelemetryWIFIJSON,
                                         JSON_STRING_SIZE(measureJson(
                                             addVariableToTelemetryWIFIJSON)))) {
-            log("[WIFI] -> WIFI MQTT PUBLISH CONFIG SUCCESS");
+            logI("[WIFI] -> WIFI MQTT PUBLISH CONFIG SUCCESS");
           } else {
-            log("[WIFI] -> WIFI MQTT PUBLISH CONFIG FAIL");
+            logI("[WIFI] -> WIFI MQTT PUBLISH CONFIG FAIL");
           }
           WIFI_JSON.clear();
         }
@@ -411,9 +411,9 @@ void WIFI_TB_OTA() {
         if (tb_wifi.sendTelemetryJson(addVariableToTelemetryWIFIJSON,
                                       JSON_STRING_SIZE(measureJson(
                                           addVariableToTelemetryWIFIJSON)))) {
-          log("[WIFI] -> WIFI MQTT PUBLISH TELEMETRIES SUCCESS");
+          logI("[WIFI] -> WIFI MQTT PUBLISH TELEMETRIES SUCCESS");
         } else {
-          log("[WIFI] -> WIFI MQTT PUBLISH TELEMETRIES FAIL");
+          logI("[WIFI] -> WIFI MQTT PUBLISH TELEMETRIES FAIL");
         }
         WIFI_JSON.clear();
         Wifi_TB.lastMQTTPublish = millis();

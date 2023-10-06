@@ -88,7 +88,7 @@ void MAM_in3ator_Humidifier::turn(uint16_t mode) {
         val = true;
       }
       _write(IN3ATOR_HUM_ON, (uint16_t *)&val);
-      Serial.println("HUMIDIFIER I2C: " + String(mode));
+      logI("HUMIDIFIER I2C: " + String(mode));
       break;
   }
 }
