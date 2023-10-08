@@ -165,6 +165,8 @@ extern PID humidityControlPID;
 #define MINIMUM_SUCCESSFULL_SENSOR_UPDATE 30000 // in millis
 
 bool alarmOnGoing[NUM_ALARMS];
+bool displayAlarm[NUM_ALARMS];
+bool clearedAlarm[NUM_ALARMS];
 long lastAlarmTrigger[NUM_ALARMS];
 float alarmSensedValue;
 
@@ -253,6 +255,7 @@ void checkStatusOfSensor(byte sensor)
     if (millis() - lastSuccesfullSensorUpdate[sensor] >
         MINIMUM_SUCCESSFULL_SENSOR_UPDATE)
     {
+      Serial.println(lastSuccesfullSensorUpdate[sensor]);
       if (!alarmOnGoing[alarmID])
       {
         setAlarm(alarmID);
@@ -268,8 +271,6 @@ void checkStatusOfSensor(byte sensor)
   }
 }
 
-void powerFailureAlarm() {}
-
 void sensorHealthMonitor()
 {
   checkStatusOfSensor(ROOM_DIGITAL_TEMP_SENSOR);
@@ -280,14 +281,6 @@ void powerMonitor()
 {
   currentMonitor();
   voltageMonitor();
-#if (HW_NUM >= 10)
-  if (digitalCurrentSensorPresent &&
-      in3.system_voltage < MINIMUM_SYSTEM_VALUE &&
-      GPIORead(ON_OFF_SWITCH) == OFF)
-  {
-    powerFailureAlarm();
-  }
-#endif
 }
 
 void alarmTimerStart()
@@ -369,27 +362,49 @@ char *alarmIDtoString(byte alarmID)
   }
 }
 
+int alarmPendingToDisplay()
+{
+  for (int i = 0; i < NUM_ALARMS; i++)
+  {
+    if (displayAlarm[i])
+      return i;
+  }
+  return false;
+}
+
+void clearDisplayedAlarm(byte alarm)
+{
+  displayAlarm[alarm] = false;
+}
+
+void clearAlarmPendingToClear(byte alarm)
+{
+  clearedAlarm[alarm] = false;
+}
+
+int alarmPendingToClear()
+{
+  for (int i = 0; i < NUM_ALARMS; i++)
+  {
+    if (clearedAlarm[i])
+      return i;
+  }
+  return false;
+}
+
 void setAlarm(byte alarmID)
 {
   logAlarm("[ALARM] ->" + String(alarmIDtoString(alarmID)) + " has been triggered");
   alarmOnGoing[alarmID] = true;
+  displayAlarm[alarmID] = true;
   buzzerConstantTone(buzzerAlarmTone);
-  drawAlarmMessage(alarmIDtoString(alarmID));
 }
 
 void resetAlarm(byte alarmID)
 {
   logAlarm("[ALARM] ->" + String(alarmIDtoString(alarmID)) + " has been disable");
   alarmOnGoing[alarmID] = false;
-  drawHeading(page, in3.serialNumber);
-  if (!ongoingAlarms())
-  {
-    shutBuzzer();
-  }
-  else
-  {
-    drawAlarmMessage(alarmIDtoString(activeAlarm()));
-  }
+  clearedAlarm[alarmID] = true;
 }
 
 void disableAllAlarms()
@@ -440,7 +455,7 @@ void powerSupplyCheck()
 {
   if (HW_NUM >= 13)
   {
-    if (digitalCurrentSensorPresent[MAIN] && in3.system_voltage < 8)
+    if (digitalCurrentSensorPresent[MAIN] && in3.system_voltage > 0 && in3.system_voltage < 8)
     {
       if (!alarmOnGoing[POWER_SUPPLY_ALARM])
         setAlarm(POWER_SUPPLY_ALARM);

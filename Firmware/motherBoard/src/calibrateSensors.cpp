@@ -271,16 +271,10 @@ void autoCalibration()
       sensorToCalibrateHistory[historyLengthPosition] =
           in3.temperature[SKIN_SENSOR];
       historyLengthPosition++;
-
-      if (LOG_GPRS)
+      for (int i = 0; i < SAMPLES_WITHIN_ERROR; i++)
       {
-        for (int i = 0; i < SAMPLES_WITHIN_ERROR; i++)
-        {
-          Serial.println(
-              abs(*referenceSensorHistory - *(referenceSensorHistory + i)));
-          Serial.println(
-              abs(*sensorToCalibrateHistory - *(sensorToCalibrateHistory + i)));
-        }
+        logI(String(abs(*referenceSensorHistory - *(referenceSensorHistory + i))));
+        logI(String(abs(*sensorToCalibrateHistory - *(sensorToCalibrateHistory + i))));
       }
     }
   }

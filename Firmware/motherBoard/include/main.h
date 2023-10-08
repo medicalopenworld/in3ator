@@ -294,7 +294,8 @@ typedef enum {
 } HW_ERROR_ID;
 
 typedef enum {
-  HUMIDITY_ALARM = 0,
+  NO_ALARMS = 0,
+  HUMIDITY_ALARM,
   TEMPERATURE_ALARM,
   AIR_THERMAL_CUTOUT_ALARM,
   SKIN_THERMAL_CUTOUT_ALARM,
@@ -530,7 +531,13 @@ void printLoadingTemperatureBar(double UI_desiredControlTemperature);
 void printLoadingHumidityBar(int UI_desiredControlHumidity);
 void blinkGoBackMessage();
 bool ongoingAlarms();
+byte activeAlarm();
 void disableAllAlarms();
+int alarmPendingToDisplay();
+int alarmPendingToClear();
+void clearDisplayedAlarm(byte alarm);
+void clearAlarmPendingToClear(byte alarm);
+char *alarmIDtoString(byte alarmID);
 
 void checkSetMessage(int UI_page);
 

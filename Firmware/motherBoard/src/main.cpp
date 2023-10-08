@@ -202,6 +202,18 @@ void buzzer_Task(void *pvParameters)
   }
 }
 
+void security_Task(void *pvParameters)
+{
+  for (;;)
+  {
+    if (ALARM_SYSTEM_ENABLED && in3.alarmsEnabled)
+    {
+      securityCheck();
+    }
+    vTaskDelay(BUZZER_TASK_PERIOD / portTICK_PERIOD_MS);
+  }
+}
+
 void setup()
 {
   bool goToSettings = false;
@@ -252,6 +264,12 @@ void setup()
     ;
   ;
   logI("sensors task successfully created!\n");
+  logI("Creating security task ...\n");
+  while (xTaskCreatePinnedToCore(security_Task, (const char *)"SECURITY", 4096,
+                                 NULL, 1, NULL, CORE_ID_FREERTOS) != pdPASS)
+    ;
+  ;
+  logI("sensors task successfully created!\n");
   /*
   logI("Creating time track task ...\n");
   while (xTaskCreatePinnedToCore(time_track_Task, (const char *)"SENSORS", 4096,
@@ -266,9 +284,5 @@ void loop()
 {
   userInterfaceHandler(page);
   updateData();
-  if (ALARM_SYSTEM_ENABLED && in3.alarmsEnabled)
-  {
-    securityCheck();
-  }
   vTaskDelay(LOOP_TASK_PERIOD / portTICK_PERIOD_MS);
 }
