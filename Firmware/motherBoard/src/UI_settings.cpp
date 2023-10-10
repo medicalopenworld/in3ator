@@ -59,7 +59,7 @@ extern byte autoCalibrationProcess;
 // they have different check rates
 extern byte encoderRate;
 extern byte encoderCount;
-extern bool encPulseDetected;
+
 extern volatile long lastEncPulse;
 extern volatile bool statusEncSwitch;
 
@@ -196,7 +196,6 @@ void UI_settings() {
   selected = false;
   ypos = graphicHeight(bar_pos - 1);
   while (!GPIORead(ENC_SWITCH)) {
-    updateData();
+  vTaskDelay(pdMS_TO_TICKS(debounceTime));    
   }
-  vTaskDelay(debounceTime / portTICK_PERIOD_MS);
 }

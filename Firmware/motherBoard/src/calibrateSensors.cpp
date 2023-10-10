@@ -59,7 +59,7 @@ extern byte autoCalibrationProcess;
 // they have different check rates
 extern byte encoderRate;
 extern byte encoderCount;
-extern bool encPulseDetected;
+
 extern volatile long lastEncPulse;
 extern volatile bool statusEncSwitch;
 
@@ -187,13 +187,12 @@ void autoCalibration()
   ypos = graphicHeight(bar_pos - 1);
   while (!GPIORead(ENC_SWITCH))
   {
-    updateData();
+    vTaskDelay(pdMS_TO_TICKS(debounceTime));
   }
-  vTaskDelay(debounceTime / portTICK_PERIOD_MS);
   autoCalibrationProcess = setupAutoCalibrationPoint;
   while (!exitCalibrationMenu)
   {
-    updateData();
+    vTaskDelay(pdMS_TO_TICKS(WHILE_LOOP_DELAY));
     switch (autoCalibrationProcess)
     {
     case setupAutoCalibrationPoint:
@@ -213,13 +212,13 @@ void autoCalibration()
             in3.temperature[ROOM_DIGITAL_TEMP_SENSOR];
         provisionalRawTemperatureLow[SKIN_SENSOR] =
             in3.temperature[SKIN_SENSOR];
-        vTaskDelay(debounceTime / portTICK_PERIOD_MS);
+        vTaskDelay(pdMS_TO_TICKS(debounceTime));
         while (!GPIORead(ENC_SWITCH))
         {
-          updateData();
+          vTaskDelay(pdMS_TO_TICKS(WHILE_LOOP_DELAY));
           exitCalibrationMenu = back_mode();
         }
-        vTaskDelay(debounceTime / portTICK_PERIOD_MS);
+        vTaskDelay(pdMS_TO_TICKS(debounceTime));
         in3.desiredControlTemperature = DEFAULT_CALIBRATION_TEMPERATURE;
         startPID(airPID);
         autoCalibrationProcess = secondAutoCalibrationPoint;
@@ -308,9 +307,8 @@ void fineTuneCalibration()
   drawFloat(in3.temperature[SKIN_SENSOR], 1, valuePosition, ypos, textFontSize);
   while (!GPIORead(ENC_SWITCH))
   {
-    updateData();
+    vTaskDelay(pdMS_TO_TICKS(debounceTime));
   }
-  vTaskDelay(debounceTime / portTICK_PERIOD_MS);
 }
 
 void firstPointCalibration()
@@ -357,9 +355,8 @@ void firstPointCalibration()
   drawFloat(in3.temperature[SKIN_SENSOR], 1, valuePosition, ypos, textFontSize);
   while (!GPIORead(ENC_SWITCH))
   {
-    updateData();
+  vTaskDelay(pdMS_TO_TICKS(debounceTime));
   }
-  vTaskDelay(debounceTime / portTICK_PERIOD_MS);
 }
 
 void secondPointCalibration()
@@ -406,9 +403,8 @@ void secondPointCalibration()
   drawFloat(in3.temperature[SKIN_SENSOR], 1, valuePosition, ypos, textFontSize);
   while (!GPIORead(ENC_SWITCH))
   {
-    updateData();
+  vTaskDelay(pdMS_TO_TICKS(debounceTime));
   }
-  vTaskDelay(debounceTime / portTICK_PERIOD_MS);
 }
 
 bool checkStableTemperatures(double *referenceSensorHistory,

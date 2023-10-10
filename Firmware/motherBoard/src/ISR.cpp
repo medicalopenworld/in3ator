@@ -59,7 +59,6 @@ extern byte autoCalibrationProcess;
 // they have different check rates
 extern byte encoderRate;
 extern byte encoderCount;
-extern bool encPulseDetected;
 extern volatile long lastEncPulse;
 extern volatile bool statusEncSwitch;
 
@@ -166,17 +165,13 @@ void IRAM_ATTR encSwitchHandler()
   {
     if (millis() - lastEncPulse > encPulseDebounce)
     {
-      if (!encPulseDetected)
-      {
-        buzzerTone(buzzerStandbyToneTimes, buzzerSwitchDuration,
-                   buzzerRotaryEncoderTone);
-      }
+      buzzerTone(buzzerStandbyToneTimes, buzzerSwitchDuration,
+                 buzzerRotaryEncoderTone);
       if (ongoingAlarms())
       {
-        //shutBuzzer();
+        // shutBuzzer();
         disableAllAlarms();
       }
-      encPulseDetected = true;
       // logI"[ENCODER] -> Pushed");
     }
     lastEncPulse = millis();

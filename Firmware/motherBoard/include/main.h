@@ -44,8 +44,8 @@
 #define FAN_RPM_CONVERSION 13333333
 #define FAN_UPDATE_TIME_MIN 1000
 
-#define ENABLE_WIFI_OTA true  // enable wifi OTA
-#define ENABLE_GPRS_OTA true  // enable GPRS OTA
+#define ENABLE_WIFI_OTA true // enable wifi OTA
+#define ENABLE_GPRS_OTA true // enable GPRS OTA
 #define ALARM_SYSTEM_ENABLED true
 #define FAN_MAX_CURRENT_OVERRIDE false
 
@@ -130,16 +130,25 @@
 #define SKIN_CONTROL false
 #define AIR_CONTROL true
 
+// Tasks priorities
+#define BACKLIGHT_TASK_PRIORITY 3
+#define OTA_TASK_PRIORITY 4
+#define GPRS_TAST_PRIORITY 5
+#define BUZZER_TASK_PRIORITY 6
+#define UI_TASK_PRIORITY 7
+#define SENSORS_TASK_PRIORITY 8
+#define SECURITY_TASK_PRIORITY 9
+
 // buzzer variables
 #define buzzerStandbyPeriod \
-  10000  // in millis, there will be a periodic tone when regulating baby's
-         // constants
-#define buzzerStandbyTone 500         // in micros, tone freq
-#define buzzerAlarmTone 500           // in micros, tone freq
-#define buzzerRotaryEncoderTone 2200  // in micros, tone freq
-#define buzzerStandbyToneDuration 50  // in micros, tone freq
-#define buzzerSwitchDuration 10       // in micros, tone freq
-#define buzzerStandbyToneTimes 1      // in micros, tone freq
+  10000                              // in millis, there will be a periodic tone when regulating baby's
+                                     // constants
+#define buzzerStandbyTone 500        // in micros, tone freq
+#define buzzerAlarmTone 500          // in micros, tone freq
+#define buzzerRotaryEncoderTone 2200 // in micros, tone freq
+#define buzzerStandbyToneDuration 50 // in micros, tone freq
+#define buzzerSwitchDuration 10      // in micros, tone freq
+#define buzzerStandbyToneTimes 1     // in micros, tone freq
 
 // EEPROM variables
 #define EEPROM_SIZE 256
@@ -168,10 +177,10 @@
 #define EEPROM_HUMIDIFIER_ACTIVE_TIME 246
 
 // configuration variables
-#define debounceTime 30  // encoder debouncing time
+#define debounceTime 30 // encoder debouncing time
 #define timePressToSettings \
-  3000  // in millis, time to press to go to settings window in UI
-#define debugUpdatePeriod 1000  // in millis,
+  3000                        // in millis, time to press to go to settings window in UI
+#define DEBUG_LOOP_PRINT 1000 // in millis,
 
 // pages number in UI. Configuration and information will be displayed depending
 // on the page number
@@ -191,22 +200,22 @@
 #define portuguese 3
 #define numLanguages 4
 #define defaultLanguage \
-  english  // Preset number configuration when booting for first time
+  english // Preset number configuration when booting for first time
 #define DEFAULT_CONTROL_MODE AIR_CONTROL
 
-#define NTC_MEASUREMENT_PERIOD 1  // in millis
+#define NTC_MEASUREMENT_PERIOD 1 // in millis
 #define NTC_SAMPLES_TEST 100
-#define CURRENT_UPDATE_PERIOD 500  // in millis
-#define VOLTAGE_UPDATE_PERIOD 50   // in millis
+#define CURRENT_UPDATE_PERIOD 500 // in millis
+#define VOLTAGE_UPDATE_PERIOD 50  // in millis
 
 #define setupAutoCalibrationPoint 0
 #define firstAutoCalibrationPoint 1
 #define secondAutoCalibrationPoint 2
 
 // GPRS variables to transmit
-#define turnedOn 0      // transmit first turned ON with hardware verification
-#define room 1          // transmit room variables
-#define aliveRefresh 2  // message to let know that incubator is still ON
+#define turnedOn 0     // transmit first turned ON with hardware verification
+#define room 1         // transmit room variables
+#define aliveRefresh 2 // message to let know that incubator is still ON
 
 #define digitalCurrentSensorReadPeriod 500
 #define externalADCReadPeriod 30
@@ -214,7 +223,7 @@
 // sensor variables
 #define defaultCurrentSamples 30
 #define defaultTestingSamples 8000
-#define Rsense 3000  // 3 microohm as shunt resistor
+#define Rsense 3000 // 3 microohm as shunt resistor
 
 #define MAIN 0
 #define SECUNDARY 1
@@ -226,30 +235,30 @@
 
 // #define system constants
 #define humidifierDutyCycleMax \
-  100                             // maximum humidity cycle in heater to be set
-#define humidifierDutyCycleMin 0  // minimum humidity cycle in heater to be set
+  100                            // maximum humidity cycle in heater to be set
+#define humidifierDutyCycleMin 0 // minimum humidity cycle in heater to be set
 
-#define stepTemperatureIncrement 0.1  // maximum allowed temperature to be set
-#define stepHumidityIncrement 5       // maximum allowed temperature to be set
-#define presetHumidity 60             // preset humidity
-#define maxHum 90                     // maximum allowed humidity to be set
-#define minHum 20                     // minimum allowed humidity to be set
+#define stepTemperatureIncrement 0.1 // maximum allowed temperature to be set
+#define stepHumidityIncrement 5      // maximum allowed temperature to be set
+#define presetHumidity 60            // preset humidity
+#define maxHum 90                    // maximum allowed humidity to be set
+#define minHum 20                    // minimum allowed humidity to be set
 
 // Encoder variables
-#define NUMENCODERS 1  // number of encoders in circuit
+#define NUMENCODERS 1 // number of encoders in circuit
 #if (HW_NUM == 6)
 #define ENCODER_TICKS_DIV 1
 #else
 #define ENCODER_TICKS_DIV 0
 #endif
-#define encPulseDebounce 50
+#define encPulseDebounce 200
 
 // User Interface display constants
-#define brightenRate 10  // intro brighten speed (Higher value, faster)
+#define brightenRate 10 // intro brighten speed (Higher value, faster)
 #define valuePosition 245
 #define separatorPosition 240
 #define unitPosition 315
-#define textFontSize 2  // text default size
+#define textFontSize 2 // text default size
 #define width_select 20
 #define height_heading 34
 #define width_indentation 4
@@ -263,14 +272,15 @@
 #define headint_text_height height_heading / 5
 #define initialSensorsValue "XX"
 #define barThickness 3
-#define blinkTimeON 1000  // displayed text ON time
-#define blinkTimeOFF 100  // displayed text OFF time
+#define blinkTimeON 1000 // displayed text ON time
+#define blinkTimeOFF 100 // displayed text OFF time
 #define time_back_draw 255
 #define time_back_wait 255
 
 #define DEFAULT_AUTOLOCK ON
 
-typedef enum {
+typedef enum
+{
   NTC_BABY_MIN_ERROR = 0,
   NTC_BABY_MAX_ERROR,
   DIG_TEMP_ROOM_MIN_ERROR,
@@ -293,7 +303,8 @@ typedef enum {
   UNCALIBRATED_SENSOR,
 } HW_ERROR_ID;
 
-typedef enum {
+typedef enum
+{
   NO_ALARMS = 0,
   HUMIDITY_ALARM,
   TEMPERATURE_ALARM,
@@ -307,14 +318,16 @@ typedef enum {
   NUM_ALARMS,
 } ALARMS_ID;
 
-typedef enum {
+typedef enum
+{
   EVENT_2G = 0,
   EVENT_WIFI,
   EVENT_SERVER_CONNECTION,
   EVENT_OTA_ONGOING,
 } UI_EVENTS_ID;
 
-typedef enum {
+typedef enum
+{
   EVENT_2G_UI_POS = 5,
   EVENT_SERVER_CONNECTION_UI_POS = EVENT_2G_UI_POS + 2 * letter_width,
   EVENT_WIFI_UI_POS = EVENT_SERVER_CONNECTION_UI_POS + letter_width,
@@ -326,7 +339,7 @@ typedef enum {
 #define DRAW true
 
 // graphic text configurations
-#define graphicTextOffset 1  // bar pos is counted from 1, but text from 0
+#define graphicTextOffset 1 // bar pos is counted from 1, but text from 0
 #define CENTER true
 #define LEFT_MARGIN false
 
@@ -387,24 +400,27 @@ typedef enum {
 #define transitionEffect BLACK
 
 #define BACKLIGHT_NO_INTERACTION_TIME \
-  12000  // time to decrease backlight display if no user actions
+  12000 // time to decrease backlight display if no user actions
 
 #define GPRS_TASK_PERIOD 1
-#define OTA_TASK_PERIOD 0
+#define OTA_TASK_PERIOD 1
 #define SENSORS_TASK_PERIOD 1
 #define ROOM_SENSOR_UPDATE_PERIOD 500
 #define DIGITAL_CURRENT_SENSOR_PERIOD 5
 #define BUZZER_TASK_PERIOD 1
+#define SECURITY_TASK_PERIOD 1
 #define BACKLIGHT_TASK_PERIOD 100
 #define FAN_TASK_PERIOD 1
 #define LOOP_TASK_PERIOD 1
 
 #define BACKLIGHT_DELAY 2
 #define INIT_TFT_DELAY 300
+#define WHILE_LOOP_DELAY 1
 
-#define TIME_TRACK_UPDATE_PERIOD 900000  // 15 minutes
+#define TIME_TRACK_UPDATE_PERIOD 900000 // 15 minutes
 
-typedef struct {
+typedef struct
+{
   double temperature[SENSOR_TEMP_QTY];
   double humidity[SENSOR_HUM_QTY];
   double desiredControlTemperature = false;
@@ -499,6 +515,7 @@ int16_t getBackgroundColor();
 
 void turnFans(bool mode);
 void alarmTimerStart();
+void timeTrackHandler();
 
 bool ongoingCriticalAlarm();
 void setAlarm(byte alarmID);

@@ -59,7 +59,7 @@ extern byte autoCalibrationProcess;
 // they have different check rates
 extern byte encoderRate;
 extern byte encoderCount;
-extern bool encPulseDetected;
+
 extern volatile long lastEncPulse;
 extern volatile bool statusEncSwitch;
 
@@ -141,7 +141,23 @@ extern PID humidityControlPID;
 
 extern in3ator_parameters in3;
 
-void userInterfaceHandler(int UI_page)
+void updateDisplayHeader()
+{
+  if (millis() - lastGraphicSensorsUpdate > sensorsUpdatePeriod)
+  {
+    if (page == mainMenuPage)
+    {
+      UI_updateConnectivityEvents();
+    }
+    if (page == mainMenuPage || page == actuatorsProgressPage)
+    {
+      updateDisplaySensors();
+    }
+    lastGraphicSensorsUpdate = millis();
+  }
+}
+
+void checkAlarmsToDisplay()
 {
   byte alarmToDisplay = alarmPendingToDisplay();
   byte alarmToClear = alarmPendingToClear();
@@ -163,71 +179,86 @@ void userInterfaceHandler(int UI_page)
       drawAlarmMessage(alarmIDtoString(activeAlarm()));
     }
   }
-  if (EncMove)
+}
+
+void bar_pos_handler(int UI_page)
+{
+  if (EncMove && !selected)
   {
-    if (!selected)
+    if (EncMove < 0)
     {
-      if (EncMove < 0)
+      EncMove++;
+      if (UI_page == mainMenuPage)
       {
-        EncMove++;
-        if (UI_page == mainMenuPage)
-        {
-          enableSetProcess = enableSet;
-        }
-        else
-        {
-          enableSetProcess = true;
-        }
-        if (bar_pos < menu_rows - !enableSetProcess)
-        {
-          eraseBar(menu_rows, bar_pos);
-          bar_pos++;
-          updateBar(menu_rows, bar_pos);
-        }
+        enableSetProcess = enableSet;
       }
       else
       {
-        EncMove--;
-        if (bar_pos > 1)
-        {
-          eraseBar(menu_rows, bar_pos);
-          bar_pos--;
-          updateBar(menu_rows, bar_pos);
-        }
+        enableSetProcess = true;
       }
-      ypos = graphicHeight(bar_pos - 1);
+      if (bar_pos < menu_rows - !enableSetProcess)
+      {
+        eraseBar(menu_rows, bar_pos);
+        bar_pos++;
+        updateBar(menu_rows, bar_pos);
+      }
+    }
+    else
+    {
+      EncMove--;
+      if (bar_pos > 1)
+      {
+        eraseBar(menu_rows, bar_pos);
+        bar_pos--;
+        updateBar(menu_rows, bar_pos);
+      }
+    }
+    ypos = graphicHeight(bar_pos - 1);
+  }
+}
+
+void bar_highlight()
+{
+  if (menu_rows)
+  {
+    if (selected)
+    {
+      tft.fillRect(
+          0,
+          (tft.height() - height_heading) * (bar_pos - 1) / menu_rows +
+              height_heading,
+          width_select, (tft.height() - height_heading) / menu_rows,
+          COLOR_CHOSEN);
+    }
+    else
+    {
+      tft.fillRect(
+          0,
+          (tft.height() - height_heading) * (bar_pos - 1) / menu_rows +
+              height_heading,
+          width_select, (tft.height() - height_heading) / menu_rows, WHITE);
+    }
+    for (int i = 2; i <= menu_rows; i++)
+    {
+      tft.fillRect(0,
+                   (tft.height() - height_heading) * (i - 1) / menu_rows +
+                       height_heading - 1,
+                   tft.height(), width_indentation, WHITE); // mejorable
     }
   }
+}
+
+void userInterfaceHandler(int UI_page)
+{
+  updateDisplayHeader();
+  checkSetMessage(UI_page);
+  checkAlarmsToDisplay();
+  bar_pos_handler(UI_page);
+
   if (!GPIORead(ENC_SWITCH))
   {
     selected = !selected;
-    if (menu_rows)
-    {
-      if (selected)
-      {
-        tft.fillRect(
-            0,
-            (tft.height() - height_heading) * (bar_pos - 1) / menu_rows +
-                height_heading,
-            width_select, (tft.height() - height_heading) / menu_rows,
-            COLOR_CHOSEN);
-      }
-      else
-      {
-        tft.fillRect(
-            0,
-            (tft.height() - height_heading) * (bar_pos - 1) / menu_rows +
-                height_heading,
-            width_select, (tft.height() - height_heading) / menu_rows, WHITE);
-      }
-      for (int i = 2; i <= menu_rows; i++)
-      {
-        tft.fillRect(0,
-                     (tft.height() - height_heading) * (i - 1) / menu_rows +
-                         height_heading - 1,
-                     tft.height(), width_indentation, WHITE); // mejorable
-      }
-    }
+    bar_highlight();
     if (!encoderContinuousPress(UI_page))
     {
       switch (UI_page)
@@ -244,7 +275,7 @@ void userInterfaceHandler(int UI_page)
         case temperatureGraphicPosition:
           while (GPIORead(ENC_SWITCH))
           {
-            updateData();
+            vTaskDelay(pdMS_TO_TICKS(WHILE_LOOP_DELAY));
             if (EncMove)
             {
               if (!in3.temperatureControl)
@@ -297,7 +328,7 @@ void userInterfaceHandler(int UI_page)
         case humidityGraphicPosition:
           while (GPIORead(ENC_SWITCH))
           {
-            updateData();
+            vTaskDelay(pdMS_TO_TICKS(WHILE_LOOP_DELAY));
             if (EncMove)
             {
               if (!in3.humidityControl)
@@ -387,7 +418,7 @@ void userInterfaceHandler(int UI_page)
         case languageGraphicPosition:
           while (GPIORead(ENC_SWITCH))
           {
-            updateData();
+            vTaskDelay(pdMS_TO_TICKS(WHILE_LOOP_DELAY));
             if (EncMove)
             {
               setTextColor(COLOR_MENU);
@@ -445,7 +476,7 @@ void userInterfaceHandler(int UI_page)
         case serialNumberGraphicPosition:
           while (GPIORead(ENC_SWITCH))
           {
-            updateData();
+            vTaskDelay(pdMS_TO_TICKS(WHILE_LOOP_DELAY));
             if (EncMove)
             {
               setTextColor(COLOR_MENU);
@@ -542,7 +573,7 @@ void userInterfaceHandler(int UI_page)
           diffAirTemperature = in3.temperature[ROOM_DIGITAL_TEMP_SENSOR];
           while (GPIORead(ENC_SWITCH))
           {
-            updateData();
+            vTaskDelay(pdMS_TO_TICKS(WHILE_LOOP_DELAY));
             if (EncMove)
             {
               setTextColor(COLOR_MENU);
@@ -586,7 +617,7 @@ void userInterfaceHandler(int UI_page)
           diffAirTemperature = in3.temperature[ROOM_DIGITAL_TEMP_SENSOR];
           while (GPIORead(ENC_SWITCH))
           {
-            updateData();
+            vTaskDelay(pdMS_TO_TICKS(WHILE_LOOP_DELAY));
             if (EncMove)
             {
               setTextColor(COLOR_MENU);
@@ -620,7 +651,7 @@ void userInterfaceHandler(int UI_page)
           diffSkinTemperature = in3.temperature[SKIN_SENSOR];
           while (GPIORead(ENC_SWITCH))
           {
-            updateData();
+            vTaskDelay(pdMS_TO_TICKS(WHILE_LOOP_DELAY));
             if (EncMove)
             {
               setTextColor(COLOR_MENU);
@@ -674,20 +705,20 @@ void userInterfaceHandler(int UI_page)
             width_select, (tft.height() - height_heading) / menu_rows, WHITE);
       }
       encoderContinuousPress(UI_page);
-      vTaskDelay(debounceTime / portTICK_PERIOD_MS);
+      vTaskDelay(pdMS_TO_TICKS(debounceTime));
     }
   }
 }
 
 bool encoderContinuousPress(int UI_page)
 {
-  updateData();
+
   if (UI_page == mainMenuPage)
   {
     long timePressed = millis();
     while (!GPIORead(ENC_SWITCH))
     {
-      updateData();
+      vTaskDelay(pdMS_TO_TICKS(WHILE_LOOP_DELAY));
       if (HOLD_PRESS_TO_GO_TO_SETTINGS && millis() - timePressed > timePressToSettings)
       {
         UI_settings();
@@ -716,45 +747,47 @@ int getYpos(int UI_menu_rows, byte row)
 
 void checkSetMessage(int UI_page)
 {
-  int compareTime;
-  if (blinkSetMessageState)
+  if ((UI_page == mainMenuPage) && !enableSet)
   {
-    compareTime = blinkTimeON;
-  }
-  else
-  {
-    compareTime = blinkTimeOFF;
-  }
-  if (millis() - lastBlinkSetMessage > compareTime)
-  {
-    lastBlinkSetMessage = millis();
-    blinkSetMessageState = !blinkSetMessageState;
+    int compareTime;
     if (blinkSetMessageState)
     {
-      setTextColor(COLOR_WARNING_TEXT);
+      compareTime = blinkTimeON;
     }
     else
     {
-      setTextColor(COLOR_MENU);
+      compareTime = blinkTimeOFF;
     }
-    if (page == mainMenuPage)
+    if (millis() - lastBlinkSetMessage > compareTime)
     {
-      drawHelpMessage(in3.language);
+      lastBlinkSetMessage = millis();
+      blinkSetMessageState = !blinkSetMessageState;
+      if (blinkSetMessageState)
+      {
+        setTextColor(COLOR_WARNING_TEXT);
+      }
+      else
+      {
+        setTextColor(COLOR_MENU);
+      }
+      if (page == mainMenuPage)
+      {
+        drawHelpMessage(in3.language);
+      }
+      drawCentreString(helpMessage,
+                       width_select + (tft.width() - width_select) / 2,
+                       getYpos(menu_rows, startGraphicPosition), textFontSize);
     }
-    drawCentreString(helpMessage,
-                     width_select + (tft.width() - width_select) / 2,
-                     getYpos(menu_rows, startGraphicPosition), textFontSize);
   }
 }
 
 bool back_mode()
 {
-  vTaskDelay(debounceTime / portTICK_PERIOD_MS);
+  vTaskDelay(pdMS_TO_TICKS(debounceTime));
   last_encPulsed = millis();
   byte back_bar = false;
   while (!GPIORead(ENC_SWITCH))
   {
-    updateData();
     if (millis() - last_encPulsed > time_back_wait)
     {
       back_bar++;
@@ -766,13 +799,12 @@ bool back_mode()
       UI_mainMenu();
       return true;
     }
-    vTaskDelay(((time_back_draw + time_back_wait) / width_back) /
-               portTICK_PERIOD_MS);
+    vTaskDelay(pdMS_TO_TICKS(((time_back_draw + time_back_wait) / width_back)));
   }
   if (millis() - last_encPulsed > time_back_wait)
   {
     drawBack();
   }
-  vTaskDelay(debounceTime / portTICK_PERIOD_MS);
+  vTaskDelay(pdMS_TO_TICKS(debounceTime));
   return (false);
 }

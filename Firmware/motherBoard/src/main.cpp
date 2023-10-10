@@ -66,7 +66,7 @@ byte autoCalibrationProcess;
 // they have different check rates
 byte encoderRate = true;
 byte encoderCount = false;
-bool encPulseDetected;
+
 volatile long lastEncPulse;
 volatile bool statusEncSwitch;
 
@@ -111,6 +111,7 @@ int barWidth, barHeight, tempBarPosX, tempBarPosY, humBarPosX, humBarPosY;
 int screenTextColor, screenTextBackgroundColor;
 
 // User Interface display variables
+bool goToSettings = false;
 bool autoLock;             // setting that enables backlight switch OFF after a given time
                            // of no user actions
 long lastbacklightHandler; // last time there was a encoder movement or pulse
@@ -139,6 +140,8 @@ long lastRoomSensorUpdate, lastCurrentSensorUpdate;
 
 in3ator_parameters in3;
 
+QueueHandle_t sharedSensorQueue;
+
 void GPRS_Task(void *pvParameters)
 {
   initGPRS();
@@ -149,7 +152,7 @@ void GPRS_Task(void *pvParameters)
     {
       GPRS_Handler();
     }
-    vTaskDelay(GPRS_TASK_PERIOD / portTICK_PERIOD_MS);
+    vTaskDelay(pdMS_TO_TICKS(GPRS_TASK_PERIOD));
   }
 }
 
@@ -158,7 +161,7 @@ void Backlight_Task(void *pvParameters)
   for (;;)
   {
     backlightHandler();
-    vTaskDelay(BACKLIGHT_TASK_PERIOD / portTICK_PERIOD_MS);
+    vTaskDelay(pdMS_TO_TICKS(BACKLIGHT_TASK_PERIOD));
   }
 }
 
@@ -179,7 +182,7 @@ void sensors_Task(void *pvParameters)
       powerMonitor();
       lastCurrentSensorUpdate = millis();
     }
-    vTaskDelay(SENSORS_TASK_PERIOD / portTICK_PERIOD_MS);
+    vTaskDelay(pdMS_TO_TICKS(SENSORS_TASK_PERIOD));
   }
 }
 
@@ -189,7 +192,7 @@ void OTA_Task(void *pvParameters)
   for (;;)
   {
     WifiOTAHandler();
-    vTaskDelay(OTA_TASK_PERIOD / portTICK_PERIOD_MS);
+    vTaskDelay(pdMS_TO_TICKS(OTA_TASK_PERIOD));
   }
 }
 
@@ -198,7 +201,7 @@ void buzzer_Task(void *pvParameters)
   for (;;)
   {
     buzzerHandler();
-    vTaskDelay(BUZZER_TASK_PERIOD / portTICK_PERIOD_MS);
+    vTaskDelay(pdMS_TO_TICKS(BUZZER_TASK_PERIOD));
   }
 }
 
@@ -210,18 +213,12 @@ void security_Task(void *pvParameters)
     {
       securityCheck();
     }
-    vTaskDelay(BUZZER_TASK_PERIOD / portTICK_PERIOD_MS);
+    vTaskDelay(pdMS_TO_TICKS(SECURITY_TASK_PERIOD));
   }
 }
 
-void setup()
+void UI_Task(void *pvParameters)
 {
-  bool goToSettings = false;
-  if (!GPIORead(ENC_SWITCH))
-  {
-    goToSettings = true;
-  }
-  initHardware(false);
   if (goToSettings)
   {
     UI_settings();
@@ -230,46 +227,67 @@ void setup()
   {
     UI_mainMenu();
   }
-  // Task generation
-  /* Task n#1 - GPRS Handler */
-  logI("Creating GPRS task ...\n");
-  while (xTaskCreatePinnedToCore(GPRS_Task, (const char *)"GPRS", 8192, NULL, 1,
-                                 NULL, CORE_ID_FREERTOS) != pdPASS)
-    ;
-  logI("GPRS task successfully created!\n");
+  for (;;)
+  {
+    userInterfaceHandler(page);
+    vTaskDelay(pdMS_TO_TICKS(SECURITY_TASK_PERIOD));
+  }
+}
 
-  logI("Creating OTA task ...\n");
-  while (xTaskCreatePinnedToCore(OTA_Task, (const char *)"OTA", 8192, NULL, 1,
-                                 NULL, CORE_ID_FREERTOS) != pdPASS)
+void setup()
+{
+  sharedSensorQueue = xQueueCreate(SENSOR_TEMP_QTY, sizeof(long));
+  if (!GPIORead(ENC_SWITCH))
+  {
+    goToSettings = true;
+  }
+  initHardware(false);
+
+  logI("Creating UI task ...\n");
+  while (xTaskCreatePinnedToCore(UI_Task, (const char *)"UI", 4096,
+                                 NULL, UI_TASK_PRIORITY, NULL, CORE_ID_FREERTOS) != pdPASS)
     ;
   ;
-  logI("OTA task successfully created!\n");
-  logI("Creating Backlight task ...\n");
-  while (xTaskCreatePinnedToCore(Backlight_Task, (const char *)"BACKLIGHT",
-                                 4096, NULL, 1, NULL,
-                                 CORE_ID_FREERTOS) != pdPASS)
-    ;
-  ;
-  logI("Backlight task successfully created!\n");
+  logI("UI task successfully created!\n");
 
   logI("Creating buzzer task ...\n");
   while (xTaskCreatePinnedToCore(buzzer_Task, (const char *)"BUZZER", 4096,
-                                 NULL, 1, NULL, CORE_ID_FREERTOS) != pdPASS)
+                                 NULL, BUZZER_TASK_PRIORITY, NULL, CORE_ID_FREERTOS) != pdPASS)
     ;
   ;
   logI("Buzzer task successfully created!\n");
   logI("Creating sensors task ...\n");
   while (xTaskCreatePinnedToCore(sensors_Task, (const char *)"SENSORS", 4096,
-                                 NULL, 1, NULL, CORE_ID_FREERTOS) != pdPASS)
+                                 NULL, SENSORS_TASK_PRIORITY, NULL, CORE_ID_FREERTOS) != pdPASS)
     ;
   ;
   logI("sensors task successfully created!\n");
+  // Task generation
   logI("Creating security task ...\n");
   while (xTaskCreatePinnedToCore(security_Task, (const char *)"SECURITY", 4096,
-                                 NULL, 1, NULL, CORE_ID_FREERTOS) != pdPASS)
+                                 NULL, SECURITY_TASK_PRIORITY, NULL, CORE_ID_FREERTOS) != pdPASS)
     ;
   ;
   logI("sensors task successfully created!\n");
+  logI("Creating GPRS task ...\n");
+  while (xTaskCreatePinnedToCore(GPRS_Task, (const char *)"GPRS", 8192, NULL, GPRS_TAST_PRIORITY,
+                                 NULL, CORE_ID_FREERTOS) != pdPASS)
+    ;
+  logI("GPRS task successfully created!\n");
+
+  logI("Creating OTA task ...\n");
+  while (xTaskCreatePinnedToCore(OTA_Task, (const char *)"OTA", 8192, NULL, OTA_TASK_PRIORITY,
+                                 NULL, CORE_ID_FREERTOS) != pdPASS)
+    ;
+  logI("OTA task successfully created!\n");
+
+  logI("Creating Backlight task ...\n");
+  while (xTaskCreatePinnedToCore(Backlight_Task, (const char *)"BACKLIGHT",
+                                 4096, NULL, BACKLIGHT_TASK_PRIORITY, NULL,
+                                 CORE_ID_FREERTOS) != pdPASS)
+    ;
+  ;
+  logI("Backlight task successfully created!\n");
   /*
   logI("Creating time track task ...\n");
   while (xTaskCreatePinnedToCore(time_track_Task, (const char *)"SENSORS", 4096,
@@ -282,7 +300,7 @@ void setup()
 
 void loop()
 {
-  userInterfaceHandler(page);
-  updateData();
-  vTaskDelay(LOOP_TASK_PERIOD / portTICK_PERIOD_MS);
+  watchdogReload();
+  timeTrackHandler();
+  vTaskDelay(pdMS_TO_TICKS(LOOP_TASK_PERIOD));
 }

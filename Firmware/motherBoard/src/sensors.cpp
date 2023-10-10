@@ -62,7 +62,7 @@ extern byte autoCalibrationProcess;
 // they have different check rates
 extern byte encoderRate;
 extern byte encoderCount;
-extern bool encPulseDetected;
+
 extern volatile long lastEncPulse;
 extern volatile bool statusEncSwitch;
 
@@ -130,6 +130,7 @@ extern bool blinkSetMessageState;
 extern long lastBlinkSetMessage;
 
 extern long lastSuccesfullSensorUpdate[SENSOR_TEMP_QTY];
+extern QueueHandle_t sharedSensorQueue;
 
 extern double HeaterPIDOutput;
 extern double skinControlPIDInput;
@@ -314,6 +315,7 @@ bool measureNTCTemperature()
         NTCmeasurement < ADC_TO_DISCARD_MAX)
     {
       lastSuccesfullSensorUpdate[SKIN_SENSOR] = millis();
+      xQueueSend(sharedSensorQueue, &lastSuccesfullSensorUpdate[SKIN_SENSOR], portMAX_DELAY);
       in3.temperature[SKIN_SENSOR] = filter_1(adcToCelsius(NTCmeasurement));
       errorTemperature[SKIN_SENSOR] = in3.temperature[SKIN_SENSOR];
       if (RawTemperatureRange[SKIN_SENSOR])
@@ -356,6 +358,7 @@ bool updateRoomSensor()
           sensedTemperature < DIG_TEMP_TO_DISCARD_MAX)
       {
         lastSuccesfullSensorUpdate[ROOM_DIGITAL_TEMP_SENSOR] = millis();
+        xQueueSend(sharedSensorQueue, &lastSuccesfullSensorUpdate[ROOM_DIGITAL_TEMP_SENSOR], portMAX_DELAY);
         in3.temperature[ROOM_DIGITAL_TEMP_SENSOR] =
             sensedTemperature; // Add here measurement to temp array
         in3.humidity[ROOM_DIGITAL_HUM_SENSOR] = mySHTC3.toPercent();

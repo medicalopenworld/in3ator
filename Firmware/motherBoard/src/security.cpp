@@ -59,7 +59,7 @@ extern byte autoCalibrationProcess;
 // they have different check rates
 extern byte encoderRate;
 extern byte encoderCount;
-extern bool encPulseDetected;
+
 extern volatile long lastEncPulse;
 extern volatile bool statusEncSwitch;
 
@@ -130,6 +130,7 @@ extern bool blinkSetMessageState;
 extern long lastBlinkSetMessage;
 
 extern long lastSuccesfullSensorUpdate[SENSOR_TEMP_QTY];
+extern QueueHandle_t sharedSensorQueue;
 
 extern double HeaterPIDOutput;
 extern double skinControlPIDInput;
@@ -252,20 +253,22 @@ void checkStatusOfSensor(byte sensor)
   }
   if (alarmID)
   {
-    if (millis() - lastSuccesfullSensorUpdate[sensor] >
-        MINIMUM_SUCCESSFULL_SENSOR_UPDATE)
+    if (xQueueReceive(sharedSensorQueue, &lastSuccesfullSensorUpdate[sensor], portMAX_DELAY))
     {
-      Serial.println(lastSuccesfullSensorUpdate[sensor]);
-      if (!alarmOnGoing[alarmID])
+      if (millis() - lastSuccesfullSensorUpdate[sensor] >
+          MINIMUM_SUCCESSFULL_SENSOR_UPDATE)
       {
-        setAlarm(alarmID);
+        if (!alarmOnGoing[alarmID])
+        {
+          setAlarm(alarmID);
+        }
       }
-    }
-    else
-    {
-      if (alarmOnGoing[alarmID])
+      else
       {
-        resetAlarm(alarmID);
+        if (alarmOnGoing[alarmID])
+        {
+          resetAlarm(alarmID);
+        }
       }
     }
   }
@@ -455,7 +458,7 @@ void powerSupplyCheck()
 {
   if (HW_NUM >= 13)
   {
-    if (digitalCurrentSensorPresent[MAIN] && in3.system_voltage > 0 && in3.system_voltage < 8)
+    if (digitalCurrentSensorPresent[MAIN] && in3.system_voltage > MIN_SYSTEM_VOLTAGE_TRIGGER && in3.system_voltage < MAX_SYSTEM_VOLTAGE_TRIGGER)
     {
       if (!alarmOnGoing[POWER_SUPPLY_ALARM])
         setAlarm(POWER_SUPPLY_ALARM);

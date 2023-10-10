@@ -59,7 +59,7 @@ extern byte autoCalibrationProcess;
 // they have different check rates
 extern byte encoderRate;
 extern byte encoderCount;
-extern bool encPulseDetected;
+
 extern volatile long lastEncPulse;
 extern volatile bool statusEncSwitch;
 
@@ -201,7 +201,7 @@ TCA9555 TCA(0x20);
 
 void initDebug() {
   Serial.begin(115200);
-  vTaskDelay(CURRENT_STABILIZE_TIME_DEFAULT / portTICK_PERIOD_MS);
+  vTaskDelay(pdMS_TO_TICKS(CURRENT_STABILIZE_TIME_DEFAULT ));
   logI("in3ator debug uart, version v" + String(FWversion) + "/" +
       String(HWversion) + ", SN: " + String(in3.serialNumber));
 }
@@ -474,12 +474,12 @@ void initTFT() {
   }
   for (int i = backlight_start_value; i < backlight_end_value; i++) {
     ledcWrite(SCREENBACKLIGHT_PWM_CHANNEL, i);
-    vTaskDelay(BACKLIGHT_DELAY / portTICK_PERIOD_MS);
+    vTaskDelay(pdMS_TO_TICKS(BACKLIGHT_DELAY));
     if (BACKLIGHT_CONTROL == INVERTED_BACKLIGHT_CONTROL) {
       i -= 2;
     }
   }
-  vTaskDelay(INIT_TFT_DELAY / portTICK_PERIOD_MS);
+  vTaskDelay(pdMS_TO_TICKS(INIT_TFT_DELAY));
   testCurrent =
       measureMeanConsumption(MAIN, SYSTEM_SHUNT_CHANNEL) - offsetCurrent;
   if (testCurrent < SCREEN_CONSUMPTION_MIN) {
@@ -505,11 +505,11 @@ void initBuzzer() {
 
   offsetCurrent = measureMeanConsumption(MAIN, SYSTEM_SHUNT_CHANNEL);
   ledcWrite(BUZZER_PWM_CHANNEL, BUZZER_HALF_PWM);
-  vTaskDelay(CURRENT_STABILIZE_TIME_DEFAULT / portTICK_PERIOD_MS);
+  vTaskDelay(pdMS_TO_TICKS(CURRENT_STABILIZE_TIME_DEFAULT ));
   testCurrent =
       measureMeanConsumption(MAIN, SYSTEM_SHUNT_CHANNEL) - offsetCurrent;
   ledcWrite(BUZZER_PWM_CHANNEL, false);
-  vTaskDelay(CURRENT_STABILIZE_TIME_DEFAULT / portTICK_PERIOD_MS);
+  vTaskDelay(pdMS_TO_TICKS(CURRENT_STABILIZE_TIME_DEFAULT ));
   if (testCurrent < BUZZER_CONSUMPTION_MIN) {
     addErrorToVar(HW_error, DEFECTIVE_BUZZER);
     logE("[HW] -> Fail -> Buzzer current is not high enough");
@@ -530,7 +530,7 @@ bool actuatorsTest() {
   float testCurrent, offsetCurrent;
   offsetCurrent = measureMeanConsumption(MAIN, SYSTEM_SHUNT_CHANNEL);
   ledcWrite(HEATER_PWM_CHANNEL, PWM_MAX_VALUE);
-  vTaskDelay(CURRENT_STABILIZE_TIME_HEATER / portTICK_PERIOD_MS);
+  vTaskDelay(pdMS_TO_TICKS(CURRENT_STABILIZE_TIME_HEATER));
   testCurrent =
       measureMeanConsumption(MAIN, SYSTEM_SHUNT_CHANNEL) - offsetCurrent;
   logI("[HW] -> Heater current consumption: " + String(testCurrent) + " Amps");
@@ -548,10 +548,10 @@ bool actuatorsTest() {
     setAlarm(HEATER_ISSUE_ALARM);
     return (true);
   }
-  vTaskDelay(CURRENT_STABILIZE_TIME_DEFAULT / portTICK_PERIOD_MS);
+  vTaskDelay(pdMS_TO_TICKS(CURRENT_STABILIZE_TIME_DEFAULT ));
   offsetCurrent = measureMeanConsumption(MAIN, PHOTOTHERAPY_SHUNT_CHANNEL);
   GPIOWrite(PHOTOTHERAPY, HIGH);
-  vTaskDelay(CURRENT_STABILIZE_TIME_DEFAULT / portTICK_PERIOD_MS);
+  vTaskDelay(pdMS_TO_TICKS(CURRENT_STABILIZE_TIME_DEFAULT ));
   testCurrent =
       measureMeanConsumption(MAIN, PHOTOTHERAPY_SHUNT_CHANNEL) - offsetCurrent;
   GPIOWrite(PHOTOTHERAPY, LOW);
@@ -567,11 +567,11 @@ bool actuatorsTest() {
     logE("[HW] -> Fail -> PHOTOTHERAPY current consumption is too high");
     return (true);
   }
-  vTaskDelay(CURRENT_STABILIZE_TIME_DEFAULT / portTICK_PERIOD_MS);
+  vTaskDelay(pdMS_TO_TICKS(CURRENT_STABILIZE_TIME_DEFAULT ));
   offsetCurrent = measureMeanConsumption(
       MAIN, SYSTEM_SHUNT_CHANNEL);  // <- UPDATE THIS CODE TO ASK I2C DATA
   in3_hum.turn(ON);
-  vTaskDelay(CURRENT_STABILIZE_TIME_DEFAULT / portTICK_PERIOD_MS);
+  vTaskDelay(pdMS_TO_TICKS(CURRENT_STABILIZE_TIME_DEFAULT ));
   testCurrent = measureMeanConsumption(MAIN, SYSTEM_SHUNT_CHANNEL) -
                 offsetCurrent;  // <- UPDATE THIS CODE TO ASK I2C DATA
   logI("[HW] -> Humidifier current consumption: " + String(testCurrent) +
@@ -587,10 +587,10 @@ bool actuatorsTest() {
     logE("[HW] -> Fail -> HUMIDIFIER current consumption is too high");
     return (true);
   }
-  vTaskDelay(CURRENT_STABILIZE_TIME_DEFAULT / portTICK_PERIOD_MS);
+  vTaskDelay(pdMS_TO_TICKS(CURRENT_STABILIZE_TIME_DEFAULT ));
   offsetCurrent = measureMeanConsumption(MAIN, FAN_SHUNT_CHANNEL);
   GPIOWrite(FAN, HIGH);
-  vTaskDelay(CURRENT_STABILIZE_TIME_DEFAULT / portTICK_PERIOD_MS);
+  vTaskDelay(pdMS_TO_TICKS(CURRENT_STABILIZE_TIME_DEFAULT ));
   testCurrent = measureMeanConsumption(MAIN, FAN_SHUNT_CHANNEL) - offsetCurrent;
   logI("[HW] -> FAN consumption: " + String(testCurrent) + " Amps");
   in3.fan_current_test = testCurrent;
