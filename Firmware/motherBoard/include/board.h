@@ -26,7 +26,7 @@
 #define HW_NUM 13
 #define HW_REVISION 'A'
 #define HWversion String(HW_NUM) + "." + String(HW_REVISION)
-#define FWversion "13.0"
+#define FWversion "13.1"
 #define WIFI_NAME "In3_v" + String(FWversion) + "/" + String(HWversion)
 #define CURRENT_FIRMWARE_TITLE "in3ator"
 

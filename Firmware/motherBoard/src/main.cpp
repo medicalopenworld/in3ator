@@ -186,7 +186,7 @@ void sensors_Task(void *pvParameters)
   }
 }
 
-void OTA_Task(void *pvParameters)
+void OTA_WIFI_Task(void *pvParameters)
 {
   WIFI_TB_Init();
   for (;;)
@@ -234,6 +234,15 @@ void UI_Task(void *pvParameters)
   }
 }
 
+void TimeTrack_Task(void *pvParameters)
+{
+  for (;;)
+  {
+    timeTrackHandler();
+    vTaskDelay(pdMS_TO_TICKS(TIME_TRACK_TASK_PERIOD));
+  }
+}
+
 void setup()
 {
   sharedSensorQueue = xQueueCreate(SENSOR_TEMP_QTY, sizeof(long));
@@ -276,7 +285,7 @@ void setup()
   logI("GPRS task successfully created!\n");
 
   logI("Creating OTA task ...\n");
-  while (xTaskCreatePinnedToCore(OTA_Task, (const char *)"OTA", 8192, NULL, OTA_TASK_PRIORITY,
+  while (xTaskCreatePinnedToCore(OTA_WIFI_Task, (const char *)"OTA", 8192, NULL, OTA_TASK_PRIORITY,
                                  NULL, CORE_ID_FREERTOS) != pdPASS)
     ;
   logI("OTA task successfully created!\n");
@@ -288,19 +297,17 @@ void setup()
     ;
   ;
   logI("Backlight task successfully created!\n");
-  /*
   logI("Creating time track task ...\n");
-  while (xTaskCreatePinnedToCore(time_track_Task, (const char *)"SENSORS", 4096,
-  NULL, 1, NULL, CORE_ID_FREERTOS) != pdPASS)
+  while (xTaskCreatePinnedToCore(TimeTrack_Task, (const char *)"TimeTrack",
+                                 4096, NULL, TIME_TRACK_TASK_PRIORITY, NULL,
+                                 CORE_ID_FREERTOS) != pdPASS)
     ;
   ;
   logI("Time track task successfully created!\n");
-  */
 }
 
 void loop()
 {
   watchdogReload();
-  timeTrackHandler();
   vTaskDelay(pdMS_TO_TICKS(LOOP_TASK_PERIOD));
 }

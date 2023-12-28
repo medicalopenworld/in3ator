@@ -31,7 +31,10 @@
 #include "driver/rtc_io.h"
 #include "esp32/ulp.h"
 #include "in3ator_humidifier.h"
-#include <ESP32_Updater.h>
+
+#include <Espressif_Updater.h>
+#include <Espressif_MQTT_Client.h>
+#include <Arduino_MQTT_Client.h>
 
 #define LOG_GPRS false
 #define LOG_MODEM_DATA false
@@ -65,6 +68,7 @@
 #define TELEMETRIES_DECIMALS 2
 #define FIRMWARE_FAILURE_RETRIES 12
 #define FIRMWARE_PACKET_SIZE 4096
+#define WAIT_FAILED_OTA_CHUNKS 10U * 1000U * 1000U
 
 #define SN_KEY "SN"
 #define HW_NUM_KEY "HW_num"
@@ -131,6 +135,7 @@
 #define AIR_CONTROL true
 
 // Tasks priorities
+#define TIME_TRACK_TASK_PRIORITY 2
 #define BACKLIGHT_TASK_PRIORITY 3
 #define OTA_TASK_PRIORITY 4
 #define GPRS_TAST_PRIORITY 5
@@ -409,9 +414,10 @@ typedef enum
 #define DIGITAL_CURRENT_SENSOR_PERIOD 5
 #define BUZZER_TASK_PERIOD 1
 #define SECURITY_TASK_PERIOD 1
+#define TIME_TRACK_TASK_PERIOD 100
 #define BACKLIGHT_TASK_PERIOD 100
 #define FAN_TASK_PERIOD 1
-#define LOOP_TASK_PERIOD 1
+#define LOOP_TASK_PERIOD 1000
 
 #define BACKLIGHT_DELAY 2
 #define INIT_TFT_DELAY 300

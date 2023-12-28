@@ -36,13 +36,18 @@ TinyGsm modem(modemSerial);
 // Initialize GSM client
 TinyGsmClient client(modem);
 
+// Initalize the Mqtt client instance
+Arduino_MQTT_Client mqttClientGPRS(client);
+
 // Initialize ThingsBoard instance
 // ThingsBoardSized<THINGSBOARD_BUFFER_SIZE, THINGSBOARD_FIELDS_AMOUNT>
 // tb(client);
-ThingsBoard tb(client, MAX_MESSAGE_SIZE);
 
 // Initialize ThingsBoard client provision instance
-ThingsBoard tb_provision(client, MAX_MESSAGE_SIZE);
+ThingsBoard tb_provision(mqttClientGPRS, MAX_MESSAGE_SIZE);
+
+// Initialize ThingsBoard client provision instance
+ThingsBoard tb(mqttClientGPRS, MAX_MESSAGE_SIZE);
 
 StaticJsonDocument<JSON_OBJECT_SIZE(THINGSBOARD_FIELDS_AMOUNT)> GPRS_JSON;
 JsonObject addVariableToTelemetryGPRSJSON = GPRS_JSON.to<JsonObject>();
@@ -54,7 +59,7 @@ extern in3ator_parameters in3;
 
 GPRSstruct GPRS;
 Credentials credentials;
-ESP32_Updater updater_GPRS;
+Espressif_Updater updater_GPRS;
 
 // Statuses for updating
 bool currentFWSent = false;
@@ -66,18 +71,20 @@ void progressCallback(const uint32_t &currentChunk,
   if (LOG_GPRS)
     Serial.printf("Progress %.2f%%\n",
                   static_cast<float>(currentChunk * 100U) / totalChuncks);
+  GPRS.OTAInProgress = true;
 }
 
 void updatedCallback(const bool &success)
 {
   if (success)
   {
-    logCon("[WIFI] -> Done, OTA will be implemented on next boot");
+    logCon("[GPRS] -> Done, OTA will be implemented on next boot");
     // esp_restart();
   }
   else
   {
     logCon("[GPRS] -> No new firmware");
+    GPRS.OTAInProgress = false;
   }
 }
 
@@ -85,7 +92,7 @@ const OTA_Update_Callback OTAcallback(&progressCallback, &updatedCallback,
                                       CURRENT_FIRMWARE_TITLE, FWversion,
                                       &updater_GPRS,
                                       FIRMWARE_FAILURE_RETRIES,
-                                      FIRMWARE_PACKET_SIZE);
+                                      FIRMWARE_PACKET_SIZE, WAIT_FAILED_OTA_CHUNKS);
 
 void clearGPRSBuffer()
 {
@@ -172,16 +179,36 @@ void GPRSUpdateCSQ()
   logCon("[GPRS] -> CSQ is: " + String(GPRS.CSQ));
 }
 
+void readGPRSData()
+{
+  while (Serial2.available())
+  {
+    GPRS.buffer[GPRS.bufferWritePos] = Serial2.read();
+    if (LOG_GPRS)
+    {
+      Serial.print(GPRS.buffer[GPRS.bufferWritePos]);
+    }
+    GPRS.bufferWritePos++;
+    if (GPRS.bufferWritePos >= RX_BUFFER_LENGTH)
+    {
+      GPRS.bufferWritePos = 0;
+      logCon("[GPRS] -> Buffer overflow");
+    }
+    GPRS.charToRead++;
+  }
+}
+
 void GPRSStatusHandler()
 {
   if (GPRS.process)
   {
     if (GPRS.powerUp || GPRS.connect)
     {
+      readGPRSData();
       if (millis() - GPRS.processTime > GPRS_TIMEOUT)
       {
         logE("[GPRS] -> timeOut: " + String(GPRS.powerUp) +
-               String(GPRS.connect) + String(GPRS.post) + String(GPRS.process));
+             String(GPRS.connect) + String(GPRS.post) + String(GPRS.process));
         GPRS.timeOut = false;
         GPRS.process = false;
         GPRS.post = false;
@@ -284,25 +311,6 @@ void GPRSStablishConnection()
     GPRS.process = false;
     GPRS.post = true;
     break;
-  }
-}
-
-void readGPRSData()
-{
-  while (Serial2.available())
-  {
-    GPRS.buffer[GPRS.bufferWritePos] = Serial2.read();
-    if (LOG_GPRS)
-    {
-      Serial.print(GPRS.buffer[GPRS.bufferWritePos]);
-    }
-    GPRS.bufferWritePos++;
-    if (GPRS.bufferWritePos >= RX_BUFFER_LENGTH)
-    {
-      GPRS.bufferWritePos = 0;
-      logCon("[GPRS] -> Buffer overflow");
-    }
-    GPRS.charToRead++;
   }
 }
 
@@ -443,6 +451,7 @@ void GPRSCheckOTA()
   if (!updateRequestSent)
   {
     tb.Start_Firmware_Update(OTAcallback);
+    // updateRequestSent = tb.Subscribe_Firmware_Update(callback);
   }
 }
 
@@ -610,9 +619,9 @@ void GPRSPost()
   {
     if (!tb.connected())
     {
-      // Connect to the ThingsBoard
       logCon("[GPRS] -> Connecting over GPRS to: " + String(THINGSBOARD_SERVER) +
              " with token " + String(GPRS.device_token));
+
       if (!tb.connect(THINGSBOARD_SERVER, GPRS.device_token.c_str()))
       {
         logCon("[GPRS] -> Failed to connect");
@@ -620,9 +629,11 @@ void GPRSPost()
       }
       else
       {
+        logCon("[GPRS] -> Connected to host");
         GPRS.serverConnectionStatus = true;
         if (ENABLE_GPRS_OTA && !GPRS.OTA_requested)
         {
+          logCon("[GPRS] -> Requesting OTA");
           GPRSCheckOTA();
           GPRS.OTA_requested = true;
         }
@@ -700,5 +711,4 @@ void GPRS_Handler()
     GPRSPost();
     tb.loop();
   }
-  readGPRSData();
 }
