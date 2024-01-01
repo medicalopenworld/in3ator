@@ -629,7 +629,7 @@ void initPin(uint8_t GPIO, uint8_t Mode) {
   if (GPIO < GPIO_EXP_BASE) {
     pinMode(GPIO, Mode);
   } else {
-    TCA.pinMode(GPIO - GPIO_EXP_BASE, Mode);
+    TCA.pinMode1(GPIO - GPIO_EXP_BASE, Mode);
   }
 }
 
@@ -639,7 +639,7 @@ void GPIOWrite(uint8_t GPIO, uint8_t Mode) {
   } else {
     logI("[HW] -> TCA9355 writing pin" + String(GPIO - GPIO_EXP_BASE) + " -> " +
         String(Mode));
-    if (!TCA.digitalWrite(GPIO - GPIO_EXP_BASE, Mode)) {
+    if (!TCA.write1(GPIO - GPIO_EXP_BASE, Mode)) {
       logE("[HW] -> TCA9355 WRITE ERROR");
     }
   }
@@ -649,7 +649,7 @@ bool GPIORead(uint8_t GPIO) {
   if (GPIO < GPIO_EXP_BASE) {
     return (digitalRead(GPIO));
   } else {
-    return (TCA.digitalRead(GPIO - GPIO_EXP_BASE));
+    return (TCA.read1(GPIO - GPIO_EXP_BASE));
   }
 }
 
