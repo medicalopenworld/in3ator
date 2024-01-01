@@ -122,6 +122,15 @@
 #define GPRS_CONNECTIVITY_KEY "GPRS_connection"
 #define WIFI_CONNECTIVITY_KEY "WIFI_connection"
 
+#define CALIBRATION_RAW_TEMPERATURE_RANGE_SKIN_KEY "Cal_raw_range_skin_temp"
+#define CALIBRATION_RAW_TEMPERATURE_LOW_SKIN_KEY "Cal_raw_low_skin_temp"
+#define CALIBRATION_RAW_TEMPERATURE_RANGE_AIR_KEY "Cal_raw_range_air_temp"
+#define CALIBRATION_RAW_TEMPERATURE_LOW_AIR_KEY "Cal_raw_low_air_temp"
+#define CALIBRATION_REFERENCE_TEMPERATURE_RANGE_KEY "Cal_ref_range_temp"
+#define CALIBRATION_REFERENCE_TEMPERATURE_LOW_KEY "Cal_ref_low_temp"
+#define CALIBRATION_SKIN_FINETUNE_KEY "Cal_finetune_skin_temp"
+#define CALIBRATION_AIR_FINETUNE_KEY "Cal_finetune_air_temp"
+
 #define ANALOGREAD_ADC 0
 #define MILLIVOTSREAD_ADC 1
 

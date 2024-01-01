@@ -65,6 +65,11 @@ Espressif_Updater updater_GPRS;
 bool currentFWSent = false;
 bool updateRequestSent = false;
 
+extern double ReferenceTemperatureRange, ReferenceTemperatureLow;
+extern double fineTuneSkinTemperature, fineTuneAirTemperature;
+extern double RawTemperatureLow[SENSOR_TEMP_QTY],
+    RawTemperatureRange[SENSOR_TEMP_QTY];
+
 void progressCallback(const uint32_t &currentChunk,
                       const uint32_t &totalChuncks)
 {
@@ -488,6 +493,19 @@ void addConfigTelemetriesToGPRSJSON()
   addVariableToTelemetryGPRSJSON[CALIBRATED_SENSOR_KEY] = !in3.calibrationError;
   addVariableToTelemetryGPRSJSON[GPRS_CONNECTIVITY_KEY] = true;
   addVariableToTelemetryGPRSJSON[WIFI_CONNECTIVITY_KEY] = false;
+
+  addVariableToTelemetryGPRSJSON[CALIBRATION_REFERENCE_TEMPERATURE_RANGE_KEY] =
+      roundSignificantDigits(ReferenceTemperatureRange, TELEMETRIES_DECIMALS);
+  addVariableToTelemetryGPRSJSON[CALIBRATION_REFERENCE_TEMPERATURE_LOW_KEY] =
+      roundSignificantDigits(ReferenceTemperatureLow, TELEMETRIES_DECIMALS);
+  addVariableToTelemetryGPRSJSON[CALIBRATION_SKIN_FINETUNE_KEY] =
+      roundSignificantDigits(fineTuneSkinTemperature, TELEMETRIES_DECIMALS);
+  addVariableToTelemetryGPRSJSON[CALIBRATION_AIR_FINETUNE_KEY] =
+      roundSignificantDigits(fineTuneAirTemperature, TELEMETRIES_DECIMALS);
+  addVariableToTelemetryGPRSJSON[CALIBRATION_RAW_TEMPERATURE_RANGE_SKIN_KEY] =
+      roundSignificantDigits(RawTemperatureRange[SKIN_SENSOR], TELEMETRIES_DECIMALS);
+  addVariableToTelemetryGPRSJSON[CALIBRATION_RAW_TEMPERATURE_LOW_SKIN_KEY] =
+      roundSignificantDigits(RawTemperatureLow[SKIN_SENSOR], TELEMETRIES_DECIMALS);
 }
 
 void addTelemetriesToGPRSJSON()
