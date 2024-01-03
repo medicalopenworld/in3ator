@@ -145,11 +145,11 @@ void updateDisplayHeader()
 {
   if (millis() - lastGraphicSensorsUpdate > sensorsUpdatePeriod)
   {
-    if (page == mainMenuPage)
+    if (page == MAIN_MENU_PAGE)
     {
       UI_updateConnectivityEvents();
     }
-    if (page == mainMenuPage || page == actuatorsProgressPage)
+    if (page == MAIN_MENU_PAGE || page == ACTUATORS_PROGRESS_PAGE)
     {
       updateDisplaySensors();
     }
@@ -188,7 +188,7 @@ void bar_pos_handler(int UI_page)
     if (EncMove < 0)
     {
       EncMove++;
-      if (UI_page == mainMenuPage)
+      if (UI_page == MAIN_MENU_PAGE)
       {
         enableSetProcess = enableSet;
       }
@@ -263,16 +263,16 @@ void userInterfaceHandler(int UI_page)
     {
       switch (UI_page)
       {
-      case mainMenuPage:
+      case MAIN_MENU_PAGE:
         switch (bar_pos - graphicTextOffset)
         {
-        case controlModeGraphicPosition:
+        case CONTROL_MODE_UI_ROW:
           in3.controlMode = !in3.controlMode;
           EEPROM.write(EEPROM_CONTROL_MODE, in3.controlMode);
           EEPROM.commit();
           UI_mainMenu();
           break;
-        case temperatureGraphicPosition:
+        case TEMPERATURE_UI_ROW:
           while (GPIORead(ENC_SWITCH))
           {
             vTaskDelay(pdMS_TO_TICKS(WHILE_LOOP_DELAY));
@@ -325,7 +325,7 @@ void userInterfaceHandler(int UI_page)
           EEPROM.commit();
           drawStartMessage(enableSet, menu_rows, helpMessage);
           break;
-        case humidityGraphicPosition:
+        case HUMIDITY_UI_ROW:
           while (GPIORead(ENC_SWITCH))
           {
             vTaskDelay(pdMS_TO_TICKS(WHILE_LOOP_DELAY));
@@ -377,7 +377,7 @@ void userInterfaceHandler(int UI_page)
           EEPROM.commit();
           drawStartMessage(enableSet, menu_rows, helpMessage);
           break;
-        case LEDGraphicPosition:
+        case LED_UI_ROW:
           in3.phototherapy = !in3.phototherapy;
           setTextColor(COLOR_MENU);
           if (in3.phototherapy)
@@ -404,18 +404,18 @@ void userInterfaceHandler(int UI_page)
           GPIOWrite(PHOTOTHERAPY, in3.phototherapy);
           turnFans(in3.phototherapy);
           break;
-        case settingsGraphicPosition:
+        case SETTINGS_UI_ROW:
           UI_settings();
           break;
-        case startGraphicPosition:
+        case START_UI_ROW:
           UI_actuatorsProgress();
           break;
         }
         break;
-      case settingsPage:
+      case SETTIGNS_PAGE:
         switch (bar_pos - graphicTextOffset)
         {
-        case languageGraphicPosition:
+        case LANGUAGE_UI_ROW:
           while (GPIORead(ENC_SWITCH))
           {
             vTaskDelay(pdMS_TO_TICKS(WHILE_LOOP_DELAY));
@@ -424,16 +424,16 @@ void userInterfaceHandler(int UI_page)
               setTextColor(COLOR_MENU);
               switch (in3.language)
               {
-              case spanish:
+              case SPANISH:
                 textToWrite = convertStringToChar(cstring, "SPA");
                 break;
-              case english:
+              case ENGLISH:
                 textToWrite = convertStringToChar(cstring, "ENG");
                 break;
-              case french:
+              case FRENCH:
                 textToWrite = convertStringToChar(cstring, "FRA");
                 break;
-              case portuguese:
+              case PORTUGUESE:
                 textToWrite = convertStringToChar(cstring, "POR");
                 break;
               }
@@ -442,25 +442,25 @@ void userInterfaceHandler(int UI_page)
               in3.language -= EncMove;
               if (in3.language < 0)
               {
-                in3.language = numLanguages - 1;
+                in3.language = NUM_LANGUAGES - 1;
               }
-              if (in3.language >= numLanguages)
+              if (in3.language >= NUM_LANGUAGES)
               {
                 in3.language = false;
               }
               setTextColor(COLOR_MENU_TEXT);
               switch (in3.language)
               {
-              case spanish:
+              case SPANISH:
                 textToWrite = convertStringToChar(cstring, "SPA");
                 break;
-              case english:
+              case ENGLISH:
                 textToWrite = convertStringToChar(cstring, "ENG");
                 break;
-              case french:
+              case FRENCH:
                 textToWrite = convertStringToChar(cstring, "FRA");
                 break;
-              case portuguese:
+              case PORTUGUESE:
                 textToWrite = convertStringToChar(cstring, "POR");
                 break;
               }
@@ -473,7 +473,7 @@ void userInterfaceHandler(int UI_page)
           EEPROM.commit();
           UI_settings();
           break;
-        case serialNumberGraphicPosition:
+        case SERIAL_NUMBER_UI_ROW:
           while (GPIORead(ENC_SWITCH))
           {
             vTaskDelay(pdMS_TO_TICKS(WHILE_LOOP_DELAY));
@@ -490,7 +490,7 @@ void userInterfaceHandler(int UI_page)
           }
           EEPROM.commit();
           break;
-        case WifiENGraphicPosition:
+        case WIFI_EN_UI_ROW:
           WIFI_EN = !WIFI_EN;
           if (WIFI_EN)
           {
@@ -525,7 +525,7 @@ void userInterfaceHandler(int UI_page)
                             unitPosition, ypos, textFontSize);
           }
           break;
-        case setdefaultValuesGraphicPosition:
+        case DEFAULT_VALUES_UI_ROW:
           loaddefaultValues();
           if (WIFI_EN)
           {
@@ -537,37 +537,37 @@ void userInterfaceHandler(int UI_page)
           }
           UI_settings();
           break;
-        case HWTestGraphicPosition:
+        case HW_TEST_UI_ROW:
           initHardware(true);
           UI_settings();
           break;
-        case calibrateGraphicPosition:
+        case CALIBRATION_UI_ROW:
           UI_calibration();
           break;
         }
         break;
-      case calibrateSensorsPage:
+      case CALIBRATION_SENSORS_PAGE:
         switch (bar_pos - graphicTextOffset)
         {
-        case twoPointCalibrationGraphicPosition:
+        case TWO_POINT_CALIB_UI_ROW:
           firstPointCalibration();
           break;
-        case fineTuneCalibrationGraphicPosition:
+        case FINE_TUNE_UI_ROW:
           fineTuneCalibration();
           break;
-        case autoCalibrationGraphicPosition:
+        case AUTO_CALIB_UI_ROW:
           autoCalibration();
           break;
-        case restartCalibrationGraphicPosition:
+        case RESET_CALIB_UI_ROW:
           recapVariables();
           UI_calibration();
           break;
         }
         break;
-      case fineTuneCalibrationPage:
+      case FINE_TUNE_CALIBRATION_PAGE:
         switch (bar_pos - graphicTextOffset)
         {
-        case temperatureCalibrationGraphicPosition:
+        case TEMP_CALIB_UI_ROW:
           errorTemperature[SKIN_SENSOR] = false;
           diffSkinTemperature = in3.temperature[SKIN_SENSOR];
           diffAirTemperature = in3.temperature[ROOM_DIGITAL_TEMP_SENSOR];
@@ -588,7 +588,7 @@ void userInterfaceHandler(int UI_page)
             }
           }
           break;
-        case setCalibrationGraphicPosition:
+        case SET_CALIB_UI_ROW:
           fineTuneSkinTemperature =
               diffSkinTemperature - in3.temperature[SKIN_SENSOR];
           fineTuneAirTemperature =
@@ -607,11 +607,11 @@ void userInterfaceHandler(int UI_page)
           break;
         }
         break;
-      case firstPointCalibrationPage:
+      case FIRST_POINT_CALIBRATION_PAGE:
         clearCalibrationValues();
         switch (bar_pos - graphicTextOffset)
         {
-        case temperatureCalibrationGraphicPosition:
+        case TEMP_CALIB_UI_ROW:
           errorTemperature[SKIN_SENSOR] = false;
           diffSkinTemperature = in3.temperature[SKIN_SENSOR];
           diffAirTemperature = in3.temperature[ROOM_DIGITAL_TEMP_SENSOR];
@@ -632,7 +632,7 @@ void userInterfaceHandler(int UI_page)
             }
           }
           break;
-        case setCalibrationGraphicPosition:
+        case SET_CALIB_UI_ROW:
           provisionalReferenceTemperatureLow = diffSkinTemperature;
           provisionalRawTemperatureLow[SKIN_SENSOR] =
               in3.temperature[SKIN_SENSOR];
@@ -644,10 +644,10 @@ void userInterfaceHandler(int UI_page)
           break;
         }
         break;
-      case secondPointCalibrationPage:
+      case SECOND_POINT_CALIBRATION_PAGE:
         switch (bar_pos - graphicTextOffset)
         {
-        case temperatureCalibrationGraphicPosition:
+        case TEMP_CALIB_UI_ROW:
           diffSkinTemperature = in3.temperature[SKIN_SENSOR];
           while (GPIORead(ENC_SWITCH))
           {
@@ -666,7 +666,7 @@ void userInterfaceHandler(int UI_page)
             }
           }
           break;
-        case setCalibrationGraphicPosition:
+        case SET_CALIB_UI_ROW:
           ReferenceTemperatureLow = provisionalReferenceTemperatureLow;
           RawTemperatureLow[SKIN_SENSOR] =
               provisionalRawTemperatureLow[SKIN_SENSOR];
@@ -692,7 +692,7 @@ void userInterfaceHandler(int UI_page)
           break;
         }
         break;
-      case autoCalibrationPage:
+      case AUTO_CALIBRATION_PAGE:
         break;
       }
       selected = false;
@@ -705,7 +705,7 @@ void userInterfaceHandler(int UI_page)
             width_select, (tft.height() - height_heading) / menu_rows, WHITE);
       }
       encoderContinuousPress(UI_page);
-      vTaskDelay(pdMS_TO_TICKS(debounceTime));
+      vTaskDelay(pdMS_TO_TICKS(SWITCH_DEBOUNCE_TIME_MS));
     }
   }
 }
@@ -713,7 +713,7 @@ void userInterfaceHandler(int UI_page)
 bool encoderContinuousPress(int UI_page)
 {
 
-  if (UI_page == mainMenuPage)
+  if (UI_page == MAIN_MENU_PAGE)
   {
     long timePressed = millis();
     while (!GPIORead(ENC_SWITCH))
@@ -747,7 +747,7 @@ int getYpos(int UI_menu_rows, byte row)
 
 void checkSetMessage(int UI_page)
 {
-  if ((UI_page == mainMenuPage) && !enableSet)
+  if ((UI_page == MAIN_MENU_PAGE) && !enableSet)
   {
     int compareTime;
     if (blinkSetMessageState)
@@ -770,20 +770,20 @@ void checkSetMessage(int UI_page)
       {
         setTextColor(COLOR_MENU);
       }
-      if (page == mainMenuPage)
+      if (page == MAIN_MENU_PAGE)
       {
         drawHelpMessage(in3.language);
       }
       drawCentreString(helpMessage,
                        width_select + (tft.width() - width_select) / 2,
-                       getYpos(menu_rows, startGraphicPosition), textFontSize);
+                       getYpos(menu_rows, START_UI_ROW), textFontSize);
     }
   }
 }
 
 bool back_mode()
 {
-  vTaskDelay(pdMS_TO_TICKS(debounceTime));
+  vTaskDelay(pdMS_TO_TICKS(SWITCH_DEBOUNCE_TIME_MS));
   last_encPulsed = millis();
   byte back_bar = false;
   while (!GPIORead(ENC_SWITCH))
@@ -805,6 +805,6 @@ bool back_mode()
   {
     drawBack();
   }
-  vTaskDelay(pdMS_TO_TICKS(debounceTime));
+  vTaskDelay(pdMS_TO_TICKS(SWITCH_DEBOUNCE_TIME_MS));
   return (false);
 }

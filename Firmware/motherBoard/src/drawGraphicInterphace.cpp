@@ -149,13 +149,13 @@ void setSensorsGraphicPosition(int UI_page)
 {
   switch (UI_page)
   {
-  case mainMenuPage:
+  case MAIN_MENU_PAGE:
     humidityX = tft.width() - 50;
-    humidityY = graphicHeight(humidityGraphicPosition);
+    humidityY = graphicHeight(HUMIDITY_UI_ROW);
     temperatureX = tft.width() - 79;
-    temperatureY = graphicHeight(temperatureGraphicPosition);
+    temperatureY = graphicHeight(TEMPERATURE_UI_ROW);
     break;
-  case actuatorsProgressPage:
+  case ACTUATORS_PROGRESS_PAGE:
     barWidth = tft.width() / 4 * 2;
     barHeight = 20;
     tempBarPosX = tft.width() / 2;
@@ -195,7 +195,7 @@ void drawHeading(int UI_page, int UI_serialNumber)
     tft.fillRect(0, height_heading / 2, tft.width(), height_heading / 2,
                  YELLOW);
   }
-  if (UI_page != mainMenuPage)
+  if (UI_page != MAIN_MENU_PAGE)
   {
     drawBack();
   }
@@ -326,22 +326,22 @@ void drawIntroMessage()
   byte numWords = 3;
   switch (in3.language)
   {
-  case english:
+  case ENGLISH:
     words[0] = convertStringToChar("Welcome to in3ator");
     words[1] = convertStringToChar("");
     words[2] = convertStringToChar("Saving lives");
     break;
-  case spanish:
+  case SPANISH:
     words[0] = convertStringToChar("Bienvenido a in3");
     words[1] = convertStringToChar("");
     words[2] = convertStringToChar("Salvando vidas");
     break;
-  case french:
+  case FRENCH:
     words[0] = convertStringToChar("Bienvenue a in3");
     words[1] = convertStringToChar("");
     words[2] = convertStringToChar("Sauver des vies");
     break;
-  case portuguese:
+  case PORTUGUESE:
     words[0] = convertStringToChar("Bem-vindo ao");
     words[1] = convertStringToChar("");
     words[2] = convertStringToChar("Salvando vidas");
@@ -399,16 +399,16 @@ void drawStop()
 {
   switch (in3.language)
   {
-  case spanish:
+  case SPANISH:
     textToWrite = convertStringToChar(cstring, "Pulsa 2 seg para salir");
     break;
-  case english:
+  case ENGLISH:
     textToWrite = convertStringToChar(cstring, "Press 2 sec to go back");
     break;
-  case french:
+  case FRENCH:
     textToWrite = convertStringToChar(cstring, "appuyez 2 sec pour voler");
     break;
-  case portuguese:
+  case PORTUGUESE:
     textToWrite =
         convertStringToChar(cstring, "Pressione 2 segundos para sair");
     break;
@@ -461,16 +461,16 @@ void drawHelpMessage(byte UI_language)
 {
   switch (UI_language)
   {
-  case english:
+  case ENGLISH:
     helpMessage = convertStringToChar(cstring, "Set desired parameters");
     break;
-  case spanish:
+  case SPANISH:
     helpMessage = convertStringToChar(cstring, "Introduce parametros");
     break;
-  case french:
+  case FRENCH:
     helpMessage = convertStringToChar(cstring, "Entrer parametres");
     break;
-  case portuguese:
+  case PORTUGUESE:
     helpMessage = convertStringToChar(cstring, "Insira os parametros");
     break;
   }
@@ -485,26 +485,26 @@ void drawStartMessage(bool UI_enableSet, int UI_menu_rows,
     drawHelpMessage(in3.language);
     drawCentreString(helpMessage,
                      width_select + (tft.width() - width_select) / 2,
-                     getYpos(UI_menu_rows, startGraphicPosition), textFontSize);
+                     getYpos(UI_menu_rows, START_UI_ROW), textFontSize);
     setTextColor(COLOR_MENU_TEXT);
     switch (in3.language)
     {
-    case spanish:
-      words[startGraphicPosition] = convertStringToChar(cstring, "Empezar");
+    case SPANISH:
+      words[START_UI_ROW] = convertStringToChar(cstring, "Empezar");
       break;
-    case english:
-      words[startGraphicPosition] = convertStringToChar(cstring, "Start");
+    case ENGLISH:
+      words[START_UI_ROW] = convertStringToChar(cstring, "Start");
       break;
-    case french:
-      words[startGraphicPosition] = convertStringToChar(cstring, "Debut");
+    case FRENCH:
+      words[START_UI_ROW] = convertStringToChar(cstring, "Debut");
       break;
-    case portuguese:
-      words[startGraphicPosition] = convertStringToChar(cstring, "Comecar");
+    case PORTUGUESE:
+      words[START_UI_ROW] = convertStringToChar(cstring, "Comecar");
       break;
     }
-    drawCentreString(words[startGraphicPosition],
+    drawCentreString(words[START_UI_ROW],
                      width_select + (tft.width() - width_select) / 2,
-                     getYpos(UI_menu_rows, startGraphicPosition), textFontSize);
+                     getYpos(UI_menu_rows, START_UI_ROW), textFontSize);
   }
 }
 
@@ -796,17 +796,17 @@ void drawHardwareErrorMessage(long error, bool criticalError,
     }
     switch (in3.language)
     {
-    case spanish:
+    case SPANISH:
       textToWrite = convertStringToChar(cstring, " Por favor contacta");
       break;
-    case portuguese:
+    case PORTUGUESE:
       textToWrite =
           convertStringToChar(cstring, " Por favor entre em contato");
       break;
-    case english:
+    case ENGLISH:
       textToWrite = convertStringToChar(cstring, " Please contact");
       break;
-    case french:
+    case FRENCH:
       textToWrite =
           convertStringToChar(cstring, " S'il vous plait contactez");
       break;
@@ -825,16 +825,16 @@ void drawHardwareErrorMessage(long error, bool criticalError,
   tft.print(" ");
   switch (in3.language)
   {
-  case spanish:
+  case SPANISH:
     textToWrite = convertStringToChar(cstring, "Presione para continuar");
     break;
-  case portuguese:
+  case PORTUGUESE:
     textToWrite = convertStringToChar(cstring, "Pressione para continuar");
     break;
-  case english:
+  case ENGLISH:
     textToWrite = convertStringToChar(cstring, "Press to continue");
     break;
-  case french:
+  case FRENCH:
     textToWrite = convertStringToChar(cstring, "Appuyez pour continuer");
     break;
   }
@@ -898,24 +898,24 @@ void graphics(uint8_t UI_page, uint8_t UI_language, uint8_t UI_print_text,
       }
       switch (UI_page)
       {
-      case mainMenuPage:
+      case MAIN_MENU_PAGE:
         switch (i)
         {
-        case controlModeGraphicPosition:
+        case CONTROL_MODE_UI_ROW:
           if (UI_var_0)
           {
             switch (in3.language)
             {
-            case spanish:
+            case SPANISH:
               textToWrite = convertStringToChar(cstring, "AIRE");
               break;
-            case english:
+            case ENGLISH:
               textToWrite = convertStringToChar(cstring, "AIR");
               break;
-            case french:
+            case FRENCH:
               textToWrite = convertStringToChar(cstring, "AIR");
               break;
-            case portuguese:
+            case PORTUGUESE:
               textToWrite = convertStringToChar(cstring, "AR");
               break;
             }
@@ -925,29 +925,29 @@ void graphics(uint8_t UI_page, uint8_t UI_language, uint8_t UI_print_text,
           {
             switch (in3.language)
             {
-            case spanish:
+            case SPANISH:
               textToWrite = convertStringToChar(cstring, "PIEL");
               break;
-            case english:
+            case ENGLISH:
               textToWrite = convertStringToChar(cstring, "SKIN");
               break;
-            case french:
+            case FRENCH:
               textToWrite = convertStringToChar(cstring, "PEAU");
               break;
-            case portuguese:
+            case PORTUGUESE:
               textToWrite = convertStringToChar(cstring, "PELE");
               break;
             }
             drawRightString(textToWrite, unitPosition, ypos, textFontSize);
           }
           break;
-        case temperatureGraphicPosition:
+        case TEMPERATURE_UI_ROW:
           drawTemperatureUnits();
           drawRightString(convertStringToChar(cstring, initialSensorsValue),
                           initialSensorPosition, temperatureY,
                           textFontSize);
           break;
-        case LEDGraphicPosition:
+        case LED_UI_ROW:
           if (UI_var_1)
           {
             drawRightString(convertStringToChar(cstring, "ON"),
@@ -959,38 +959,38 @@ void graphics(uint8_t UI_page, uint8_t UI_language, uint8_t UI_print_text,
                             unitPosition, ypos, textFontSize);
           }
           break;
-        case humidityGraphicPosition:
+        case HUMIDITY_UI_ROW:
           drawHumidityUnits();
           drawRightString(convertStringToChar(cstring, initialSensorsValue),
                           initialSensorPosition, humidityY, textFontSize);
           break;
         }
         break;
-      case settingsPage:
+      case SETTIGNS_PAGE:
         switch (i)
         {
-        case languageGraphicPosition:
+        case LANGUAGE_UI_ROW:
           switch (in3.language)
           {
-          case spanish:
+          case SPANISH:
             textToWrite = convertStringToChar(cstring, "SPA");
             break;
-          case english:
+          case ENGLISH:
             textToWrite = convertStringToChar(cstring, "ENG");
             break;
-          case french:
+          case FRENCH:
             textToWrite = convertStringToChar(cstring, "FRA");
             break;
-          case portuguese:
+          case PORTUGUESE:
             textToWrite = convertStringToChar(cstring, "POR");
             break;
           }
           drawRightString(textToWrite, unitPosition, ypos, textFontSize);
           break;
-        case serialNumberGraphicPosition:
+        case SERIAL_NUMBER_UI_ROW:
           drawRightNumber(UI_var_0, unitPosition, ypos);
           break;
-        case WifiENGraphicPosition:
+        case WIFI_EN_UI_ROW:
           if (UI_var_1)
           {
             drawRightString(convertStringToChar(cstring, "ON"),

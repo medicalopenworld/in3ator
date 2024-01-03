@@ -1,6 +1,14 @@
 #ifndef _MAIN_H
 #define _MAIN_H
 
+#define TINY_GSM_MODEM_SIM800
+#define modemSerial Serial2
+#define THINGSBOARD_ENABLE_DYNAMIC 1
+//#define THINGSBOARD_ENABLE_STREAM_UTILS 1
+#include <Arduino.h>
+#include <TinyGsmClient.h>
+#include "ThingsBoard.h"
+
 #include <ESPmDNS.h>
 #include <Update.h>
 #include <WebServer.h>
@@ -36,10 +44,10 @@
 #include <Espressif_MQTT_Client.h>
 #include <Arduino_MQTT_Client.h>
 
-#define LOG_GPRS false
-#define LOG_MODEM_DATA false
-#define LOG_INFORMATION false
-#define LOG_ERRORS false
+#define LOG_GPRS true
+#define LOG_MODEM_DATA true
+#define LOG_INFORMATION true
+#define LOG_ERRORS true
 #define LOG_ALARMS true
 
 #define WDT_TIMEOUT 45
@@ -47,8 +55,6 @@
 #define FAN_RPM_CONVERSION 13333333
 #define FAN_UPDATE_TIME_MIN 1000
 
-#define ENABLE_WIFI_OTA true // enable wifi OTA
-#define ENABLE_GPRS_OTA true // enable GPRS OTA
 #define ALARM_SYSTEM_ENABLED true
 #define FAN_MAX_CURRENT_OVERRIDE false
 
@@ -61,9 +67,11 @@
 #define BROWN_OUT_BATTERY_MODE 0
 #define BROWN_OUT_NORMAL_MODE 0
 
+#define ENABLE_WIFI_OTA true // enable wifi OTA
+#define ENABLE_GPRS_OTA true // enable GPRS OTA
 #define THINGSBOARD_BUFFER_SIZE 4096
 #define THINGSBOARD_FIELDS_AMOUNT 64
-#define MAX_MESSAGE_SIZE 512
+#define MAX_MESSAGE_SIZE 1024
 #define THINGSBOARD_QOS false
 #define TELEMETRIES_DECIMALS 2
 #define FIRMWARE_FAILURE_RETRIES 12
@@ -191,30 +199,13 @@
 #define EEPROM_HUMIDIFIER_ACTIVE_TIME 246
 
 // configuration variables
-#define debounceTime 30 // encoder debouncing time
+#define SWITCH_DEBOUNCE_TIME_MS 30 // encoder debouncing time
 #define timePressToSettings \
   3000                        // in millis, time to press to go to settings window in UI
-#define DEBUG_LOOP_PRINT 1000 // in millis,
+#define DEBUG_LOOP_PRINT 60000 // in millis,
 
-// pages number in UI. Configuration and information will be displayed depending
-// on the page number
 
-#define mainMenuPage 1
-#define actuatorsProgressPage 2
-#define settingsPage 3
-#define calibrateSensorsPage 4
-#define firstPointCalibrationPage 5
-#define secondPointCalibrationPage 6
-#define autoCalibrationPage 7
-#define fineTuneCalibrationPage 8
-// languages numbers that will be called in language variable
-#define spanish 0
-#define english 1
-#define french 2
-#define portuguese 3
-#define numLanguages 4
-#define defaultLanguage \
-  english // Preset number configuration when booting for first time
+
 #define DEFAULT_CONTROL_MODE AIR_CONTROL
 
 #define NTC_MEASUREMENT_PERIOD 1 // in millis
@@ -293,6 +284,33 @@
 
 #define DEFAULT_AUTOLOCK ON
 
+// pages number in UI. Configuration and information will be displayed depending
+// on the page number
+
+typedef enum
+{
+  MAIN_MENU_PAGE = 1,
+  ACTUATORS_PROGRESS_PAGE,
+  SETTIGNS_PAGE,
+  CALIBRATION_SENSORS_PAGE,
+  FIRST_POINT_CALIBRATION_PAGE,
+  SECOND_POINT_CALIBRATION_PAGE,
+  AUTO_CALIBRATION_PAGE,
+  FINE_TUNE_CALIBRATION_PAGE,
+} UI_PAGES;
+
+// languages numbers that will be called in language variable
+typedef enum
+{
+  SPANISH = 0,
+  ENGLISH,
+  FRENCH,
+  PORTUGUESE,
+  NUM_LANGUAGES,
+
+} UI_LANGUAGES;
+#define defaultLanguage ENGLISH    // Preset number configuration when booting for first time
+
 typedef enum
 {
   NTC_BABY_MIN_ERROR = 0,
@@ -348,6 +366,8 @@ typedef enum
   EVENT_OTA_ONGOING_UI_POS = EVENT_WIFI_UI_POS + letter_width,
 } UI_EVENTS_ID_POS;
 
+
+
 // Graphic variables
 #define ERASE false
 #define DRAW true
@@ -359,33 +379,42 @@ typedef enum
 
 // below are all the different variables positions that will be displayed in
 // user interface mainMenu
-#define controlModeGraphicPosition 0
-#define temperatureGraphicPosition 1
-#define humidityGraphicPosition 2
-#define LEDGraphicPosition 3
-#define settingsGraphicPosition 5
-#define startGraphicPosition 4
-// settings
+typedef enum
+{
+  CONTROL_MODE_UI_ROW = 0,
+  TEMPERATURE_UI_ROW,
+  HUMIDITY_UI_ROW,
+  LED_UI_ROW,
+  START_UI_ROW,
+  SETTINGS_UI_ROW,
+} MAIN_MENU_UI;
 
-#define serialNumberGraphicPosition 0
-#define languageGraphicPosition 1
-#define WifiENGraphicPosition 2
-#define calibrateGraphicPosition 3
-#define setdefaultValuesGraphicPosition 4
-#define HWTestGraphicPosition 5
+// settings
+typedef enum
+{
+  SERIAL_NUMBER_UI_ROW = 0,
+  LANGUAGE_UI_ROW,
+  WIFI_EN_UI_ROW,
+  CALIBRATION_UI_ROW,
+  DEFAULT_VALUES_UI_ROW,
+  HW_TEST_UI_ROW,
+} SETTINGS_MENU_UI;
 
 // calibration menu
-#define autoCalibrationGraphicPosition 0
-#define fineTuneCalibrationGraphicPosition 1
-#define twoPointCalibrationGraphicPosition 2
-#define restartCalibrationGraphicPosition 3
+typedef enum
+{
+  AUTO_CALIB_UI_ROW = 0,
+  FINE_TUNE_UI_ROW,
+  TWO_POINT_CALIB_UI_ROW,
+  RESET_CALIB_UI_ROW,
+} CALIBRATION_MENU_UI;
 
 // 2p calibration
-#define temperatureCalibrationGraphicPosition 0
-#define setCalibrationGraphicPosition 1
+#define TEMP_CALIB_UI_ROW 0
+#define SET_CALIB_UI_ROW 1
 
 // auto calibration
-#define autoCalibrationMessageGraphicPosition 0
+#define AUTO_CALIB_MESSAGE_UI_ROW 0
 
 // color options
 #define BLACK 0x0000
@@ -421,12 +450,14 @@ typedef enum
 #define SENSORS_TASK_PERIOD 1
 #define ROOM_SENSOR_UPDATE_PERIOD 500
 #define DIGITAL_CURRENT_SENSOR_PERIOD 5
-#define BUZZER_TASK_PERIOD 1
+#define BUZZER_TASK_PERIOD 10
+#define UI_TASK_PERIOD 10
 #define SECURITY_TASK_PERIOD 1
 #define TIME_TRACK_TASK_PERIOD 100
 #define BACKLIGHT_TASK_PERIOD 100
-#define FAN_TASK_PERIOD 1
+#define FAN_TASK_PERIOD 10
 #define LOOP_TASK_PERIOD 1000
+#define CALIBRATION_TASK_PERIOD 100
 
 #define BACKLIGHT_DELAY 2
 #define INIT_TFT_DELAY 300
@@ -597,9 +628,6 @@ bool back_mode();
 void setSensorsGraphicPosition(int UI_page);
 
 void basicHumidityControl();
-bool checkStableTemperatures(double *referenceSensorHistory,
-                             double *sensorToCalibrateHistory,
-                             int historyLength, double stabilityError);
 void initRoomSensor();
 void initAmbientSensor();
 void powerMonitor();

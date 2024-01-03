@@ -39,7 +39,6 @@ extern bool WIFI_EN;
 extern long lastDebugUpdate;
 extern long loopCounts;
 extern int page;
-extern long lastNTCmeasurement;
 extern double errorTemperature[SENSOR_TEMP_QTY], temperatureCalibrationPoint;
 extern double ReferenceTemperatureRange, ReferenceTemperatureLow;
 extern double provisionalReferenceTemperatureLow;
@@ -301,44 +300,41 @@ void fanSpeedHandler()
 bool measureNTCTemperature()
 {
   int NTCmeasurement;
-  if (millis() - lastNTCmeasurement > NTC_MEASUREMENT_PERIOD)
+  if (ADC_READ_FUNCTION == MILLIVOTSREAD_ADC)
   {
-    if (ADC_READ_FUNCTION == MILLIVOTSREAD_ADC)
+    NTCmeasurement = analogReadMilliVolts(BABY_NTC_PIN);
+  }
+  else if (ADC_READ_FUNCTION == ANALOGREAD_ADC)
+  {
+    NTCmeasurement = analogRead(BABY_NTC_PIN);
+  }
+  if (NTCmeasurement > ADC_TO_DISCARD_MIN &&
+      NTCmeasurement < ADC_TO_DISCARD_MAX)
+  {
+    lastSuccesfullSensorUpdate[SKIN_SENSOR] = millis();
+    //        xQueueSend(sharedSensorQueue, &lastSuccesfullSensorUpdate[SKIN_SENSOR], portMAX_DELAY);
+    in3.temperature[SKIN_SENSOR] = filter_1(adcToCelsius(NTCmeasurement));
+    errorTemperature[SKIN_SENSOR] = in3.temperature[SKIN_SENSOR];
+    if (RawTemperatureRange[SKIN_SENSOR])
     {
-      NTCmeasurement = analogReadMilliVolts(BABY_NTC_PIN);
+      in3.temperature[SKIN_SENSOR] =
+          (((in3.temperature[SKIN_SENSOR] - RawTemperatureLow[SKIN_SENSOR]) *
+            ReferenceTemperatureRange) /
+           RawTemperatureRange[SKIN_SENSOR]) +
+          ReferenceTemperatureLow;
     }
-    else if (ADC_READ_FUNCTION == ANALOGREAD_ADC)
+    in3.temperature[SKIN_SENSOR] += fineTuneSkinTemperature;
+    errorTemperature[SKIN_SENSOR] -= in3.temperature[SKIN_SENSOR];
+    if (in3.temperature < 0)
     {
-      NTCmeasurement = analogRead(BABY_NTC_PIN);
-    }
-    if (NTCmeasurement > ADC_TO_DISCARD_MIN &&
-        NTCmeasurement < ADC_TO_DISCARD_MAX)
-    {
-      lastSuccesfullSensorUpdate[SKIN_SENSOR] = millis();
-      xQueueSend(sharedSensorQueue, &lastSuccesfullSensorUpdate[SKIN_SENSOR], portMAX_DELAY);
-      in3.temperature[SKIN_SENSOR] = filter_1(adcToCelsius(NTCmeasurement));
-      errorTemperature[SKIN_SENSOR] = in3.temperature[SKIN_SENSOR];
-      if (RawTemperatureRange[SKIN_SENSOR])
-      {
-        in3.temperature[SKIN_SENSOR] =
-            (((in3.temperature[SKIN_SENSOR] - RawTemperatureLow[SKIN_SENSOR]) *
-              ReferenceTemperatureRange) /
-             RawTemperatureRange[SKIN_SENSOR]) +
-            ReferenceTemperatureLow;
-      }
-      in3.temperature[SKIN_SENSOR] += fineTuneSkinTemperature;
-      errorTemperature[SKIN_SENSOR] -= in3.temperature[SKIN_SENSOR];
-      if (in3.temperature < 0)
-      {
-        in3.temperature[SKIN_SENSOR] = 0;
-      }
-      lastNTCmeasurement = millis();
-    }
-    else
-    {
-      // logAlarm("[ALARM] -> NTC read is: " + String(NTCmeasurement));
+      in3.temperature[SKIN_SENSOR] = 0;
     }
     return true;
+  }
+  else
+  {
+    // logAlarm("[ALARM] -> NTC read is: " + String(NTCmeasurement));
+    return false;
   }
   return false;
 }
@@ -358,7 +354,7 @@ bool updateRoomSensor()
           sensedTemperature < DIG_TEMP_TO_DISCARD_MAX)
       {
         lastSuccesfullSensorUpdate[ROOM_DIGITAL_TEMP_SENSOR] = millis();
-        xQueueSend(sharedSensorQueue, &lastSuccesfullSensorUpdate[ROOM_DIGITAL_TEMP_SENSOR], portMAX_DELAY);
+        //        xQueueSend(sharedSensorQueue, &lastSuccesfullSensorUpdate[ROOM_DIGITAL_TEMP_SENSOR], portMAX_DELAY);
         in3.temperature[ROOM_DIGITAL_TEMP_SENSOR] =
             sensedTemperature; // Add here measurement to temp array
         in3.humidity[ROOM_DIGITAL_HUM_SENSOR] = mySHTC3.toPercent();

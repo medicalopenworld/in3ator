@@ -140,7 +140,7 @@ extern in3ator_parameters in3;
 void UI_calibration()
 {
     byte numWords = 4;
-    page = calibrateSensorsPage;
+    page = CALIBRATION_SENSORS_PAGE;
     print_text = true;
     tft.setTextSize(1);
     setTextColor(COLOR_MENU_TEXT);
@@ -150,44 +150,44 @@ void UI_calibration()
     }
     switch (in3.language)
     {
-    case english:
-        words[twoPointCalibrationGraphicPosition] =
+    case ENGLISH:
+        words[TWO_POINT_CALIB_UI_ROW] =
             convertStringToChar("2-p calibration");
-        words[fineTuneCalibrationGraphicPosition] =
+        words[FINE_TUNE_UI_ROW] =
             convertStringToChar("fine tune");
-        words[autoCalibrationGraphicPosition] =
+        words[AUTO_CALIB_UI_ROW] =
             convertStringToChar("auto calibration");
-        words[restartCalibrationGraphicPosition] =
+        words[RESET_CALIB_UI_ROW] =
             convertStringToChar("Reset values");
         break;
-    case spanish:
-        words[twoPointCalibrationGraphicPosition] =
+    case SPANISH:
+        words[TWO_POINT_CALIB_UI_ROW] =
             convertStringToChar("2-p calibracion");
-        words[fineTuneCalibrationGraphicPosition] =
+        words[FINE_TUNE_UI_ROW] =
             convertStringToChar("ajuste fino");
-        words[autoCalibrationGraphicPosition] =
+        words[AUTO_CALIB_UI_ROW] =
             convertStringToChar("auto calibracion");
-        words[restartCalibrationGraphicPosition] =
+        words[RESET_CALIB_UI_ROW] =
             convertStringToChar("Reiniciar valores");
         break;
-    case french:
-        words[twoPointCalibrationGraphicPosition] =
+    case FRENCH:
+        words[TWO_POINT_CALIB_UI_ROW] =
             convertStringToChar("2-p calibrage");
-        words[fineTuneCalibrationGraphicPosition] =
+        words[FINE_TUNE_UI_ROW] =
             convertStringToChar("affiner");
-        words[autoCalibrationGraphicPosition] =
+        words[AUTO_CALIB_UI_ROW] =
             convertStringToChar("calibrage auto");
-        words[restartCalibrationGraphicPosition] =
+        words[RESET_CALIB_UI_ROW] =
             convertStringToChar("Reinitialiser valeurs");
         break;
-    case portuguese:
-        words[twoPointCalibrationGraphicPosition] =
+    case PORTUGUESE:
+        words[TWO_POINT_CALIB_UI_ROW] =
             convertStringToChar("2-p calibracao");
-        words[fineTuneCalibrationGraphicPosition] =
+        words[FINE_TUNE_UI_ROW] =
             convertStringToChar("sintonia fina");
-        words[autoCalibrationGraphicPosition] =
+        words[AUTO_CALIB_UI_ROW] =
             convertStringToChar("calibracao auto");
-        words[restartCalibrationGraphicPosition] =
+        words[RESET_CALIB_UI_ROW] =
             convertStringToChar("Redefinir valores");
         break;
     }
@@ -198,6 +198,6 @@ void UI_calibration()
     ypos = graphicHeight(bar_pos - 1);
     while (!GPIORead(ENC_SWITCH))
     {
-        vTaskDelay(pdMS_TO_TICKS(debounceTime));
+        vTaskDelay(pdMS_TO_TICKS(SWITCH_DEBOUNCE_TIME_MS));
     }
 }

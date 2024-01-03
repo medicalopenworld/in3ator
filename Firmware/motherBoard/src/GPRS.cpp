@@ -28,7 +28,6 @@
 #include <Arduino.h>
 
 #include "main.h"
-#include <ThingsBoard.h>
 
 // Initialize GSM modem
 TinyGsm modem(modemSerial);

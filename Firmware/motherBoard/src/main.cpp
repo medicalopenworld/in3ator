@@ -42,7 +42,6 @@ bool WIFI_EN = true;
 long lastDebugUpdate;
 long loopCounts;
 int page;
-long lastNTCmeasurement;
 
 double errorTemperature[SENSOR_TEMP_QTY], temperatureCalibrationPoint;
 double ReferenceTemperatureRange, ReferenceTemperatureLow;
@@ -230,7 +229,7 @@ void UI_Task(void *pvParameters)
   for (;;)
   {
     userInterfaceHandler(page);
-    vTaskDelay(pdMS_TO_TICKS(SECURITY_TASK_PERIOD));
+    vTaskDelay(pdMS_TO_TICKS(UI_TASK_PERIOD));
   }
 }
 
@@ -250,14 +249,8 @@ void setup()
   {
     goToSettings = true;
   }
-  initHardware(false);
 
-  logI("Creating UI task ...\n");
-  while (xTaskCreatePinnedToCore(UI_Task, (const char *)"UI", 4096,
-                                 NULL, UI_TASK_PRIORITY, NULL, CORE_ID_FREERTOS) != pdPASS)
-    ;
-  ;
-  logI("UI task successfully created!\n");
+  initHardware(false);
 
   logI("Creating buzzer task ...\n");
   while (xTaskCreatePinnedToCore(buzzer_Task, (const char *)"BUZZER", 4096,
@@ -304,10 +297,18 @@ void setup()
     ;
   ;
   logI("Time track task successfully created!\n");
+
+  logI("Creating UI task ...\n");
+  while (xTaskCreatePinnedToCore(UI_Task, (const char *)"UI", 4096,
+                                 NULL, UI_TASK_PRIORITY, NULL, CORE_ID_FREERTOS) != pdPASS)
+    ;
+  ;
+  logI("UI task successfully created!\n");
 }
 
 void loop()
 {
   watchdogReload();
+  updateData();
   vTaskDelay(pdMS_TO_TICKS(LOOP_TASK_PERIOD));
 }

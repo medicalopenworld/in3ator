@@ -253,8 +253,8 @@ void checkStatusOfSensor(byte sensor)
   }
   if (alarmID)
   {
-    if (xQueueReceive(sharedSensorQueue, &lastSuccesfullSensorUpdate[sensor], portMAX_DELAY))
-    {
+    // if (xQueueReceive(sharedSensorQueue, &lastSuccesfullSensorUpdate[sensor], portMAX_DELAY))
+    // {
       if (millis() - lastSuccesfullSensorUpdate[sensor] >
           MINIMUM_SUCCESSFULL_SENSOR_UPDATE)
       {
@@ -270,7 +270,7 @@ void checkStatusOfSensor(byte sensor)
           resetAlarm(alarmID);
         }
       }
-    }
+//    }
   }
 }
 
@@ -427,7 +427,7 @@ void disableAllAlarms()
 
 void checkAlarms()
 {
-  if (page == actuatorsProgressPage)
+  if (page == ACTUATORS_PROGRESS_PAGE)
   {
     if (in3.temperatureControl)
     {

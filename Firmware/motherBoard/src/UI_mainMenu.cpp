@@ -141,7 +141,7 @@ extern PID humidityControlPID;
 extern in3ator_parameters in3;
 
 void UI_mainMenu() {
-  page = mainMenuPage;
+  page = MAIN_MENU_PAGE;
   byte numWords = 5;
   print_text = true;
   tft.setTextSize(1);
@@ -149,53 +149,53 @@ void UI_mainMenu() {
   for (int i = false; i < numWords; i++) {
     pos_text[i] = LEFT_MARGIN;
   }
-  pos_text[startGraphicPosition] = CENTER;
+  pos_text[START_UI_ROW] = CENTER;
   switch (in3.language) {
-    case spanish:
-      words[controlModeGraphicPosition] =
+    case SPANISH:
+      words[CONTROL_MODE_UI_ROW] =
           convertStringToChar("Modo de control");
       if (in3.controlMode) {
-        words[temperatureGraphicPosition] = convertStringToChar("Temp aire");
+        words[TEMPERATURE_UI_ROW] = convertStringToChar("Temp aire");
       } else {
-        words[temperatureGraphicPosition] = convertStringToChar("Temp piel");
+        words[TEMPERATURE_UI_ROW] = convertStringToChar("Temp piel");
       }
-      words[humidityGraphicPosition] = convertStringToChar("Humedad");
-      words[LEDGraphicPosition] = convertStringToChar("Fototerapia");
+      words[HUMIDITY_UI_ROW] = convertStringToChar("Humedad");
+      words[LED_UI_ROW] = convertStringToChar("Fototerapia");
       break;
-    case english:
-      words[controlModeGraphicPosition] = convertStringToChar("Control mode");
+    case ENGLISH:
+      words[CONTROL_MODE_UI_ROW] = convertStringToChar("Control mode");
       if (in3.controlMode) {
-        words[temperatureGraphicPosition] = convertStringToChar("Air temp");
+        words[TEMPERATURE_UI_ROW] = convertStringToChar("Air temp");
       } else {
-        words[temperatureGraphicPosition] = convertStringToChar("Skin temp");
+        words[TEMPERATURE_UI_ROW] = convertStringToChar("Skin temp");
       }
-      words[humidityGraphicPosition] = convertStringToChar("Humidity");
-      words[LEDGraphicPosition] = convertStringToChar("Phototherapy");
+      words[HUMIDITY_UI_ROW] = convertStringToChar("Humidity");
+      words[LED_UI_ROW] = convertStringToChar("Phototherapy");
       break;
-    case french:
-      words[controlModeGraphicPosition] =
+    case FRENCH:
+      words[CONTROL_MODE_UI_ROW] =
           convertStringToChar("Mode de controle");
       if (in3.controlMode) {
-        words[temperatureGraphicPosition] = convertStringToChar("Temp air");
+        words[TEMPERATURE_UI_ROW] = convertStringToChar("Temp air");
       } else {
-        words[temperatureGraphicPosition] = convertStringToChar("Temp peau");
+        words[TEMPERATURE_UI_ROW] = convertStringToChar("Temp peau");
       }
-      words[humidityGraphicPosition] = convertStringToChar("Humidite");
-      words[LEDGraphicPosition] = convertStringToChar("Phototherapie");
+      words[HUMIDITY_UI_ROW] = convertStringToChar("Humidite");
+      words[LED_UI_ROW] = convertStringToChar("Phototherapie");
       break;
-    case portuguese:
-      words[controlModeGraphicPosition] =
+    case PORTUGUESE:
+      words[CONTROL_MODE_UI_ROW] =
           convertStringToChar("Modo de controle");
       if (in3.controlMode) {
-        words[temperatureGraphicPosition] = convertStringToChar("Temp do ar");
+        words[TEMPERATURE_UI_ROW] = convertStringToChar("Temp do ar");
       } else {
-        words[temperatureGraphicPosition] = convertStringToChar("Temp pele");
+        words[TEMPERATURE_UI_ROW] = convertStringToChar("Temp pele");
       }
-      words[humidityGraphicPosition] = convertStringToChar("Umidade");
-      words[LEDGraphicPosition] = convertStringToChar("Fototerapia");
+      words[HUMIDITY_UI_ROW] = convertStringToChar("Umidade");
+      words[LED_UI_ROW] = convertStringToChar("Fototerapia");
       break;
   }
-  words[startGraphicPosition] = convertStringToChar("");
+  words[START_UI_ROW] = convertStringToChar("");
   menu_rows = numWords;
   setSensorsGraphicPosition(page);
   graphics(page, in3.language, print_text, menu_rows, in3.controlMode,
@@ -213,6 +213,6 @@ void UI_mainMenu() {
     in3.desiredControlTemperature = presetTemp[in3.controlMode];
   }
   while (!GPIORead(ENC_SWITCH)) {
-  vTaskDelay(pdMS_TO_TICKS(debounceTime));    
+  vTaskDelay(pdMS_TO_TICKS(SWITCH_DEBOUNCE_TIME_MS));    
   }
 }

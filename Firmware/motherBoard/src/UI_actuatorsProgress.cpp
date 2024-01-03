@@ -213,7 +213,7 @@ void UI_actuatorsProgress()
   alarmTimerStart();
   byte numWords = false;
   temperaturePercentage = false;
-  page = actuatorsProgressPage;
+  page = ACTUATORS_PROGRESS_PAGE;
   tft.setTextSize(1);
   print_text = false;
   menu_rows = numWords;
@@ -227,16 +227,16 @@ void UI_actuatorsProgress()
   {
     switch (in3.language)
     {
-    case spanish:
+    case SPANISH:
       textToWrite = convertStringToChar(cstring, "Temperatura aire");
       break;
-    case portuguese:
+    case PORTUGUESE:
       textToWrite = convertStringToChar(cstring, "Temperatura do ar");
       break;
-    case english:
+    case ENGLISH:
       textToWrite = convertStringToChar(cstring, "Air temperature");
       break;
-    case french:
+    case FRENCH:
       textToWrite = convertStringToChar(cstring, "Temperature de l'air");
       break;
     }
@@ -245,16 +245,16 @@ void UI_actuatorsProgress()
   {
     switch (in3.language)
     {
-    case spanish:
+    case SPANISH:
       textToWrite = convertStringToChar(cstring, "Temperatura piel");
       break;
-    case portuguese:
+    case PORTUGUESE:
       textToWrite = convertStringToChar(cstring, "temperatura da pele");
       break;
-    case english:
+    case ENGLISH:
       textToWrite = convertStringToChar(cstring, "Skin temperature");
       break;
-    case french:
+    case FRENCH:
       textToWrite = convertStringToChar(cstring, "Temperature de la peau");
       break;
     }
@@ -265,16 +265,16 @@ void UI_actuatorsProgress()
   {
     switch (in3.language)
     {
-    case spanish:
+    case SPANISH:
       textToWrite = convertStringToChar(cstring, "Temperatura aire");
       break;
-    case portuguese:
+    case PORTUGUESE:
       textToWrite = convertStringToChar(cstring, "Temperatura do ar");
       break;
-    case english:
+    case ENGLISH:
       textToWrite = convertStringToChar(cstring, "Air temperature");
       break;
-    case french:
+    case FRENCH:
       textToWrite = convertStringToChar(cstring, "Temperature de l'air");
       break;
     }
@@ -283,16 +283,16 @@ void UI_actuatorsProgress()
   {
     switch (in3.language)
     {
-    case spanish:
+    case SPANISH:
       textToWrite = convertStringToChar(cstring, "Temperatura piel");
       break;
-    case portuguese:
+    case PORTUGUESE:
       textToWrite = convertStringToChar(cstring, "temperatura da pele");
       break;
-    case english:
+    case ENGLISH:
       textToWrite = convertStringToChar(cstring, "Skin temperature");
       break;
-    case french:
+    case FRENCH:
       textToWrite = convertStringToChar(cstring, "Temperature de la peau");
       break;
     }
@@ -302,16 +302,16 @@ void UI_actuatorsProgress()
 
   switch (in3.language)
   {
-  case spanish:
+  case SPANISH:
     textToWrite = convertStringToChar(cstring, "Humedad");
     break;
-  case english:
+  case ENGLISH:
     textToWrite = convertStringToChar(cstring, "Humidity");
     break;
-  case french:
+  case FRENCH:
     textToWrite = convertStringToChar(cstring, "Humidite");
     break;
-  case portuguese:
+  case PORTUGUESE:
     textToWrite = convertStringToChar(cstring, "Umidade");
     break;
   }

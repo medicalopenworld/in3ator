@@ -143,50 +143,50 @@ extern in3ator_parameters in3;
 
 void UI_settings() {
   byte numWords = 6;
-  page = settingsPage;
+  page = SETTIGNS_PAGE;
   print_text = true;
   tft.setTextSize(1);
   setTextColor(COLOR_MENU_TEXT);
   for (int i = false; i < numWords; i++) {
     pos_text[i] = LEFT_MARGIN;
   }
-  pos_text[setdefaultValuesGraphicPosition] = CENTER;
-  pos_text[HWTestGraphicPosition] = CENTER;
-  pos_text[calibrateGraphicPosition] = CENTER;
+  pos_text[DEFAULT_VALUES_UI_ROW] = CENTER;
+  pos_text[HW_TEST_UI_ROW] = CENTER;
+  pos_text[CALIBRATION_UI_ROW] = CENTER;
   switch (in3.language) {
-    case english:
-      words[languageGraphicPosition] = convertStringToChar("in3.language");
-      words[serialNumberGraphicPosition] = convertStringToChar("Serial number");
-      words[setdefaultValuesGraphicPosition] =
+    case ENGLISH:
+      words[LANGUAGE_UI_ROW] = convertStringToChar("in3.language");
+      words[SERIAL_NUMBER_UI_ROW] = convertStringToChar("Serial number");
+      words[DEFAULT_VALUES_UI_ROW] =
           convertStringToChar("Set default values");
-      words[calibrateGraphicPosition] = convertStringToChar("Calibration");
+      words[CALIBRATION_UI_ROW] = convertStringToChar("Calibration");
       break;
-    case spanish:
-      words[languageGraphicPosition] = convertStringToChar("Idioma");
-      words[serialNumberGraphicPosition] = convertStringToChar("Serial number");
-      words[setdefaultValuesGraphicPosition] =
+    case SPANISH:
+      words[LANGUAGE_UI_ROW] = convertStringToChar("Idioma");
+      words[SERIAL_NUMBER_UI_ROW] = convertStringToChar("Serial number");
+      words[DEFAULT_VALUES_UI_ROW] =
           convertStringToChar("Fijar valores estandar");
-      words[calibrateGraphicPosition] = convertStringToChar("Calibracion");
+      words[CALIBRATION_UI_ROW] = convertStringToChar("Calibracion");
       break;
-    case french:
-      words[languageGraphicPosition] = convertStringToChar("Langue");
-      words[serialNumberGraphicPosition] = convertStringToChar("Serial number");
-      words[setdefaultValuesGraphicPosition] =
+    case FRENCH:
+      words[LANGUAGE_UI_ROW] = convertStringToChar("Langue");
+      words[SERIAL_NUMBER_UI_ROW] = convertStringToChar("Serial number");
+      words[DEFAULT_VALUES_UI_ROW] =
           convertStringToChar("Definir valeurs default");
-      words[calibrateGraphicPosition] = convertStringToChar("Etalonner");
+      words[CALIBRATION_UI_ROW] = convertStringToChar("Etalonner");
       break;
-    case portuguese:
-      words[languageGraphicPosition] = convertStringToChar("Idioma");
-      words[serialNumberGraphicPosition] = convertStringToChar("Serial number");
-      words[setdefaultValuesGraphicPosition] =
+    case PORTUGUESE:
+      words[LANGUAGE_UI_ROW] = convertStringToChar("Idioma");
+      words[SERIAL_NUMBER_UI_ROW] = convertStringToChar("Serial number");
+      words[DEFAULT_VALUES_UI_ROW] =
           convertStringToChar("Definir valores de fabrica");
-      words[calibrateGraphicPosition] = convertStringToChar("Calibrar");
+      words[CALIBRATION_UI_ROW] = convertStringToChar("Calibrar");
       break;
   }
-  words[WifiENGraphicPosition] = convertStringToChar("WIFI");
-  words[HWTestGraphicPosition] = convertStringToChar("HW Test");
+  words[WIFI_EN_UI_ROW] = convertStringToChar("WIFI");
+  words[HW_TEST_UI_ROW] = convertStringToChar("HW Test");
   if (WiFi.status() == WL_CONNECTED) {
-    words[WifiENGraphicPosition] = convertStringToChar("WIFI IP->");
+    words[WIFI_EN_UI_ROW] = convertStringToChar("WIFI IP->");
   }
   menu_rows = numWords;
   graphics(page, in3.language, print_text, menu_rows, in3.serialNumber,
@@ -196,6 +196,6 @@ void UI_settings() {
   selected = false;
   ypos = graphicHeight(bar_pos - 1);
   while (!GPIORead(ENC_SWITCH)) {
-  vTaskDelay(pdMS_TO_TICKS(debounceTime));    
+  vTaskDelay(pdMS_TO_TICKS(SWITCH_DEBOUNCE_TIME_MS));    
   }
 }

@@ -140,6 +140,48 @@ extern in3ator_parameters in3;
 #define TIME_BETWEEN_SAMPLES 1 // minutes
 #define SAMPLES_WITHIN_ERROR 3
 #define DEFAULT_CALIBRATION_TEMPERATURE 36
+#define MINIMUM_DIFFERENCE_TEMPERATURE 8
+
+bool checkStableTemperatures(double *referenceSensorHistory,
+                             double *sensorToCalibrateHistory,
+                             int historyLength, double stabilityError, double targetReference)
+{
+
+  for (int i = 1; i < historyLength; i++)
+  {
+    // Check value for the sensor to calibrate
+    if (sensorToCalibrateHistory[i - 1] == false)
+    {
+      return false;
+    }
+    // Check stability for the sensor to calibrate
+    if (abs(sensorToCalibrateHistory[i] - sensorToCalibrateHistory[i - 1]) > stabilityError)
+    {
+      return false;
+    }
+    // Check stability for the reference sensor
+    if (abs(referenceSensorHistory[i] - referenceSensorHistory[i - 1]) > stabilityError)
+    {
+      return false;
+    }
+    // Check error for the reference sensor and calibration range
+    if (targetReference)
+    {
+      if (abs(referenceSensorHistory[i] - targetReference) > stabilityError)
+      {
+        return false;
+      }
+    }
+    else
+    {
+      if (abs(referenceSensorHistory[i] - DEFAULT_CALIBRATION_TEMPERATURE) < MINIMUM_DIFFERENCE_TEMPERATURE)
+      {
+        return false;
+      }
+    }
+  }
+  return true;
+}
 
 void autoCalibration()
 {
@@ -152,7 +194,7 @@ void autoCalibration()
   double sensorToCalibrateHistory[SAMPLES_WITHIN_ERROR];
   referenceSensorHistory[0] = in3.temperature[ROOM_DIGITAL_TEMP_SENSOR];
   sensorToCalibrateHistory[0] = in3.temperature[SKIN_SENSOR];
-  page = autoCalibrationPage;
+  page = AUTO_CALIBRATION_PAGE;
   print_text = true;
   tft.setTextSize(1);
   setTextColor(COLOR_MENU_TEXT);
@@ -160,23 +202,23 @@ void autoCalibration()
   {
     pos_text[i] = LEFT_MARGIN;
   }
-  pos_text[setCalibrationGraphicPosition] = CENTER;
+  pos_text[SET_CALIB_UI_ROW] = CENTER;
   switch (in3.language)
   {
-  case english:
-    words[autoCalibrationMessageGraphicPosition] =
+  case ENGLISH:
+    words[AUTO_CALIB_MESSAGE_UI_ROW] =
         convertStringToChar("Calibrating...");
     break;
-  case spanish:
-    words[autoCalibrationMessageGraphicPosition] =
+  case SPANISH:
+    words[AUTO_CALIB_MESSAGE_UI_ROW] =
         convertStringToChar("Calibrating...");
     break;
-  case french:
-    words[autoCalibrationMessageGraphicPosition] =
+  case FRENCH:
+    words[AUTO_CALIB_MESSAGE_UI_ROW] =
         convertStringToChar("Calibrating...");
     break;
-  case portuguese:
-    words[autoCalibrationMessageGraphicPosition] =
+  case PORTUGUESE:
+    words[AUTO_CALIB_MESSAGE_UI_ROW] =
         convertStringToChar("Calibrating...");
     break;
   }
@@ -187,12 +229,12 @@ void autoCalibration()
   ypos = graphicHeight(bar_pos - 1);
   while (!GPIORead(ENC_SWITCH))
   {
-    vTaskDelay(pdMS_TO_TICKS(debounceTime));
+    vTaskDelay(pdMS_TO_TICKS(SWITCH_DEBOUNCE_TIME_MS));
   }
   autoCalibrationProcess = setupAutoCalibrationPoint;
   while (!exitCalibrationMenu)
   {
-    vTaskDelay(pdMS_TO_TICKS(WHILE_LOOP_DELAY));
+    vTaskDelay(pdMS_TO_TICKS(CALIBRATION_TASK_PERIOD));
     switch (autoCalibrationProcess)
     {
     case setupAutoCalibrationPoint:
@@ -206,19 +248,18 @@ void autoCalibration()
       if (!GPIORead(ENC_SWITCH) ||
           checkStableTemperatures(referenceSensorHistory,
                                   sensorToCalibrateHistory,
-                                  SAMPLES_WITHIN_ERROR, CALIBRATION_ERROR))
+                                  SAMPLES_WITHIN_ERROR, CALIBRATION_ERROR, false))
       {
         provisionalReferenceTemperatureLow =
             in3.temperature[ROOM_DIGITAL_TEMP_SENSOR];
         provisionalRawTemperatureLow[SKIN_SENSOR] =
             in3.temperature[SKIN_SENSOR];
-        vTaskDelay(pdMS_TO_TICKS(debounceTime));
         while (!GPIORead(ENC_SWITCH))
         {
-          vTaskDelay(pdMS_TO_TICKS(WHILE_LOOP_DELAY));
+          vTaskDelay(pdMS_TO_TICKS(SWITCH_DEBOUNCE_TIME_MS));
           exitCalibrationMenu = back_mode();
+          vTaskDelay(pdMS_TO_TICKS(SWITCH_DEBOUNCE_TIME_MS));
         }
-        vTaskDelay(pdMS_TO_TICKS(debounceTime));
         in3.desiredControlTemperature = DEFAULT_CALIBRATION_TEMPERATURE;
         startPID(airPID);
         autoCalibrationProcess = secondAutoCalibrationPoint;
@@ -233,7 +274,7 @@ void autoCalibration()
       if (!GPIORead(ENC_SWITCH) ||
           checkStableTemperatures(referenceSensorHistory,
                                   sensorToCalibrateHistory,
-                                  SAMPLES_WITHIN_ERROR, CALIBRATION_ERROR))
+                                  SAMPLES_WITHIN_ERROR, CALIBRATION_ERROR, DEFAULT_CALIBRATION_TEMPERATURE))
       {
         logI(
             "=================================================point 2");
@@ -270,7 +311,7 @@ void autoCalibration()
       sensorToCalibrateHistory[historyLengthPosition] =
           in3.temperature[SKIN_SENSOR];
       historyLengthPosition++;
-      for (int i = 0; i < SAMPLES_WITHIN_ERROR; i++)
+      for (int i = 1; i < SAMPLES_WITHIN_ERROR; i++)
       {
         logI(String(abs(*referenceSensorHistory - *(referenceSensorHistory + i))));
         logI(String(abs(*sensorToCalibrateHistory - *(sensorToCalibrateHistory + i))));
@@ -286,7 +327,7 @@ void fineTuneCalibration()
   byte numWords = 2;
   fineTuneSkinTemperature = false;
   fineTuneAirTemperature = false;
-  page = fineTuneCalibrationPage;
+  page = FINE_TUNE_CALIBRATION_PAGE;
   print_text = true;
   tft.setTextSize(1);
   setTextColor(COLOR_MENU_TEXT);
@@ -294,10 +335,10 @@ void fineTuneCalibration()
   {
     pos_text[i] = LEFT_MARGIN;
   }
-  pos_text[setCalibrationGraphicPosition] = CENTER;
-  words[temperatureCalibrationGraphicPosition] =
+  pos_text[SET_CALIB_UI_ROW] = CENTER;
+  words[TEMP_CALIB_UI_ROW] =
       convertStringToChar("Temperature adjust");
-  words[setCalibrationGraphicPosition] = convertStringToChar("SET");
+  words[SET_CALIB_UI_ROW] = convertStringToChar("SET");
   menu_rows = numWords;
   graphics(page, in3.language, print_text, menu_rows, false, false);
   drawHeading(page, in3.serialNumber);
@@ -307,14 +348,14 @@ void fineTuneCalibration()
   drawFloat(in3.temperature[SKIN_SENSOR], 1, valuePosition, ypos, textFontSize);
   while (!GPIORead(ENC_SWITCH))
   {
-    vTaskDelay(pdMS_TO_TICKS(debounceTime));
+    vTaskDelay(pdMS_TO_TICKS(SWITCH_DEBOUNCE_TIME_MS));
   }
 }
 
 void firstPointCalibration()
 {
   byte numWords = 2;
-  page = firstPointCalibrationPage;
+  page = FIRST_POINT_CALIBRATION_PAGE;
   print_text = true;
   tft.setTextSize(1);
   setTextColor(COLOR_MENU_TEXT);
@@ -322,28 +363,28 @@ void firstPointCalibration()
   {
     pos_text[i] = LEFT_MARGIN;
   }
-  pos_text[setCalibrationGraphicPosition] = CENTER;
+  pos_text[SET_CALIB_UI_ROW] = CENTER;
   switch (in3.language)
   {
-  case english:
-    words[temperatureCalibrationGraphicPosition] =
+  case ENGLISH:
+    words[TEMP_CALIB_UI_ROW] =
         convertStringToChar("First point");
-    words[setCalibrationGraphicPosition] = convertStringToChar("SET");
+    words[SET_CALIB_UI_ROW] = convertStringToChar("SET");
     break;
-  case spanish:
-    words[temperatureCalibrationGraphicPosition] =
+  case SPANISH:
+    words[TEMP_CALIB_UI_ROW] =
         convertStringToChar("First point");
-    words[setCalibrationGraphicPosition] = convertStringToChar("SET");
+    words[SET_CALIB_UI_ROW] = convertStringToChar("SET");
     break;
-  case french:
-    words[temperatureCalibrationGraphicPosition] =
+  case FRENCH:
+    words[TEMP_CALIB_UI_ROW] =
         convertStringToChar("First point");
-    words[setCalibrationGraphicPosition] = convertStringToChar("SET");
+    words[SET_CALIB_UI_ROW] = convertStringToChar("SET");
     break;
-  case portuguese:
-    words[temperatureCalibrationGraphicPosition] =
+  case PORTUGUESE:
+    words[TEMP_CALIB_UI_ROW] =
         convertStringToChar("First point");
-    words[setCalibrationGraphicPosition] = convertStringToChar("SET");
+    words[SET_CALIB_UI_ROW] = convertStringToChar("SET");
     break;
   }
   menu_rows = numWords;
@@ -355,14 +396,14 @@ void firstPointCalibration()
   drawFloat(in3.temperature[SKIN_SENSOR], 1, valuePosition, ypos, textFontSize);
   while (!GPIORead(ENC_SWITCH))
   {
-  vTaskDelay(pdMS_TO_TICKS(debounceTime));
+    vTaskDelay(pdMS_TO_TICKS(SWITCH_DEBOUNCE_TIME_MS));
   }
 }
 
 void secondPointCalibration()
 {
   byte numWords = 2;
-  page = secondPointCalibrationPage;
+  page = SECOND_POINT_CALIBRATION_PAGE;
   print_text = true;
   tft.setTextSize(1);
   setTextColor(COLOR_MENU_TEXT);
@@ -370,28 +411,28 @@ void secondPointCalibration()
   {
     pos_text[i] = LEFT_MARGIN;
   }
-  pos_text[setCalibrationGraphicPosition] = CENTER;
+  pos_text[SET_CALIB_UI_ROW] = CENTER;
   switch (in3.language)
   {
-  case english:
-    words[temperatureCalibrationGraphicPosition] =
+  case ENGLISH:
+    words[TEMP_CALIB_UI_ROW] =
         convertStringToChar("Second point");
-    words[setCalibrationGraphicPosition] = convertStringToChar("SET");
+    words[SET_CALIB_UI_ROW] = convertStringToChar("SET");
     break;
-  case spanish:
-    words[temperatureCalibrationGraphicPosition] =
+  case SPANISH:
+    words[TEMP_CALIB_UI_ROW] =
         convertStringToChar("Second point");
-    words[setCalibrationGraphicPosition] = convertStringToChar("SET");
+    words[SET_CALIB_UI_ROW] = convertStringToChar("SET");
     break;
-  case french:
-    words[temperatureCalibrationGraphicPosition] =
+  case FRENCH:
+    words[TEMP_CALIB_UI_ROW] =
         convertStringToChar("Second point");
-    words[setCalibrationGraphicPosition] = convertStringToChar("SET");
+    words[SET_CALIB_UI_ROW] = convertStringToChar("SET");
     break;
-  case portuguese:
-    words[temperatureCalibrationGraphicPosition] =
+  case PORTUGUESE:
+    words[TEMP_CALIB_UI_ROW] =
         convertStringToChar("Second point");
-    words[setCalibrationGraphicPosition] = convertStringToChar("SET");
+    words[SET_CALIB_UI_ROW] = convertStringToChar("SET");
     break;
   }
   menu_rows = numWords;
@@ -403,28 +444,8 @@ void secondPointCalibration()
   drawFloat(in3.temperature[SKIN_SENSOR], 1, valuePosition, ypos, textFontSize);
   while (!GPIORead(ENC_SWITCH))
   {
-  vTaskDelay(pdMS_TO_TICKS(debounceTime));
+    vTaskDelay(pdMS_TO_TICKS(SWITCH_DEBOUNCE_TIME_MS));
   }
-}
-
-bool checkStableTemperatures(double *referenceSensorHistory,
-                             double *sensorToCalibrateHistory,
-                             int historyLength, double stabilityError)
-{
-  for (int i = 0; i < historyLength; i++)
-  {
-    if (abs(*referenceSensorHistory - *(referenceSensorHistory + i)) >
-        stabilityError)
-    {
-      return false;
-    }
-    if (abs(*sensorToCalibrateHistory - *(sensorToCalibrateHistory + i)) >
-        stabilityError)
-    {
-      return false;
-    }
-  }
-  return true;
 }
 
 bool checkStableCurrentConsumption(double *referenceSensorHistory,

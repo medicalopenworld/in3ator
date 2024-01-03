@@ -1,14 +1,7 @@
 #ifndef _GPRS_H_
 #define _GPRS_H_
 
-#define TINY_GSM_MODEM_SIM800
-#define modemSerial Serial2
-// #define THINGSBOARD_ENABLE_DYNAMIC 1
-#define THINGSBOARD_ENABLE_OTA 1
-#include <Arduino.h>
-#include <TinyGsmClient.h>
-
-#include "ThingsBoard.h"
+#include "main.h"
 
 #define APN_TM "TM"
 #define APN_TRUPHONE "iot.truphone.com"
