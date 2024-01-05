@@ -101,14 +101,13 @@ extern float temperaturePercentage, temperatureAtStart;
 extern float humidityPercentage, humidityAtStart;
 extern int barWidth, barHeight, tempBarPosX, tempBarPosY, humBarPosX,
     humBarPosY;
-extern int screenTextColor, screenTextBackgroundColor;
+extern int screenTextColor, screenTextBackgroundColour;
 
 // User Interface display variables
 extern bool autoLock; // setting that enables backlight switch OFF after a
                       // given time of no user actions
 extern long
     lastbacklightHandler; // last time there was a encoder movement or pulse
-extern long sensorsUpdatePeriod;
 
 extern bool selected;
 extern char cstring[128];
@@ -139,11 +138,11 @@ extern PID humidityControlPID;
 
 extern in3ator_parameters in3;
 
-void setTextColor(int16_t color) { screenTextColor = color; }
+void setTextColor(int16_t colour) { screenTextColor = colour; }
 
-void setBackgroundColor(int16_t color) { screenTextBackgroundColor = color; }
+void setBackgroundColor(int16_t colour) { screenTextBackgroundColour = colour; }
 
-int16_t getBackgroundColor() { return screenTextBackgroundColor; }
+int16_t getBackgroundColor() { return screenTextBackgroundColour; }
 
 void setSensorsGraphicPosition(int UI_page)
 {
@@ -179,7 +178,7 @@ int16_t drawString(char *string, int16_t poX, int16_t poY, int16_t size)
 
   while (*string)
   {
-    tft.drawChar(poX, poY, *string, screenTextColor, screenTextBackgroundColor,
+    tft.drawChar(poX, poY, *string, screenTextColor, screenTextBackgroundColour,
                  size);
     *string++;
     poX += (width + gap) * size; /* Move cursor right       */
@@ -189,7 +188,7 @@ int16_t drawString(char *string, int16_t poX, int16_t poY, int16_t size)
 
 void drawHeading(int UI_page, int UI_serialNumber)
 {
-  tft.fillRect(0, 0, tft.width(), height_heading, COLOR_HEADING);
+  tft.fillRect(0, 0, tft.width(), height_heading, COLOUR_HEADING);
   if (UKRAINE_MODE)
   {
     tft.fillRect(0, height_heading / 2, tft.width(), height_heading / 2,
@@ -199,7 +198,7 @@ void drawHeading(int UI_page, int UI_serialNumber)
   {
     drawBack();
   }
-  setTextColor(COLOR_MENU);
+  setTextColor(COLOUR_MENU);
   drawCentreString(convertStringToChar(cstring, "in3_"),
                    tft.width() / 2 - 2 * letter_width - 10, headint_text_height,
                    textFontSize);
@@ -212,14 +211,14 @@ void drawHeading(int UI_page, int UI_serialNumber)
 void updateHeadingEvent(byte Event, bool event_status)
 {
   uint16_t currentBackgroundColor = getBackgroundColor();
-  setBackgroundColor(COLOR_HEADING);
+  setBackgroundColor(COLOUR_HEADING);
   if (event_status)
   {
-    setTextColor(COLOR_MENU);
+    setTextColor(COLOUR_MENU);
   }
   else
   {
-    setTextColor(COLOR_HEADING);
+    setTextColor(COLOUR_HEADING);
   }
   switch (Event)
   {
@@ -264,7 +263,7 @@ void eraseBar(int UI_menu_rows, int bar_pos)
         (tft.height() - height_heading) * (bar_pos - 1) / UI_menu_rows +
             height_heading,
         width_select, (tft.height() - height_heading) / UI_menu_rows,
-        COLOR_BAR);
+        COLOUR_BAR);
   }
 }
 
@@ -277,7 +276,7 @@ void updateBar(int UI_menu_rows, int bar_pos)
         (tft.height() - height_heading) * (bar_pos - 1) / UI_menu_rows +
             height_heading,
         width_select, (tft.height() - height_heading) / UI_menu_rows,
-        COLOR_SELECTED);
+        COLOUR_SELECTED);
     for (int i = 2; i <= UI_menu_rows; i++)
     {
       tft.fillRect(0,
@@ -300,15 +299,15 @@ int16_t drawNumber(long long_num, int16_t poX, int16_t poY, int16_t size)
 
 void drawBack()
 {
-  tft.fillRect(0, 0, width_back, height_heading, COLOR_HEADING);
+  tft.fillRect(0, 0, width_back, height_heading, COLOUR_HEADING);
   tft.drawRect(0, 0, width_back, height_heading, BLACK);
   tft.fillTriangle(arrow_height, height_heading / 2, width_back / 2,
                    arrow_height, width_back / 2, height_heading - arrow_height,
-                   COLOR_ARROW);
+                   COLOUR_ARROW);
   tft.fillRect(width_back / 2, height_heading / 2 - arrow_tail,
-               width_back / 2 - arrow_height, arrow_tail, COLOR_ARROW);
+               width_back / 2 - arrow_height, arrow_tail, COLOUR_ARROW);
   tft.fillRect(width_back / 2, height_heading / 2,
-               width_back / 2 - arrow_height, arrow_tail, COLOR_ARROW);
+               width_back / 2 - arrow_height, arrow_tail, COLOUR_ARROW);
 }
 
 void drawRightNumber(int n, int x, int i)
@@ -356,7 +355,7 @@ void drawIntroMessage()
 
 void drawAlarmMessage(char *alertMessage)
 {
-  setTextColor(COLOR_WARNING_TEXT);
+  setTextColor(COLOUR_WARNING_TEXT);
   drawCentreString(alertMessage,
                    width_select + (tft.width() - width_select) / 2,
                    headint_text_height, textFontSize);
@@ -431,29 +430,29 @@ int graphicHeight(int position)
 void drawSelectedTemperature(float temperatureToDraw,
                              float previousTemperatureDrawn)
 {
-  setTextColor(COLOR_MENU);
+  setTextColor(COLOUR_MENU);
   drawFloat(previousTemperatureDrawn, 1, temperatureX, temperatureY,
             textFontSize);
-  setTextColor(COLOR_MENU_TEXT);
+  setTextColor(COLOUR_MENU_TEXT);
   drawFloat(temperatureToDraw, 1, temperatureX, temperatureY, textFontSize);
 }
 
 void drawUnselectedTemperature(float temperatureToDraw,
                                float previousTemperatureDrawn)
 {
-  tft.setTextColor(COLOR_MENU);
+  tft.setTextColor(COLOUR_MENU);
   drawFloat(previousTemperatureDrawn, 1, tft.width() / 2 - 20,
             tft.height() / 2 + 10, textFontSize);
-  tft.setTextColor(COLOR_MENU_TEXT);
+  tft.setTextColor(COLOUR_MENU_TEXT);
   drawFloat(temperatureToDraw, 1, tft.width() / 2 - 20, tft.height() / 2 + 10,
             textFontSize);
 }
 
 void drawHumidity(int UI_humidity, int UI_previousHumdity)
 {
-  setTextColor(COLOR_MENU);
+  setTextColor(COLOUR_MENU);
   drawCentreNumber(UI_previousHumdity, humidityX, humidityY);
-  setTextColor(COLOR_MENU_TEXT);
+  setTextColor(COLOUR_MENU_TEXT);
   drawCentreNumber(UI_humidity, humidityX, humidityY);
 }
 
@@ -476,17 +475,11 @@ void drawHelpMessage(byte UI_language)
   }
 }
 
-void drawStartMessage(bool UI_enableSet, int UI_menu_rows,
-                      char *UI_helpMessage)
+void drawStartMessage(bool UI_enableSet, int UI_menu_rows)
 {
   if (UI_enableSet)
   {
-    setTextColor(COLOR_MENU);
-    drawHelpMessage(in3.language);
-    drawCentreString(helpMessage,
-                     width_select + (tft.width() - width_select) / 2,
-                     getYpos(UI_menu_rows, START_UI_ROW), textFontSize);
-    setTextColor(COLOR_MENU_TEXT);
+    setTextColor(COLOUR_MENU_TEXT);
     switch (in3.language)
     {
     case SPANISH:
@@ -510,8 +503,8 @@ void drawStartMessage(bool UI_enableSet, int UI_menu_rows,
 
 void drawActuatorsSeparators()
 {
-  tft.fillRect(0, separatorTopYPos, tft.width(), barThickness, COLOR_FRAME_BAR);
-  tft.fillRect(0, separatorMidYPos, tft.width(), barThickness, COLOR_FRAME_BAR);
+  tft.fillRect(0, separatorTopYPos, tft.width(), barThickness, COLOUR_FRAME_BAR);
+  tft.fillRect(0, separatorMidYPos, tft.width(), barThickness, COLOUR_FRAME_BAR);
 }
 
 void printLoadingTemperatureBar(double UI_desiredControlTemperature)
@@ -522,7 +515,7 @@ void printLoadingTemperatureBar(double UI_desiredControlTemperature)
   {
     tft.drawRect(tempBarPosX - barWidth / 2 - i,
                  tempBarPosY - barHeight / 2 - i, barWidth + i * 2,
-                 barHeight + i * 2, COLOR_FRAME_BAR);
+                 barHeight + i * 2, COLOUR_FRAME_BAR);
   }
 }
 
@@ -533,7 +526,7 @@ void printLoadingHumidityBar(int UI_desiredControlHumidity)
   for (int i = true; i <= barThickness; i++)
   {
     tft.drawRect(humBarPosX - barWidth / 2 - i, humBarPosY - barHeight / 2 - i,
-                 barWidth + i * 2, barHeight + i * 2, COLOR_FRAME_BAR);
+                 barWidth + i * 2, barHeight + i * 2, COLOUR_FRAME_BAR);
   }
 }
 
@@ -542,7 +535,7 @@ void updateLoadingTemperatureBar(float prev, float actual)
   if (prev != actual)
   {
     float diff = (actual - prev) / 100;
-    int color;
+    int colour;
     float barX;
     int barY, barDiffWidth;
     barX = tempBarPosX - (barWidth / 2) * (1 - prev / 50);
@@ -550,14 +543,14 @@ void updateLoadingTemperatureBar(float prev, float actual)
     barDiffWidth = barWidth * abs(diff) + 1;
     if (diff > 0)
     {
-      color = COLOR_LOADING_BAR;
+      colour = COLOUR_LOADING_BAR;
     }
     else
     {
-      color = COLOR_MENU;
+      colour = COLOUR_MENU;
       barX -= barDiffWidth - 1;
     }
-    tft.fillRect(barX, barY, barDiffWidth, barHeight, color);
+    tft.fillRect(barX, barY, barDiffWidth, barHeight, colour);
   }
 }
 
@@ -566,7 +559,7 @@ void updateLoadingHumidityBar(float prev, float actual)
   if (prev != actual)
   {
     float diff = (actual - prev) / 100;
-    int color;
+    int colour;
     float barX;
     int barY, barDiffWidth;
     barX = humBarPosX - (barWidth / 2) * (1 - prev / 50);
@@ -574,14 +567,14 @@ void updateLoadingHumidityBar(float prev, float actual)
     barDiffWidth = barWidth * abs(diff) + 1;
     if (diff > 0)
     {
-      color = COLOR_LOADING_BAR;
+      colour = COLOUR_LOADING_BAR;
     }
     else
     {
-      color = COLOR_MENU;
+      colour = COLOUR_MENU;
       barX -= barDiffWidth - 1;
     }
-    tft.fillRect(barX, barY, barDiffWidth, barHeight, color);
+    tft.fillRect(barX, barY, barDiffWidth, barHeight, colour);
   }
 }
 
@@ -597,7 +590,7 @@ void blinkGoBackMessage()
     }
     else
     {
-      setTextColor(COLOR_MENU);
+      setTextColor(COLOUR_MENU);
       blinking += 400;
     }
     drawStop();
@@ -624,7 +617,7 @@ int16_t drawCentreString(char *string, int16_t dX, int16_t poY, int16_t size)
 
   while (*string)
   {
-    tft.drawChar(poX, poY, *string, screenTextColor, screenTextBackgroundColor,
+    tft.drawChar(poX, poY, *string, screenTextColor, screenTextBackgroundColour,
                  size);
     *string++;
     poX += (width + gap) * size; /* Move cursor right       */
@@ -654,7 +647,7 @@ int16_t drawRightString(char *string, int16_t dX, int16_t poY, int16_t size)
 
   while (*string)
   {
-    tft.drawChar(poX, poY, *string, screenTextColor, screenTextBackgroundColor,
+    tft.drawChar(poX, poY, *string, screenTextColor, screenTextBackgroundColour,
                  size);
     *string++;
     poX += (width + gap) * size; /* Move cursor right       */
@@ -844,16 +837,16 @@ void drawHardwareErrorMessage(long error, bool criticalError,
 void graphics(uint8_t UI_page, uint8_t UI_language, uint8_t UI_print_text,
               uint8_t UI_menu_rows, uint8_t UI_var_0, uint8_t UI_var_1)
 {
-  setTextColor(COLOR_MENU_TEXT);
+  setTextColor(COLOUR_MENU_TEXT);
   if (!UI_page)
   {
     tft.fillRect(width_select, height_heading, tft.width() - width_select,
-                 tft.height() - height_heading, COLOR_MENU);
+                 tft.height() - height_heading, COLOUR_MENU);
   }
   else
   {
     tft.fillRect(0, height_heading, tft.width(), tft.height() - height_heading,
-                 COLOR_MENU);
+                 COLOUR_MENU);
   }
   if (UI_print_text)
   {
@@ -861,7 +854,7 @@ void graphics(uint8_t UI_page, uint8_t UI_language, uint8_t UI_print_text,
     {
       tft.fillRect(0, height_heading, width_select,
                    (tft.height() - height_heading) / UI_menu_rows,
-                   COLOR_SELECTED);
+                   COLOUR_SELECTED);
     }
   }
   for (int i = 2; i <= UI_menu_rows; i++)
@@ -872,14 +865,14 @@ void graphics(uint8_t UI_page, uint8_t UI_language, uint8_t UI_print_text,
                    (tft.height() - height_heading) * (i - 1) / UI_menu_rows +
                        height_heading,
                    width_select, (tft.height() - height_heading) / UI_menu_rows,
-                   COLOR_BAR);
+                   COLOUR_BAR);
       tft.fillRect(0,
                    (tft.height() - height_heading) * (i - 1) / UI_menu_rows +
                        height_heading - 1,
                    tft.width(), width_indentation, WHITE);
     }
   }
-  tft.drawRect(0, tft.height() - 1, width_select, tft.height() - 1, COLOR_MENU);
+  tft.drawRect(0, tft.height() - 1, width_select, tft.height() - 1, COLOUR_MENU);
   if (UI_print_text)
   {
     tft.setTextSize(1);

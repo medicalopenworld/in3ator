@@ -103,14 +103,14 @@ extern float temperaturePercentage, temperatureAtStart;
 extern float humidityPercentage, humidityAtStart;
 extern int barWidth, barHeight, tempBarPosX, tempBarPosY, humBarPosX,
     humBarPosY;
-extern int screenTextColor, screenTextBackgroundColor;
+extern int screenTextColor, screenTextBackgroundColour;
 
 // User Interface display variables
 extern bool autoLock; // setting that enables backlight switch OFF after a
                       // given time of no user actions
 extern long
     lastbacklightHandler; // last time there was a encoder movement or pulse
-extern long sensorsUpdatePeriod;
+
 
 extern bool selected;
 extern char cstring[128];

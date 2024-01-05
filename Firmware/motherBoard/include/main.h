@@ -44,11 +44,11 @@
 #include <Espressif_MQTT_Client.h>
 #include <Arduino_MQTT_Client.h>
 
-#define LOG_GPRS true
-#define LOG_MODEM_DATA true
-#define LOG_INFORMATION true
-#define LOG_ERRORS true
-#define LOG_ALARMS true
+#define LOG_GPRS false
+#define LOG_MODEM_DATA false
+#define LOG_INFORMATION false
+#define LOG_ERRORS false
+#define LOG_ALARMS false
 
 #define WDT_TIMEOUT 45
 
@@ -161,6 +161,26 @@
 #define SENSORS_TASK_PRIORITY 8
 #define SECURITY_TASK_PRIORITY 9
 
+#define GPRS_TASK_PERIOD_MS 1
+#define OTA_TASK_PERIOD_MS 1
+#define SENSORS_TASK_PERIOD_MS 1
+#define ROOM_SENSOR_UPDATE_PERIOD_MS 500
+#define DIGITAL_CURRENT_SENSOR_PERIOD_MS 5
+#define BUZZER_TASK_PERIOD_MS 10
+#define UI_TASK_PERIOD_MS 10
+#define SECURITY_TASK_PERIOD_MS 1
+#define TIME_TRACK_TASK_PERIOD_MS 100
+#define BACKLIGHT_TASK_PERIOD_MS 100
+#define FAN_TASK_PERIOD_MS 10
+#define LOOP_TASK_PERIOD_MS 1000
+#define CALIBRATION_TASK_PERIOD_MS 100
+
+#define NTC_SAMPLES_TEST 100
+#define DIGITAL_CURRENT_SENSOR_READ_PERIOD_MS 500
+#define CURRENT_UPDATE_PERIOD_MS 500 // in millis
+#define VOLTAGE_UPDATE_PERIOD_MS 50  // in millis
+#define UI_SENSOR_UPDATE_PERIOD_MS 1000
+
 // buzzer variables
 #define buzzerStandbyPeriod \
   10000                              // in millis, there will be a periodic tone when regulating baby's
@@ -208,11 +228,6 @@
 
 #define DEFAULT_CONTROL_MODE AIR_CONTROL
 
-#define NTC_MEASUREMENT_PERIOD 1 // in millis
-#define NTC_SAMPLES_TEST 100
-#define CURRENT_UPDATE_PERIOD 500 // in millis
-#define VOLTAGE_UPDATE_PERIOD 50  // in millis
-
 #define setupAutoCalibrationPoint 0
 #define firstAutoCalibrationPoint 1
 #define secondAutoCalibrationPoint 2
@@ -222,8 +237,7 @@
 #define room 1         // transmit room variables
 #define aliveRefresh 2 // message to let know that incubator is still ON
 
-#define digitalCurrentSensorReadPeriod 500
-#define externalADCReadPeriod 30
+
 
 // sensor variables
 #define defaultCurrentSamples 30
@@ -416,7 +430,7 @@ typedef enum
 // auto calibration
 #define AUTO_CALIB_MESSAGE_UI_ROW 0
 
-// color options
+// colour options
 #define BLACK 0x0000
 #define BLUE 0x001F
 #define RED 0xF800
@@ -425,39 +439,26 @@ typedef enum
 #define MAGENTA 0xF81F
 #define YELLOW 0xFFE0
 #define WHITE 0xFFFF
-#define COLOR_WARNING_TEXT ILI9341_ORANGE
-#define COLOR_MENU BLACK
-#define COLOR_BAR BLACK
-#define COLOR_MENU_TEXT WHITE
-#define COLOR_SELECTED WHITE
-#define COLOR_CHOSEN BLUE
-#define COLOR_HEADING BLUE
-#define COLOR_ARROW BLACK
-#define COLOR_BATTERY BLACK
-#define COLOR_BATTERY_LEFT BLACK
-#define COLOR_FRAME_BAR WHITE
-#define COLOR_LOADING_BAR RED
-#define COLOR_COMPLETED_BAR GREEN
+
+#define COLOUR_WARNING_TEXT ILI9341_ORANGE
+#define COLOUR_MENU BLACK
+#define COLOUR_BAR BLACK
+#define COLOUR_MENU_TEXT WHITE
+#define COLOUR_SELECTED WHITE
+#define COLOUR_CHOSEN BLUE
+#define COLOUR_HEADING BLUE
+#define COLOUR_ARROW BLACK
+#define COLOUR_BATTERY BLACK
+#define COLOUR_BATTERY_LEFT BLACK
+#define COLOUR_FRAME_BAR WHITE
+#define COLOUR_LOADING_BAR RED
+#define COLOUR_COMPLETED_BAR GREEN
 #define introBackColor WHITE
 #define introTextColor BLACK
 #define transitionEffect BLACK
 
 #define BACKLIGHT_NO_INTERACTION_TIME \
   12000 // time to decrease backlight display if no user actions
-
-#define GPRS_TASK_PERIOD 1
-#define OTA_TASK_PERIOD 1
-#define SENSORS_TASK_PERIOD 1
-#define ROOM_SENSOR_UPDATE_PERIOD 500
-#define DIGITAL_CURRENT_SENSOR_PERIOD 5
-#define BUZZER_TASK_PERIOD 10
-#define UI_TASK_PERIOD 10
-#define SECURITY_TASK_PERIOD 1
-#define TIME_TRACK_TASK_PERIOD 100
-#define BACKLIGHT_TASK_PERIOD 100
-#define FAN_TASK_PERIOD 10
-#define LOOP_TASK_PERIOD 1000
-#define CALIBRATION_TASK_PERIOD 100
 
 #define BACKLIGHT_DELAY 2
 #define INIT_TFT_DELAY 300
@@ -556,7 +557,7 @@ void graphics(uint8_t UI_page, uint8_t UI_language, uint8_t UI_print_text,
 int graphicHeight(int position);
 int16_t drawFloat(float floatNumber, int16_t decimal, int16_t poX, int16_t poY,
                   int16_t size);
-void setTextColor(int16_t color);
+void setTextColor(int16_t colour);
 int16_t getBackgroundColor();
 
 void turnFans(bool mode);
@@ -582,8 +583,7 @@ void drawUnselectedTemperature(float temperatureToDraw,
                                float previousTemperatureDrawn);
 void drawHumidity(int UI_humidity, int UI_previousHumdity);
 int16_t drawRightString(char *string, int16_t dX, int16_t poY, int16_t size);
-void drawStartMessage(bool UI_enableSet, int UI_menu_rows,
-                      char *UI_helpMessage);
+void drawStartMessage(bool UI_enableSet, int UI_menu_rows);
 void drawCentreNumber(int n, int x, int i);
 void drawRightNumber(int n, int x, int i);
 void drawBack();
@@ -602,7 +602,7 @@ void clearDisplayedAlarm(byte alarm);
 void clearAlarmPendingToClear(byte alarm);
 char *alarmIDtoString(byte alarmID);
 
-void checkSetMessage(int UI_page);
+void checkSetMessage(int UI_page,int UI_menu_rows);
 
 bool updateRoomSensor();
 bool updateAmbientSensor();
@@ -626,6 +626,7 @@ void saveCalibrationToEEPROM();
 int getYpos(int UI_menu_rows, byte row);
 bool back_mode();
 void setSensorsGraphicPosition(int UI_page);
+void updateDisplayHeader();
 
 void basicHumidityControl();
 void initRoomSensor();

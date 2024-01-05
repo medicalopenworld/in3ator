@@ -98,14 +98,14 @@ extern float temperaturePercentage, temperatureAtStart;
 extern float humidityPercentage, humidityAtStart;
 extern int barWidth, barHeight, tempBarPosX, tempBarPosY, humBarPosX,
     humBarPosY;
-extern int screenTextColor, screenTextBackgroundColor;
+extern int screenTextColor, screenTextBackgroundColour;
 
 // User Interface display variables
 extern bool autoLock; // setting that enables backlight switch OFF after a
                       // given time of no user actions
 extern long
     lastbacklightHandler; // last time there was a encoder movement or pulse
-extern long sensorsUpdatePeriod;
+
 
 extern bool selected;
 extern char cstring[128];
@@ -219,7 +219,7 @@ void UI_actuatorsProgress()
   menu_rows = numWords;
   graphics(page, in3.language, print_text, menu_rows, false, false);
   drawHeading(page, in3.serialNumber);
-  setTextColor(COLOR_MENU_TEXT);
+  setTextColor(COLOUR_MENU_TEXT);
   setSensorsGraphicPosition(page);
   drawActuatorsSeparators();
 
@@ -317,7 +317,7 @@ void UI_actuatorsProgress()
   }
   drawCentreString(textToWrite, tft.width() / 2,
                    humBarPosY - 4 * letter_height / 3, textFontSize);
-  setTextColor(COLOR_WARNING_TEXT);
+  setTextColor(COLOUR_WARNING_TEXT);
   drawStop();
   state_blink = true;
   while (!GPIORead(ENC_SWITCH))
@@ -361,6 +361,7 @@ void UI_actuatorsProgress()
       exitActuation = back_mode();
     }
     blinkGoBackMessage();
+    updateDisplayHeader();
   }
   stopActuation();
 }

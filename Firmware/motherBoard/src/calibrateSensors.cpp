@@ -98,14 +98,13 @@ extern float temperaturePercentage, temperatureAtStart;
 extern float humidityPercentage, humidityAtStart;
 extern int barWidth, barHeight, tempBarPosX, tempBarPosY, humBarPosX,
     humBarPosY;
-extern int screenTextColor, screenTextBackgroundColor;
+extern int screenTextColor, screenTextBackgroundColour;
 
 // User Interface display variables
 extern bool autoLock; // setting that enables backlight switch OFF after a
                       // given time of no user actions
 extern long
     lastbacklightHandler; // last time there was a encoder movement or pulse
-extern long sensorsUpdatePeriod;
 
 extern bool selected;
 extern char cstring[128];
@@ -197,7 +196,7 @@ void autoCalibration()
   page = AUTO_CALIBRATION_PAGE;
   print_text = true;
   tft.setTextSize(1);
-  setTextColor(COLOR_MENU_TEXT);
+  setTextColor(COLOUR_MENU_TEXT);
   for (int i = false; i < numWords; i++)
   {
     pos_text[i] = LEFT_MARGIN;
@@ -234,7 +233,7 @@ void autoCalibration()
   autoCalibrationProcess = setupAutoCalibrationPoint;
   while (!exitCalibrationMenu)
   {
-    vTaskDelay(pdMS_TO_TICKS(CALIBRATION_TASK_PERIOD));
+    vTaskDelay(pdMS_TO_TICKS(CALIBRATION_TASK_PERIOD_MS));
     switch (autoCalibrationProcess)
     {
     case setupAutoCalibrationPoint:
@@ -330,7 +329,7 @@ void fineTuneCalibration()
   page = FINE_TUNE_CALIBRATION_PAGE;
   print_text = true;
   tft.setTextSize(1);
-  setTextColor(COLOR_MENU_TEXT);
+  setTextColor(COLOUR_MENU_TEXT);
   for (int i = false; i < numWords; i++)
   {
     pos_text[i] = LEFT_MARGIN;
@@ -344,7 +343,7 @@ void fineTuneCalibration()
   drawHeading(page, in3.serialNumber);
   bar_pos = true;
   ypos = graphicHeight(bar_pos - 1);
-  setTextColor(COLOR_MENU_TEXT);
+  setTextColor(COLOUR_MENU_TEXT);
   drawFloat(in3.temperature[SKIN_SENSOR], 1, valuePosition, ypos, textFontSize);
   while (!GPIORead(ENC_SWITCH))
   {
@@ -358,7 +357,7 @@ void firstPointCalibration()
   page = FIRST_POINT_CALIBRATION_PAGE;
   print_text = true;
   tft.setTextSize(1);
-  setTextColor(COLOR_MENU_TEXT);
+  setTextColor(COLOUR_MENU_TEXT);
   for (int i = false; i < numWords; i++)
   {
     pos_text[i] = LEFT_MARGIN;
@@ -392,7 +391,7 @@ void firstPointCalibration()
   drawHeading(page, in3.serialNumber);
   bar_pos = true;
   ypos = graphicHeight(bar_pos - 1);
-  setTextColor(COLOR_MENU_TEXT);
+  setTextColor(COLOUR_MENU_TEXT);
   drawFloat(in3.temperature[SKIN_SENSOR], 1, valuePosition, ypos, textFontSize);
   while (!GPIORead(ENC_SWITCH))
   {
@@ -406,7 +405,7 @@ void secondPointCalibration()
   page = SECOND_POINT_CALIBRATION_PAGE;
   print_text = true;
   tft.setTextSize(1);
-  setTextColor(COLOR_MENU_TEXT);
+  setTextColor(COLOUR_MENU_TEXT);
   for (int i = false; i < numWords; i++)
   {
     pos_text[i] = LEFT_MARGIN;
@@ -440,7 +439,7 @@ void secondPointCalibration()
   drawHeading(page, in3.serialNumber);
   bar_pos = true;
   ypos = graphicHeight(bar_pos - 1);
-  setTextColor(COLOR_MENU_TEXT);
+  setTextColor(COLOUR_MENU_TEXT);
   drawFloat(in3.temperature[SKIN_SENSOR], 1, valuePosition, ypos, textFontSize);
   while (!GPIORead(ENC_SWITCH))
   {

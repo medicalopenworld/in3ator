@@ -107,14 +107,13 @@ bool enableSet;
 float temperaturePercentage, temperatureAtStart;
 float humidityPercentage, humidityAtStart;
 int barWidth, barHeight, tempBarPosX, tempBarPosY, humBarPosX, humBarPosY;
-int screenTextColor, screenTextBackgroundColor;
+int screenTextColor, screenTextBackgroundColour;
 
 // User Interface display variables
 bool goToSettings = false;
 bool autoLock;             // setting that enables backlight switch OFF after a given time
                            // of no user actions
 long lastbacklightHandler; // last time there was a encoder movement or pulse
-long sensorsUpdatePeriod = 1000;
 
 bool selected;
 char cstring[128];
@@ -151,7 +150,7 @@ void GPRS_Task(void *pvParameters)
     {
       GPRS_Handler();
     }
-    vTaskDelay(pdMS_TO_TICKS(GPRS_TASK_PERIOD));
+    vTaskDelay(pdMS_TO_TICKS(GPRS_TASK_PERIOD_MS));
   }
 }
 
@@ -160,7 +159,7 @@ void Backlight_Task(void *pvParameters)
   for (;;)
   {
     backlightHandler();
-    vTaskDelay(pdMS_TO_TICKS(BACKLIGHT_TASK_PERIOD));
+    vTaskDelay(pdMS_TO_TICKS(BACKLIGHT_TASK_PERIOD_MS));
   }
 }
 
@@ -170,18 +169,18 @@ void sensors_Task(void *pvParameters)
   {
     fanSpeedHandler();
     measureNTCTemperature();
-    if (millis() - lastRoomSensorUpdate > ROOM_SENSOR_UPDATE_PERIOD)
+    if (millis() - lastRoomSensorUpdate > ROOM_SENSOR_UPDATE_PERIOD_MS)
     {
       updateRoomSensor();
       updateAmbientSensor();
       lastRoomSensorUpdate = millis();
     }
-    if (millis() - lastCurrentSensorUpdate > DIGITAL_CURRENT_SENSOR_PERIOD)
+    if (millis() - lastCurrentSensorUpdate > DIGITAL_CURRENT_SENSOR_PERIOD_MS)
     {
       powerMonitor();
       lastCurrentSensorUpdate = millis();
     }
-    vTaskDelay(pdMS_TO_TICKS(SENSORS_TASK_PERIOD));
+    vTaskDelay(pdMS_TO_TICKS(SENSORS_TASK_PERIOD_MS));
   }
 }
 
@@ -191,7 +190,7 @@ void OTA_WIFI_Task(void *pvParameters)
   for (;;)
   {
     WifiOTAHandler();
-    vTaskDelay(pdMS_TO_TICKS(OTA_TASK_PERIOD));
+    vTaskDelay(pdMS_TO_TICKS(OTA_TASK_PERIOD_MS));
   }
 }
 
@@ -200,7 +199,7 @@ void buzzer_Task(void *pvParameters)
   for (;;)
   {
     buzzerHandler();
-    vTaskDelay(pdMS_TO_TICKS(BUZZER_TASK_PERIOD));
+    vTaskDelay(pdMS_TO_TICKS(BUZZER_TASK_PERIOD_MS));
   }
 }
 
@@ -212,7 +211,7 @@ void security_Task(void *pvParameters)
     {
       securityCheck();
     }
-    vTaskDelay(pdMS_TO_TICKS(SECURITY_TASK_PERIOD));
+    vTaskDelay(pdMS_TO_TICKS(SECURITY_TASK_PERIOD_MS));
   }
 }
 
@@ -229,7 +228,7 @@ void UI_Task(void *pvParameters)
   for (;;)
   {
     userInterfaceHandler(page);
-    vTaskDelay(pdMS_TO_TICKS(UI_TASK_PERIOD));
+    vTaskDelay(pdMS_TO_TICKS(UI_TASK_PERIOD_MS));
   }
 }
 
@@ -238,7 +237,7 @@ void TimeTrack_Task(void *pvParameters)
   for (;;)
   {
     timeTrackHandler();
-    vTaskDelay(pdMS_TO_TICKS(TIME_TRACK_TASK_PERIOD));
+    vTaskDelay(pdMS_TO_TICKS(TIME_TRACK_TASK_PERIOD_MS));
   }
 }
 
@@ -310,5 +309,5 @@ void loop()
 {
   watchdogReload();
   updateData();
-  vTaskDelay(pdMS_TO_TICKS(LOOP_TASK_PERIOD));
+  vTaskDelay(pdMS_TO_TICKS(LOOP_TASK_PERIOD_MS));
 }
