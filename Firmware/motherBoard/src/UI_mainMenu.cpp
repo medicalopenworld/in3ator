@@ -201,7 +201,7 @@ void UI_mainMenu() {
   graphics(page, in3.language, print_text, menu_rows, in3.controlMode,
            in3.phototherapy);
   drawHeading(page, in3.serialNumber);
-  updateDisplaySensors();
+  updateDisplayHeader();
   in3.temperatureControl = false;
   in3.humidityControl = false;
   enableSet = false;

@@ -243,6 +243,7 @@ void TimeTrack_Task(void *pvParameters)
 
 void setup()
 {
+
   sharedSensorQueue = xQueueCreate(SENSOR_TEMP_QTY, sizeof(long));
   if (!GPIORead(ENC_SWITCH))
   {
@@ -303,6 +304,9 @@ void setup()
     ;
   ;
   logI("UI task successfully created!\n");
+  EEPROM.writeString(EEPROM_THINGSBOARD_TOKEN, "ckGEZct8wPuHEhfiFC23");
+  EEPROM.write(EEPROM_THINGSBOARD_PROVISIONED, true);
+  EEPROM.commit();
 }
 
 void loop()

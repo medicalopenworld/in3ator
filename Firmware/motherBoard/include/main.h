@@ -44,11 +44,11 @@
 #include <Espressif_MQTT_Client.h>
 #include <Arduino_MQTT_Client.h>
 
-#define LOG_GPRS false
-#define LOG_MODEM_DATA false
-#define LOG_INFORMATION false
-#define LOG_ERRORS false
-#define LOG_ALARMS false
+#define LOG_GPRS true
+#define LOG_MODEM_DATA true
+#define LOG_INFORMATION true
+#define LOG_ERRORS true
+#define LOG_ALARMS true
 
 #define WDT_TIMEOUT 45
 
@@ -63,6 +63,8 @@
 #define CORE_ID_FREERTOS 1
 
 #define HOLD_PRESS_TO_GO_TO_SETTINGS 0
+
+#define UI_MENU_OLD false
 
 #define BROWN_OUT_BATTERY_MODE 0
 #define BROWN_OUT_NORMAL_MODE 0

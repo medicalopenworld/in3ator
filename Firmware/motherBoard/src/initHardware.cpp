@@ -111,7 +111,6 @@ extern bool autoLock; // setting that enables backlight switch OFF after a
 extern long
     lastbacklightHandler; // last time there was a encoder movement or pulse
 
-
 extern bool selected;
 extern char cstring[128];
 extern char *textToWrite;
@@ -214,12 +213,16 @@ void initPWMGPIO()
             DEFAULT_PWM_RESOLUTION);
   ledcSetup(HEATER_PWM_CHANNEL, DEFAULT_PWM_FREQUENCY, DEFAULT_PWM_RESOLUTION);
   ledcSetup(BUZZER_PWM_CHANNEL, DEFAULT_PWM_FREQUENCY, DEFAULT_PWM_RESOLUTION);
+  ledcSetup(FAN_PWM_CHANNEL, LOW_PWM_FREQUENCY, DEFAULT_PWM_RESOLUTION);
   ledcAttachPin(SCREENBACKLIGHT, SCREENBACKLIGHT_PWM_CHANNEL);
   ledcAttachPin(HEATER, HEATER_PWM_CHANNEL);
   ledcAttachPin(BUZZER, BUZZER_PWM_CHANNEL);
+  ledcAttachPin(FAN, FAN_PWM_CHANNEL);
   ledcWrite(SCREENBACKLIGHT_PWM_CHANNEL, false);
   ledcWrite(HEATER_PWM_CHANNEL, false);
   ledcWrite(BUZZER_PWM_CHANNEL, false);
+  ledcWrite(FAN_PWM_CHANNEL, false);
+
 #if (HW_NUM == 8)
   ledcSetup(HUMIDIFIER_PWM_CHANNEL, HUMIDIFIER_PWM_FREQUENCY,
             DEFAULT_PWM_RESOLUTION);
@@ -272,8 +275,8 @@ void initGPIO()
   initPin(ACTUATORS_EN, OUTPUT);
   GPIOWrite(ACTUATORS_EN, HIGH);
   GPIOWrite(PHOTOTHERAPY, LOW);
-  GPIOWrite(FAN, LOW);
-  // initPin(ON_OFF_SWITCH, INPUT);
+  // GPIOWrite(FAN, LOW);
+  //  initPin(ON_OFF_SWITCH, INPUT);
   initPWMGPIO();
   logI("[HW] -> GPIOs initilialized");
 }
@@ -652,12 +655,16 @@ bool actuatorsTest()
   }
   vTaskDelay(pdMS_TO_TICKS(CURRENT_STABILIZE_TIME_DEFAULT));
   offsetCurrent = measureMeanConsumption(MAIN, FAN_SHUNT_CHANNEL);
-  GPIOWrite(FAN, HIGH);
+  // GPIOWrite(FAN, HIGH);
+  ledcWrite(FAN_PWM_CHANNEL, PWM_MAX_VALUE);
+
   vTaskDelay(pdMS_TO_TICKS(CURRENT_STABILIZE_TIME_DEFAULT));
   testCurrent = measureMeanConsumption(MAIN, FAN_SHUNT_CHANNEL) - offsetCurrent;
   logI("[HW] -> FAN consumption: " + String(testCurrent) + " Amps");
   in3.fan_current_test = testCurrent;
-  GPIOWrite(FAN, LOW);
+  // GPIOWrite(FAN, LOW);
+  ledcWrite(FAN_PWM_CHANNEL, false);
+
   if (testCurrent < FAN_CONSUMPTION_MIN)
   {
     addErrorToVar(HW_error, FAN_CONSUMPTION_MIN_ERROR);
@@ -771,7 +778,8 @@ void initHardware(bool printOutputTest)
     logE("[HW] -> PRINTING ERROR TO USER");
     drawHardwareErrorMessage(HW_error, in3.HW_critical_error,
                              in3.calibrationError);
-    while (GPIORead(ENC_SWITCH));
+    while (GPIORead(ENC_SWITCH))
+      ;
   }
   buzzerTone(2, buzzerStandbyToneDuration, buzzerStandbyTone);
   watchdogInit(WDT_TIMEOUT);

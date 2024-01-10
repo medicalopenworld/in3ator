@@ -106,7 +106,6 @@ extern bool autoLock; // setting that enables backlight switch OFF after a
 extern long
     lastbacklightHandler; // last time there was a encoder movement or pulse
 
-
 extern bool selected;
 extern char cstring[128];
 extern char *textToWrite;
@@ -204,25 +203,19 @@ void stopActuation()
 void turnFans(bool mode)
 {
   GPIOWrite(ACTUATORS_EN, mode || in3.phototherapy);
-  GPIOWrite(FAN, in3.phototherapy || mode && ongoingCriticalAlarm());
+
+  // GPIOWrite(FAN, in3.phototherapy || mode && ongoingCriticalAlarm());
+  ledcWrite(FAN_PWM_CHANNEL, (in3.phototherapy || mode && ongoingCriticalAlarm()) * FAN_PWM);
 }
 
-void UI_actuatorsProgress()
+void UIDrawProgressPage()
 {
-  bool exitActuation = false;
-  alarmTimerStart();
-  byte numWords = false;
-  temperaturePercentage = false;
-  page = ACTUATORS_PROGRESS_PAGE;
   tft.setTextSize(1);
-  print_text = false;
-  menu_rows = numWords;
-  graphics(page, in3.language, print_text, menu_rows, false, false);
+  graphics(page, in3.language, false, false, false, false);
   drawHeading(page, in3.serialNumber);
   setTextColor(COLOUR_MENU_TEXT);
   setSensorsGraphicPosition(page);
   drawActuatorsSeparators();
-
   if (in3.controlMode)
   {
     switch (in3.language)
@@ -319,6 +312,7 @@ void UI_actuatorsProgress()
                    humBarPosY - 4 * letter_height / 3, textFontSize);
   setTextColor(COLOUR_WARNING_TEXT);
   drawStop();
+  setTextColor(COLOUR_MENU_TEXT);
   state_blink = true;
   while (!GPIORead(ENC_SWITCH))
   {
@@ -332,7 +326,6 @@ void UI_actuatorsProgress()
   {
     startPID(humidityPID);
   }
-  updateDisplaySensors();
   if (in3.temperatureControl)
   {
     printLoadingTemperatureBar(in3.desiredControlTemperature);
@@ -342,6 +335,15 @@ void UI_actuatorsProgress()
   {
     printLoadingHumidityBar(in3.desiredControlHumidity);
   }
+}
+
+void UI_actuatorsProgress()
+{
+  bool exitActuation = false;
+  alarmTimerStart();
+  temperaturePercentage = false;
+  page = ACTUATORS_PROGRESS_PAGE;
+  UIDrawProgressPage();
   humidityAtStart = in3.humidity[ROOM_DIGITAL_HUM_SENSOR];
   turnFans(ON);
   while (!exitActuation)
