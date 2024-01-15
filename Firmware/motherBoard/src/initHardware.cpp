@@ -257,6 +257,7 @@ void initGPIO()
   GPIOWrite(GPRS_EN, HIGH);
   initPin(HUMIDIFIER_CTL, OUTPUT);
   GPIOWrite(HUMIDIFIER_CTL, LOW);
+  GPIOWrite(TFT_CS_EXP, LOW);
 #elif (HW_NUM == 8)
   initPin(HUMIDIFIER_PWM, OUTPUT);
 #endif
@@ -464,12 +465,13 @@ void initSenseCircuit() { standByCurrentTest(); }
 void initializeTFT()
 {
   // tft.setController(DISPLAY_CONTROLLER_IC);
-  GPIOWrite(TFT_CS_EXP, LOW);
   // tft.begin(DISPLAY_SPI_CLK);
   tft.init();
+  #if (HW_NUM == 6)
   GPIOWrite(TFT_CS_EXP, HIGH);
   delay(5);
   GPIOWrite(TFT_CS_EXP, LOW);
+  #endif
   tft.setRotation(DISPLAY_DEFAULT_ROTATION);
   tft.fillScreen(TFT_BLACK);
   tft_width = tft.width();

@@ -23,8 +23,8 @@
 
 */
 
-#define HW_NUM 6
-#define HW_REVISION 'C'
+#define HW_NUM 13
+#define HW_REVISION 'A'
 #define HWversion String(HW_NUM) + "." + String(HW_REVISION)
 #define FWversion "13.1"
 #define WIFI_NAME "In3_v" + String(FWversion) + "/" + String(HWversion)
