@@ -284,10 +284,10 @@ void GPRSStablishConnection()
     GPRS.processTime = millis();
     GPRS.packetSentenceTime = millis();
     GPRS.process++;
+    GPRS.APN = APN_TM;
     break;
   case 1:
     logCon("[GPRS] -> Connecting...");
-    GPRS.APN = APN_TM;
     if (modem.gprsConnect(GPRS.APN.c_str(), GPRS_USER, GPRS_PASS))
     {
       logCon("[GPRS] -> Attached");
@@ -296,16 +296,13 @@ void GPRSStablishConnection()
     else
     {
       logCon("[GPRS] -> Attach FAIL, retrying with different APN...");
-      GPRS.APN = APN_TRUPHONE;
-      if (modem.gprsConnect(GPRS.APN.c_str(), GPRS_USER, GPRS_PASS))
+      if (GPRS.APN == APN_TM)
       {
-        logCon("[GPRS] -> Attached");
-        GPRS.process++;
-        GPRS.processTime = millis();
+        GPRS.APN = APN_TRUPHONE;
       }
       else
       {
-        logCon("[GPRS] -> Attach FAIL, retrying...");
+        GPRS.APN = APN_TM;
       }
     }
     break;

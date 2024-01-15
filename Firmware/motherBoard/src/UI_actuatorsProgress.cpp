@@ -28,7 +28,7 @@
 
 extern TwoWire *wire;
 extern MAM_in3ator_Humidifier in3_hum;
-extern Adafruit_ILI9341 tft;
+extern TFT_eSPI tft;
 extern SHTC3 mySHTC3; // Declare an instance of the SHTC3 class
 extern RotaryEncoder encoder;
 
@@ -129,6 +129,8 @@ extern double humidityControlPIDOutput;
 extern int humidifierTimeCycle;
 extern unsigned long windowStartTime;
 
+extern int tft_width, tft_height;
+
 extern PID airControlPID;
 extern PID skinControlPID;
 extern PID humidityControlPID;
@@ -203,9 +205,12 @@ void stopActuation()
 void turnFans(bool mode)
 {
   GPIOWrite(ACTUATORS_EN, mode || in3.phototherapy);
-
-  // GPIOWrite(FAN, in3.phototherapy || mode && ongoingCriticalAlarm());
+#if (HW_NUM >= 8)
   ledcWrite(FAN_PWM_CHANNEL, (in3.phototherapy || mode && ongoingCriticalAlarm()) * FAN_PWM);
+#else
+  GPIOWrite(FAN, in3.phototherapy || mode && ongoingCriticalAlarm());
+#endif
+
 }
 
 void UIDrawProgressPage()
@@ -252,7 +257,7 @@ void UIDrawProgressPage()
       break;
     }
   }
-  drawCentreString(textToWrite, tft.width() / 2,
+  drawCentreString(textToWrite, tft_width / 2,
                    tempBarPosY - 4 * letter_height / 3, textFontSize);
   if (!in3.controlMode)
   {
@@ -290,8 +295,8 @@ void UIDrawProgressPage()
       break;
     }
   }
-  drawCentreString(textToWrite, tft.width() / 2,
-                   tft.height() / 2 - letter_height, textFontSize);
+  drawCentreString(textToWrite, tft_width / 2,
+                   tft_height / 2 - letter_height, textFontSize);
 
   switch (in3.language)
   {
@@ -308,7 +313,7 @@ void UIDrawProgressPage()
     textToWrite = convertStringToChar(cstring, "Umidade");
     break;
   }
-  drawCentreString(textToWrite, tft.width() / 2,
+  drawCentreString(textToWrite, tft_width / 2,
                    humBarPosY - 4 * letter_height / 3, textFontSize);
   setTextColor(COLOUR_WARNING_TEXT);
   drawStop();

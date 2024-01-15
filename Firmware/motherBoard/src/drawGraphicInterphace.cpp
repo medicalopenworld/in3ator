@@ -28,7 +28,7 @@
 
 extern TwoWire *wire;
 extern MAM_in3ator_Humidifier in3_hum;
-extern Adafruit_ILI9341 tft;
+extern TFT_eSPI tft;
 extern SHTC3 mySHTC3; // Declare an instance of the SHTC3 class
 extern RotaryEncoder encoder;
 
@@ -132,6 +132,8 @@ extern double humidityControlPIDOutput;
 extern int humidifierTimeCycle;
 extern unsigned long windowStartTime;
 
+extern int tft_width, tft_height;
+
 extern PID airControlPID;
 extern PID skinControlPID;
 extern PID humidityControlPID;
@@ -149,24 +151,24 @@ void setSensorsGraphicPosition(int UI_page)
   switch (UI_page)
   {
   case MAIN_MENU_PAGE:
-    humidityX = tft.width() - 50;
+    humidityX = tft_width - 50;
     humidityY = graphicHeight(HUMIDITY_UI_ROW);
-    temperatureX = tft.width() - 79;
+    temperatureX = tft_width - 79;
     temperatureY = graphicHeight(TEMPERATURE_UI_ROW);
     break;
   case ACTUATORS_PROGRESS_PAGE:
-    barWidth = tft.width() / 4 * 2;
+    barWidth = tft_width / 4 * 2;
     barHeight = 20;
-    tempBarPosX = tft.width() / 2;
-    tempBarPosY = tft.height() / 3 - 11;
+    tempBarPosX = tft_width / 2;
+    tempBarPosY = tft_height / 3 - 11;
     humBarPosX = tempBarPosX;
-    humBarPosY = tft.height() * 3 / 4 + 15;
+    humBarPosY = tft_height * 3 / 4 + 15;
     temperatureX = letter_width;
     temperatureY = tempBarPosY - barHeight / 2;
     humidityX = 4 * letter_width;
     humidityY = humBarPosY - barHeight / 2;
-    separatorTopYPos = tft.height() / 3 + 5;
-    separatorMidYPos = tft.height() * 2 / 3 - 10;
+    separatorTopYPos = tft_height / 3 + 5;
+    separatorMidYPos = tft_height * 2 / 3 - 10;
     break;
   }
 }
@@ -188,10 +190,10 @@ int16_t drawString(char *string, int16_t poX, int16_t poY, int16_t size)
 
 void drawHeading(int UI_page, int UI_serialNumber)
 {
-  tft.fillRect(0, 0, tft.width(), height_heading, COLOUR_HEADING);
+  tft.fillRect(0, 0, tft_width, TFT_HEIGHT_HEADING, COLOUR_HEADING);
   if (UKRAINE_MODE)
   {
-    tft.fillRect(0, height_heading / 2, tft.width(), height_heading / 2,
+    tft.fillRect(0, TFT_HEIGHT_HEADING / 2, tft_width, TFT_HEIGHT_HEADING / 2,
                  YELLOW);
   }
   if (UI_page != MAIN_MENU_PAGE)
@@ -200,12 +202,12 @@ void drawHeading(int UI_page, int UI_serialNumber)
   }
   setTextColor(COLOUR_MENU);
   drawCentreString(convertStringToChar(cstring, "in3_"),
-                   tft.width() / 2 - 2 * letter_width - 10, headint_text_height,
+                   tft_width / 2 - 2 * letter_width - 10, headint_text_height,
                    textFontSize);
-  drawCentreNumber(UI_serialNumber, tft.width() / 2, headint_text_height);
+  drawCentreNumber(UI_serialNumber, tft_width / 2, headint_text_height);
   drawCentreString(
       convertStringToChar(cstring, String(FWversion) + "/" + HWversion),
-      tft.width() - 4 * letter_width, headint_text_height, textFontSize);
+      tft_width - 4 * letter_width, headint_text_height, textFontSize);
 }
 
 void updateHeadingEvent(byte Event, bool event_status)
@@ -260,9 +262,9 @@ void eraseBar(int UI_menu_rows, int bar_pos)
   {
     tft.fillRect(
         0,
-        (tft.height() - height_heading) * (bar_pos - 1) / UI_menu_rows +
-            height_heading,
-        width_select, (tft.height() - height_heading) / UI_menu_rows,
+        (tft_height - TFT_HEIGHT_HEADING) * (bar_pos - 1) / UI_menu_rows +
+            TFT_HEIGHT_HEADING,
+        width_select, (tft_height - TFT_HEIGHT_HEADING) / UI_menu_rows,
         COLOUR_BAR);
   }
 }
@@ -273,16 +275,16 @@ void updateBar(int UI_menu_rows, int bar_pos)
   {
     tft.fillRect(
         0,
-        (tft.height() - height_heading) * (bar_pos - 1) / UI_menu_rows +
-            height_heading,
-        width_select, (tft.height() - height_heading) / UI_menu_rows,
+        (tft_height - TFT_HEIGHT_HEADING) * (bar_pos - 1) / UI_menu_rows +
+            TFT_HEIGHT_HEADING,
+        width_select, (tft_height - TFT_HEIGHT_HEADING) / UI_menu_rows,
         COLOUR_SELECTED);
     for (int i = 2; i <= UI_menu_rows; i++)
     {
       tft.fillRect(0,
-                   (tft.height() - height_heading) * (i - 1) / UI_menu_rows +
-                       height_heading - 1,
-                   tft.height(), width_indentation, WHITE); // mejorable
+                   (tft_height - TFT_HEIGHT_HEADING) * (i - 1) / UI_menu_rows +
+                       TFT_HEIGHT_HEADING - 1,
+                   tft_height, TFT_SEPARATOR_HEIGHT, WHITE); // mejorable
     }
   }
 }
@@ -299,14 +301,14 @@ int16_t drawNumber(long long_num, int16_t poX, int16_t poY, int16_t size)
 
 void drawBack()
 {
-  tft.fillRect(0, 0, width_back, height_heading, COLOUR_HEADING);
-  tft.drawRect(0, 0, width_back, height_heading, BLACK);
-  tft.fillTriangle(arrow_height, height_heading / 2, width_back / 2,
-                   arrow_height, width_back / 2, height_heading - arrow_height,
+  tft.fillRect(0, 0, width_back, TFT_HEIGHT_HEADING, COLOUR_HEADING);
+  tft.drawRect(0, 0, width_back, TFT_HEIGHT_HEADING, BLACK);
+  tft.fillTriangle(arrow_height, TFT_HEIGHT_HEADING / 2, width_back / 2,
+                   arrow_height, width_back / 2, TFT_HEIGHT_HEADING - arrow_height,
                    COLOUR_ARROW);
-  tft.fillRect(width_back / 2, height_heading / 2 - arrow_tail,
+  tft.fillRect(width_back / 2, TFT_HEIGHT_HEADING / 2 - arrow_tail,
                width_back / 2 - arrow_height, arrow_tail, COLOUR_ARROW);
-  tft.fillRect(width_back / 2, height_heading / 2,
+  tft.fillRect(width_back / 2, TFT_HEIGHT_HEADING / 2,
                width_back / 2 - arrow_height, arrow_tail, COLOUR_ARROW);
 }
 
@@ -348,8 +350,8 @@ void drawIntroMessage()
   }
   for (int i = false; i < numWords; i++)
   {
-    drawCentreString(words[i], tft.width() / 2,
-                     tft.height() * (1 + i) / (2 + numWords), textFontSize);
+    drawCentreString(words[i], tft_width / 2,
+                     tft_height * (1 + i) / (2 + numWords), textFontSize);
   }
 }
 
@@ -357,7 +359,7 @@ void drawAlarmMessage(char *alertMessage)
 {
   setTextColor(COLOUR_WARNING_TEXT);
   drawCentreString(alertMessage,
-                   width_select + (tft.width() - width_select) / 2,
+                   width_select + (tft_width - width_select) / 2,
                    headint_text_height, textFontSize);
 }
 
@@ -412,7 +414,7 @@ void drawStop()
         convertStringToChar(cstring, "Pressione 2 segundos para sair");
     break;
   }
-  drawCentreString(textToWrite, tft.width() / 2, tft.height() - letter_height,
+  drawCentreString(textToWrite, tft_width / 2, tft_height - letter_height,
                    textFontSize);
 }
 
@@ -420,8 +422,8 @@ int graphicHeight(int position)
 {
   if (menu_rows)
   {
-    return ((tft.height() - height_heading) / (2 * menu_rows) +
-            position * (tft.height() - height_heading) / (menu_rows) +
+    return ((tft_height - TFT_HEIGHT_HEADING) / (2 * menu_rows) +
+            position * (tft_height - TFT_HEIGHT_HEADING) / (menu_rows) +
             letter_height);
   }
   return false;
@@ -441,10 +443,10 @@ void drawUnselectedTemperature(float temperatureToDraw,
                                float previousTemperatureDrawn)
 {
   tft.setTextColor(COLOUR_MENU);
-  drawFloat(previousTemperatureDrawn, 1, tft.width() / 2 - 20,
-            tft.height() / 2 + 10, textFontSize);
+  drawFloat(previousTemperatureDrawn, 1, tft_width / 2 - 20,
+            tft_height / 2 + 10, textFontSize);
   tft.setTextColor(COLOUR_MENU_TEXT);
-  drawFloat(temperatureToDraw, 1, tft.width() / 2 - 20, tft.height() / 2 + 10,
+  drawFloat(temperatureToDraw, 1, tft_width / 2 - 20, tft_height / 2 + 10,
             textFontSize);
 }
 
@@ -477,39 +479,53 @@ void drawHelpMessage(byte UI_language)
 
 void drawStartMessage(bool UI_enableSet, int UI_menu_rows)
 {
+  uint16_t colour;
+  if (blinkSetMessageState)
+  {
+    setTextColor(COLOUR_WARNING_TEXT);
+    colour = COLOUR_WARNING_TEXT;
+  }
+  else
+  {
+    setTextColor(COLOUR_MENU);
+    colour = COLOUR_MENU;
+  }
+  screenTextBackgroundColour = colour;
+  tft.fillRect(width_select, (tft_height) - (tft_height - TFT_HEIGHT_HEADING - (UI_menu_rows - 1) * TFT_SEPARATOR_HEIGHT) / UI_menu_rows, tft_width - width_select, (tft_height - TFT_HEIGHT_HEADING - (UI_menu_rows - 1) * TFT_SEPARATOR_HEIGHT) / UI_menu_rows, colour);
   if (UI_enableSet)
   {
     setTextColor(COLOUR_MENU_TEXT);
     switch (in3.language)
     {
     case SPANISH:
-      words[START_UI_ROW] = convertStringToChar(cstring, "Empezar");
+      words[START_UI_ROW] = convertStringToChar(cstring, "EMPEZAR");
       break;
     case ENGLISH:
-      words[START_UI_ROW] = convertStringToChar(cstring, "Start");
+      words[START_UI_ROW] = convertStringToChar(cstring, "START");
       break;
     case FRENCH:
-      words[START_UI_ROW] = convertStringToChar(cstring, "Debut");
+      words[START_UI_ROW] = convertStringToChar(cstring, "DEBUT");
       break;
     case PORTUGUESE:
-      words[START_UI_ROW] = convertStringToChar(cstring, "Comecar");
+      words[START_UI_ROW] = convertStringToChar(cstring, "COMECAR");
       break;
     }
     drawCentreString(words[START_UI_ROW],
-                     width_select + (tft.width() - width_select) / 2,
+                     width_select + (tft_width - width_select) / 2,
                      getYpos(UI_menu_rows, START_UI_ROW), textFontSize);
   }
+  screenTextBackgroundColour = COLOUR_MENU;
 }
 
 void drawActuatorsSeparators()
 {
-  tft.fillRect(0, separatorTopYPos, tft.width(), barThickness, COLOUR_FRAME_BAR);
-  tft.fillRect(0, separatorMidYPos, tft.width(), barThickness, COLOUR_FRAME_BAR);
+  tft.fillRect(0, separatorTopYPos, tft_width, barThickness, COLOUR_FRAME_BAR);
+  tft.fillRect(0, separatorMidYPos, tft_width, barThickness, COLOUR_FRAME_BAR);
 }
 
 void printLoadingTemperatureBar(double UI_desiredControlTemperature)
 {
-  drawFloat(UI_desiredControlTemperature, 1, tft.width() - 5 * letter_width,
+  drawFloat(UI_desiredControlTemperature, 1, tft_width - 5 * letter_width,
             temperatureY, textFontSize);
   for (int i = true; i <= barThickness; i++)
   {
@@ -746,7 +762,7 @@ void loadlogo()
   if (UKRAINE_MODE)
   {
     tft.fillScreen(BLUE);
-    tft.fillRect(0, tft.height() / 2, tft.width(), tft.height() / 2, YELLOW);
+    tft.fillRect(0, tft_height / 2, tft_width, tft_height / 2, YELLOW);
     setTextColor(WHITE);
   }
   else
@@ -767,7 +783,7 @@ void drawHardwareErrorMessage(long error, bool criticalError,
   tft.fillScreen(introBackColor);
   tft.setTextColor(
       introTextColor); // use tft. because tft.print is configured by it
-  tft.setCursor(tft.width() / 4 - hexDigits(error) * 16, tft.height() / 10);
+  tft.setCursor(tft_width / 4 - hexDigits(error) * 16, tft_height / 10);
   tft.setTextSize(3);
   if (error || criticalError || calibrationError)
   {
@@ -840,20 +856,20 @@ void graphics(uint8_t UI_page, uint8_t UI_language, uint8_t UI_print_text,
   setTextColor(COLOUR_MENU_TEXT);
   if (!UI_page)
   {
-    tft.fillRect(width_select, height_heading, tft.width() - width_select,
-                 tft.height() - height_heading, COLOUR_MENU);
+    tft.fillRect(width_select, TFT_HEIGHT_HEADING, tft_width - width_select,
+                 tft_height - TFT_HEIGHT_HEADING, COLOUR_MENU);
   }
   else
   {
-    tft.fillRect(0, height_heading, tft.width(), tft.height() - height_heading,
+    tft.fillRect(0, TFT_HEIGHT_HEADING, tft_width, tft_height - TFT_HEIGHT_HEADING,
                  COLOUR_MENU);
   }
   if (UI_print_text)
   {
     if (UI_menu_rows)
     {
-      tft.fillRect(0, height_heading, width_select,
-                   (tft.height() - height_heading) / UI_menu_rows,
+      tft.fillRect(0, TFT_HEIGHT_HEADING, width_select,
+                   (tft_height - TFT_HEIGHT_HEADING) / UI_menu_rows,
                    COLOUR_SELECTED);
     }
   }
@@ -862,17 +878,17 @@ void graphics(uint8_t UI_page, uint8_t UI_language, uint8_t UI_print_text,
     if (UI_menu_rows)
     {
       tft.fillRect(0,
-                   (tft.height() - height_heading) * (i - 1) / UI_menu_rows +
-                       height_heading,
-                   width_select, (tft.height() - height_heading) / UI_menu_rows,
+                   (tft_height - TFT_HEIGHT_HEADING) * (i - 1) / UI_menu_rows +
+                       TFT_HEIGHT_HEADING,
+                   width_select, (tft_height - TFT_HEIGHT_HEADING) / UI_menu_rows,
                    COLOUR_BAR);
       tft.fillRect(0,
-                   (tft.height() - height_heading) * (i - 1) / UI_menu_rows +
-                       height_heading - 1,
-                   tft.width(), width_indentation, WHITE);
+                   (tft_height - TFT_HEIGHT_HEADING) * (i - 1) / UI_menu_rows +
+                       TFT_HEIGHT_HEADING - 1,
+                   tft_width, TFT_SEPARATOR_HEIGHT, WHITE);
     }
   }
-  tft.drawRect(0, tft.height() - 1, width_select, tft.height() - 1, COLOUR_MENU);
+  tft.drawRect(0, tft_height - 1, width_select, tft_height - 1, COLOUR_MENU);
   if (UI_print_text)
   {
     tft.setTextSize(1);
@@ -886,7 +902,7 @@ void graphics(uint8_t UI_page, uint8_t UI_language, uint8_t UI_print_text,
       else if (pos_text[i])
       {
         drawCentreString(words[i],
-                         width_select + (tft.width() - width_select) / 2, ypos,
+                         width_select + (tft_width - width_select) / 2, ypos,
                          textFontSize);
       }
       switch (UI_page)
@@ -996,7 +1012,7 @@ void graphics(uint8_t UI_page, uint8_t UI_language, uint8_t UI_print_text,
                                           String(WiFi.localIP()[1]) + "." +
                                           String(WiFi.localIP()[2]) + "." +
                                           String(WiFi.localIP()[3])),
-                  tft.width() / 2, ypos, textFontSize);
+                  tft_width / 2, ypos, textFontSize);
             }
           }
           else

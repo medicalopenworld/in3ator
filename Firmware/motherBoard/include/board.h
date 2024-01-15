@@ -23,8 +23,8 @@
 
 */
 
-#define HW_NUM 13
-#define HW_REVISION 'A'
+#define HW_NUM 6
+#define HW_REVISION 'C'
 #define HWversion String(HW_NUM) + "." + String(HW_REVISION)
 #define FWversion "13.1"
 #define WIFI_NAME "In3_v" + String(FWversion) + "/" + String(HWversion)
@@ -78,7 +78,7 @@
 #define BABY_NTC_PIN 39
 #define AFE44XX_PWDN_PIN NULL
 
-#define DISPLAY_CONTROLLER_IC ST7789V_CONTROLLER
+// #define DISPLAY_CONTROLLER_IC ST7789V_CONTROLLER
 
 #elif (HW_NUM == 8)
 #define TFT_DC 0
@@ -104,6 +104,10 @@
 #else
 // Hardware
 // PINOUT
+
+
+
+#define AFE44XX_CS 2
 #define TFT_DC 4
 #define BUZZER 5
 #define TFT_CS 15  // fake GPIO

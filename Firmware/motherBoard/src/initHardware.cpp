@@ -28,7 +28,7 @@
 
 extern TwoWire *wire;
 extern MAM_in3ator_Humidifier in3_hum;
-extern Adafruit_ILI9341 tft;
+extern TFT_eSPI tft;
 extern SHTC3 mySHTC3; // Declare an instance of the SHTC3 class
 extern Adafruit_SHT4x sht4;
 extern RotaryEncoder encoder;
@@ -194,16 +194,17 @@ extern int ScreenBacklightMode;
 
 long HW_error = false;
 long lastTFTCheck;
+int tft_width, tft_height;
 
 extern in3ator_parameters in3;
-TCA9555 TCA(0x20);
+TCA9535 TCA(0x20);
 
-void initDebug()
+void initI2C()
 {
-  Serial.begin(115200);
-  vTaskDelay(pdMS_TO_TICKS(CURRENT_STABILIZE_TIME_DEFAULT));
-  logI("in3ator debug uart, version v" + String(FWversion) + "/" +
-       String(HWversion) + ", SN: " + String(in3.serialNumber));
+  logI("[HW] -> Initializing i2c port");
+  Wire.begin(I2C_SDA, I2C_SCL);
+  wire = &Wire;
+  logI("[HW] -> I2c port initialized");
 }
 
 void initPWMGPIO()
@@ -213,15 +214,17 @@ void initPWMGPIO()
             DEFAULT_PWM_RESOLUTION);
   ledcSetup(HEATER_PWM_CHANNEL, DEFAULT_PWM_FREQUENCY, DEFAULT_PWM_RESOLUTION);
   ledcSetup(BUZZER_PWM_CHANNEL, DEFAULT_PWM_FREQUENCY, DEFAULT_PWM_RESOLUTION);
-  ledcSetup(FAN_PWM_CHANNEL, LOW_PWM_FREQUENCY, DEFAULT_PWM_RESOLUTION);
   ledcAttachPin(SCREENBACKLIGHT, SCREENBACKLIGHT_PWM_CHANNEL);
   ledcAttachPin(HEATER, HEATER_PWM_CHANNEL);
   ledcAttachPin(BUZZER, BUZZER_PWM_CHANNEL);
-  ledcAttachPin(FAN, FAN_PWM_CHANNEL);
   ledcWrite(SCREENBACKLIGHT_PWM_CHANNEL, false);
   ledcWrite(HEATER_PWM_CHANNEL, false);
   ledcWrite(BUZZER_PWM_CHANNEL, false);
+#if (HW_NUM >= 6)
+  ledcSetup(FAN_PWM_CHANNEL, LOW_PWM_FREQUENCY, DEFAULT_PWM_RESOLUTION);
+  ledcAttachPin(FAN, FAN_PWM_CHANNEL);
   ledcWrite(FAN_PWM_CHANNEL, false);
+#endif
 
 #if (HW_NUM == 8)
   ledcSetup(HUMIDIFIER_PWM_CHANNEL, HUMIDIFIER_PWM_FREQUENCY,
@@ -234,6 +237,7 @@ void initPWMGPIO()
 
 void initGPIO()
 {
+  initI2C();
   logI("[HW] -> Initializing GPIOs");
 #if (HW_NUM == 6)
   TCA.begin();
@@ -366,14 +370,6 @@ void initCurrentSensor(bool currentSensor)
 
 void initPowerAlarm() {}
 
-void initI2C()
-{
-  logI("[HW] -> Initializing i2c port");
-  Wire.begin(I2C_SDA, I2C_SCL);
-  wire = &Wire;
-  logI("[HW] -> I2c port initialized");
-}
-
 void addErrorToVar(long &errorVar, int error) { errorVar |= (1 << error); }
 
 void initSensors()
@@ -467,9 +463,18 @@ void initSenseCircuit() { standByCurrentTest(); }
 
 void initializeTFT()
 {
-  tft.setController(DISPLAY_CONTROLLER_IC);
-  tft.begin(DISPLAY_SPI_CLK);
+  // tft.setController(DISPLAY_CONTROLLER_IC);
+  GPIOWrite(TFT_CS_EXP, LOW);
+  // tft.begin(DISPLAY_SPI_CLK);
+  tft.init();
+  GPIOWrite(TFT_CS_EXP, HIGH);
+  delay(5);
+  GPIOWrite(TFT_CS_EXP, LOW);
   tft.setRotation(DISPLAY_DEFAULT_ROTATION);
+  tft.fillScreen(TFT_BLACK);
+  tft_width = tft.width();
+  tft_height = tft.height();
+
   // uint8_t x = tft.readcommand8(ILI9341_RDMODE);
   // Serial.print("Display Power Mode: 0x");
   // Serial.println(x, HEX);
@@ -501,11 +506,11 @@ void initTFT()
   initPin(TFT_DC, OUTPUT);
   GPIOWrite(TOUCH_CS, HIGH);
   GPIOWrite(SD_CS, HIGH);
-  GPIOWrite(TFT_CS_EXP, LOW);
-  GPIOWrite(TFT_RST, LOW); // alternating HIGH/LOW
-  delay(5);
-  GPIOWrite(TFT_RST, HIGH); // alternating HIGH/LOW
-  delay(5);
+  GPIOWrite(TFT_CS_EXP, HIGH);
+  // GPIOWrite(TFT_RST, LOW); // alternating HIGH/LOW
+  // delay(5);
+  // GPIOWrite(TFT_RST, HIGH); // alternating HIGH/LOW
+  // delay(5);
 #endif
   initializeTFT();
   loadlogo();
@@ -655,15 +660,23 @@ bool actuatorsTest()
   }
   vTaskDelay(pdMS_TO_TICKS(CURRENT_STABILIZE_TIME_DEFAULT));
   offsetCurrent = measureMeanConsumption(MAIN, FAN_SHUNT_CHANNEL);
-  // GPIOWrite(FAN, HIGH);
+// GPIOWrite(FAN, HIGH);
+#if (HW_NUM >= 8)
   ledcWrite(FAN_PWM_CHANNEL, PWM_MAX_VALUE);
+#else
+  GPIOWrite(FAN, HIGH);
+#endif
 
   vTaskDelay(pdMS_TO_TICKS(CURRENT_STABILIZE_TIME_DEFAULT));
   testCurrent = measureMeanConsumption(MAIN, FAN_SHUNT_CHANNEL) - offsetCurrent;
   logI("[HW] -> FAN consumption: " + String(testCurrent) + " Amps");
   in3.fan_current_test = testCurrent;
   // GPIOWrite(FAN, LOW);
+#if (HW_NUM >= 8)
   ledcWrite(FAN_PWM_CHANNEL, false);
+#else
+  GPIOWrite(FAN, LOW);
+#endif
 
   if (testCurrent < FAN_CONSUMPTION_MIN)
   {
@@ -742,14 +755,19 @@ bool GPIORead(uint8_t GPIO)
   }
 }
 
+void initDebug()
+{
+  Serial.begin(115200);
+  vTaskDelay(pdMS_TO_TICKS(CURRENT_STABILIZE_TIME_DEFAULT));
+  logI("in3ator debug uart, version v" + String(FWversion) + "/" +
+       String(HWversion) + ", SN: " + String(in3.serialNumber));
+}
+
 void initHardware(bool printOutputTest)
 {
   initDebug();
-
   // brownOutConfig(false);
   initEEPROM();
-  initI2C();
-  initGPIO();
   initSensors();
   logI("[HW] -> Initialiting hardware");
   initSenseCircuit();

@@ -31,8 +31,9 @@
 
 TwoWire *wire;
 MAM_in3ator_Humidifier in3_hum(DEFAULT_ADDRESS);
-Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
-SHTC3 mySHTC3; // Declare an instance of the SHTC3 class
+// Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
+TFT_eSPI tft = TFT_eSPI(); // Invoke custom library
+SHTC3 mySHTC3;             // Declare an instance of the SHTC3 class
 Adafruit_SHT4x sht4 = Adafruit_SHT4x();
 RotaryEncoder encoder(ENC_A, ENC_B, RotaryEncoder::LatchMode::TWO03);
 Beastdevices_INA3221 mainDigitalCurrentSensor(INA3221_ADDR41_VCC);
@@ -142,6 +143,7 @@ QueueHandle_t sharedSensorQueue;
 
 void GPRS_Task(void *pvParameters)
 {
+  long lastPrint;
   initGPRS();
   GPRS_TB_Init();
   for (;;)
@@ -245,7 +247,9 @@ void setup()
 {
 
   sharedSensorQueue = xQueueCreate(SENSOR_TEMP_QTY, sizeof(long));
-  if (!GPIORead(ENC_SWITCH))
+  initGPIO();
+
+  if(!GPIORead(ENC_SWITCH))
   {
     goToSettings = true;
   }

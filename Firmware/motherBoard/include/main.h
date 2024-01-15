@@ -25,7 +25,7 @@
 #include <Filters/Butterworth.hpp>
 
 #include "Adafruit_GFX.h"
-#include "Adafruit_ILI9341.h"
+#include <TFT_eSPI.h> // Hardware-specific library
 #include "Adafruit_SHT4x.h"
 #include "Credentials.h"
 #include "ESP32_config.h"
@@ -35,10 +35,10 @@
 #include "SparkFun_SHTC3.h"
 #include "TCA9555.h"
 #include "Wifi_OTA.h"
-#include "board.h"
 #include "driver/rtc_io.h"
 #include "esp32/ulp.h"
 #include "in3ator_humidifier.h"
+#include "board.h"
 
 #include <Espressif_Updater.h>
 #include <Espressif_MQTT_Client.h>
@@ -50,7 +50,7 @@
 #define LOG_ERRORS true
 #define LOG_ALARMS true
 
-#define WDT_TIMEOUT 45
+#define WDT_TIMEOUT 75
 
 #define FAN_RPM_CONVERSION 13333333
 #define FAN_UPDATE_TIME_MIN 1000
@@ -275,22 +275,21 @@
 #define encPulseDebounce 200
 
 // User Interface display constants
-#define brightenRate 10 // intro brighten speed (Higher value, faster)
 #define valuePosition 245
 #define separatorPosition 240
 #define unitPosition 315
 #define textFontSize 2 // text default size
 #define width_select 20
-#define height_heading 34
-#define width_indentation 4
+#define TFT_HEIGHT_HEADING 34
+#define TFT_SEPARATOR_HEIGHT 4
 #define width_back 50
-#define side_gap 4
+#define side_gap 0
 #define letter_height 26
 #define letter_width 14
 #define logo 40
 #define arrow_height 6
 #define arrow_tail 5
-#define headint_text_height height_heading / 5
+#define headint_text_height TFT_HEIGHT_HEADING / 5
 #define initialSensorsValue "XX"
 #define barThickness 3
 #define blinkTimeON 1000 // displayed text ON time

@@ -27,7 +27,7 @@
 #include "main.h"
 extern TwoWire *wire;
 extern MAM_in3ator_Humidifier in3_hum;
-extern Adafruit_ILI9341 tft;
+extern TFT_eSPI tft;
 extern SHTC3 mySHTC3; // Declare an instance of the SHTC3 class
 extern RotaryEncoder encoder;
 
