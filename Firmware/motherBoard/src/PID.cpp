@@ -34,6 +34,7 @@ double airControlPIDInput;
 double humidityControlPIDOutput;
 int humidifierTimeCycle = 5000;
 unsigned long windowStartTime;
+long lastHeaterPowerCheck = false;
 
 extern in3ator_parameters in3;
 extern MAM_in3ator_Humidifier in3_hum;
@@ -55,50 +56,102 @@ PID humidityControlPID(&in3.humidity[ROOM_DIGITAL_HUM_SENSOR],
                        Kp[humidityPID], Ki[humidityPID], Kd[humidityPID],
                        P_ON_E, DIRECT);
 
-void PIDInit() {
+void PIDInit()
+{
   airControlPID.SetMode(MANUAL);
   skinControlPID.SetMode(MANUAL);
   humidityControlPID.SetMode(MANUAL);
 }
 
-void PIDHandler() {
-  if (airControlPID.GetMode() == AUTOMATIC) {
+void heaterPowerConsumptionCheck()
+{
+  int heaterSafeMAXPWM_before = in3.heaterSafeMAXPWM;
+  if (millis() - lastHeaterPowerCheck > CURRENT_UPDATE_PERIOD_MS)
+  {
+    lastHeaterPowerCheck = millis();
+    if (in3.heater_current > HEATER_MAX_POWER_AMPS)
+    {
+      in3.heaterSafeMAXPWM -= HEATER_POWER_FACTOR_DECREASE;
+      if (in3.heaterSafeMAXPWM < 0)
+      {
+        in3.heaterSafeMAXPWM = 0;
+      }
+    }
+    else if (in3.heater_current < HEATER_SAFE_POWER_AMPS)
+    {
+      in3.heaterSafeMAXPWM += HEATER_POWER_FACTOR_INCREASE;
+      if (in3.heaterSafeMAXPWM > HEATER_MAX_PWM)
+      {
+        in3.heaterSafeMAXPWM = HEATER_MAX_PWM;
+      }
+    }
+    if (heaterSafeMAXPWM_before != in3.heaterSafeMAXPWM)
+    {
+      logI("[PID] -> Heater current is " + String(in3.heater_current) + ", changed max PWM to: " + String(in3.heaterSafeMAXPWM));
+      if (airControlPID.GetMode() == AUTOMATIC)
+      {
+        airControlPID.SetOutputLimits(0, in3.heaterSafeMAXPWM); // Set safe limits
+      }
+      if (skinControlPID.GetMode() == AUTOMATIC)
+      {
+        skinControlPID.SetOutputLimits(0, in3.heaterSafeMAXPWM); // Set safe limits
+      }
+    }
+  }
+}
+
+void PIDHandler()
+{
+  heaterPowerConsumptionCheck();
+  if (airControlPID.GetMode() == AUTOMATIC)
+  {
     if (abs(in3.temperature[ROOM_DIGITAL_TEMP_SENSOR] -
             in3.desiredControlTemperature) <
             anti_windup_offset[ROOM_DIGITAL_TEMP_SENSOR] &&
-        airControlPID.GetKi() != Ki[airPID]) {
+        airControlPID.GetKi() != Ki[airPID])
+    {
       airControlPID.SetTunings(Kp[airPID], Ki[airPID], Kd[airPID]);
     }
     airControlPID.Compute();
     ledcWrite(HEATER_PWM_CHANNEL, HeaterPIDOutput * ongoingCriticalAlarm());
   }
-  if (skinControlPID.GetMode() == AUTOMATIC) {
+  if (skinControlPID.GetMode() == AUTOMATIC)
+  {
     if (abs(in3.temperature[SKIN_SENSOR] - in3.desiredControlTemperature) <
-        anti_windup_offset[SKIN_SENSOR]) {
+        anti_windup_offset[SKIN_SENSOR])
+    {
       skinControlPID.SetTunings(Kp[skinPID], Ki[skinPID], Kd[skinPID]);
     }
     skinControlPID.Compute();
     ledcWrite(HEATER_PWM_CHANNEL, HeaterPIDOutput * ongoingCriticalAlarm());
   }
-  if (humidityControlPID.GetMode() == AUTOMATIC) {
+  if (humidityControlPID.GetMode() == AUTOMATIC)
+  {
     if (in3.humidity[ROOM_DIGITAL_HUM_SENSOR] - in3.desiredControlHumidity <
-        anti_windup_offset[humidityPID]) {
+        anti_windup_offset[humidityPID])
+    {
       humidityControlPID.SetTunings(Kp[humidityPID], Ki[humidityPID],
                                     Kd[humidityPID]);
     }
     humidityControlPID.Compute();
     if (millis() - windowStartTime >
-        humidifierTimeCycle) {  // time to shift the Relay Window
+        humidifierTimeCycle)
+    { // time to shift the Relay Window
       windowStartTime += humidifierTimeCycle;
     }
-    if (humidityControlPIDOutput < millis() - windowStartTime) {
-      if (humidifierState || humidifierStateChange) {
+    if (humidityControlPIDOutput < millis() - windowStartTime)
+    {
+      if (humidifierState || humidifierStateChange)
+      {
         in3_hum.turn(OFF);
         humidifierStateChange = false;
       }
       humidifierState = false;
-    } else {
-      if (!humidifierState || humidifierStateChange) {
+    }
+    else
+    {
+      if (!humidifierState || humidifierStateChange)
+      {
         in3_hum.turn(ON);
         humidifierStateChange = false;
       }
@@ -107,45 +160,52 @@ void PIDHandler() {
   }
 }
 
-void startPID(byte var) {
-  switch (var) {
-    case airPID:
-      airControlPID.SetOutputLimits(false, HEATER_MAX_PWM);
-      airControlPID.SetTunings(Kp[airPID], false, Kd[airPID]);
-      airControlPID.SetControllerDirection(DIRECT);
-      airControlPID.SetSampleTime(PID_TEMPERATURE_SAMPLE_TIME);
-      airControlPID.SetMode(AUTOMATIC);
-      break;
-    case skinPID:
-      skinControlPID.SetOutputLimits(false, HEATER_MAX_PWM);
-      skinControlPID.SetTunings(Kp[skinPID], false, Kd[skinPID]);
-      skinControlPID.SetControllerDirection(DIRECT);
-      airControlPID.SetSampleTime(PID_TEMPERATURE_SAMPLE_TIME);
-      skinControlPID.SetMode(AUTOMATIC);
-      break;
-    case humidityPID:
-      humidifierStateChange = true;
-      windowStartTime = millis();
-      humidityControlPID.SetTunings(Kp[humidityPID], false, Kd[humidityPID]);
-      humidityControlPID.SetControllerDirection(DIRECT);
-      humidityControlPID.SetOutputLimits(
-          humidifierTimeCycle * humidifierDutyCycleMin / 100,
-          humidifierTimeCycle * humidifierDutyCycleMax / 100);
-      airControlPID.SetSampleTime(PID_HUMIDITY_SAMPLE_TIME);
-      humidityControlPID.SetMode(AUTOMATIC);
-      break;
+void startPID(byte var)
+{
+  in3.heaterSafeMAXPWM = HEATER_MAX_PWM;
+  switch (var)
+  {
+  case airPID:
+    airControlPID.SetOutputLimits(false, HEATER_MAX_PWM);
+    airControlPID.SetTunings(Kp[airPID], false, Kd[airPID]);
+    airControlPID.SetControllerDirection(DIRECT);
+    airControlPID.SetSampleTime(PID_TEMPERATURE_SAMPLE_TIME);
+    airControlPID.SetMode(AUTOMATIC);
+    airControlPID.SetOutputLimits(0, HEATER_MAX_PWM); // reset safe limits
+    break;
+  case skinPID:
+    skinControlPID.SetOutputLimits(false, HEATER_MAX_PWM);
+    skinControlPID.SetTunings(Kp[skinPID], false, Kd[skinPID]);
+    skinControlPID.SetControllerDirection(DIRECT);
+    airControlPID.SetSampleTime(PID_TEMPERATURE_SAMPLE_TIME);
+    skinControlPID.SetMode(AUTOMATIC);
+    skinControlPID.SetOutputLimits(0, HEATER_MAX_PWM); // reset safe limits
+    break;
+  case humidityPID:
+    humidifierStateChange = true;
+    windowStartTime = millis();
+    humidityControlPID.SetTunings(Kp[humidityPID], false, Kd[humidityPID]);
+    humidityControlPID.SetControllerDirection(DIRECT);
+    humidityControlPID.SetOutputLimits(
+        humidifierTimeCycle * humidifierDutyCycleMin / 100,
+        humidifierTimeCycle * humidifierDutyCycleMax / 100);
+    airControlPID.SetSampleTime(PID_HUMIDITY_SAMPLE_TIME);
+    humidityControlPID.SetMode(AUTOMATIC);
+    break;
   }
 }
 
-void stopPID(byte var) {
-  switch (var) {
-    case airPID:
-      airControlPID.SetMode(MANUAL);
-      break;
-    case skinPID:
-      skinControlPID.SetMode(MANUAL);
-      break;
-    case humidityPID:
-      humidityControlPID.SetMode(MANUAL);
+void stopPID(byte var)
+{
+  switch (var)
+  {
+  case airPID:
+    airControlPID.SetMode(MANUAL);
+    break;
+  case skinPID:
+    skinControlPID.SetMode(MANUAL);
+    break;
+  case humidityPID:
+    humidityControlPID.SetMode(MANUAL);
   }
 }

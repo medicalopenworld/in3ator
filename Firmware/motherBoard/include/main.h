@@ -51,6 +51,10 @@
 #define LOG_ALARMS true
 
 #define WDT_TIMEOUT 75
+#define HEATER_MAX_POWER_AMPS 10.5
+#define HEATER_SAFE_POWER_AMPS 9.5
+#define HEATER_POWER_FACTOR_INCREASE 5
+#define HEATER_POWER_FACTOR_DECREASE 5
 
 #define FAN_RPM_CONVERSION 13333333
 #define FAN_UPDATE_TIME_MIN 1000
@@ -179,7 +183,7 @@
 
 #define NTC_SAMPLES_TEST 100
 #define DIGITAL_CURRENT_SENSOR_READ_PERIOD_MS 500
-#define CURRENT_UPDATE_PERIOD_MS 500 // in millis
+#define CURRENT_UPDATE_PERIOD_MS 100 // in millis
 #define VOLTAGE_UPDATE_PERIOD_MS 50  // in millis
 #define UI_SENSOR_UPDATE_PERIOD_MS 1000
 
@@ -488,6 +492,7 @@ typedef struct
   double system_current = false;
   double system_voltage = false;
   double heater_current = false;
+  int heaterSafeMAXPWM = HEATER_MAX_PWM;
   double fan_current = false;
   double humidifier_current = false;
   double humidifier_voltage = false;
