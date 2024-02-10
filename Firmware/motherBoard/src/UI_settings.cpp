@@ -29,7 +29,7 @@
 extern TwoWire *wire;
 extern MAM_in3ator_Humidifier in3_hum;
 extern TFT_eSPI tft;
-extern SHTC3 mySHTC3;  // Declare an instance of the SHTC3 class
+extern SHTC3 mySHTC3; // Declare an instance of the SHTC3 class
 extern RotaryEncoder encoder;
 
 extern bool WIFI_EN;
@@ -44,14 +44,14 @@ extern double fineTuneSkinTemperature;
 extern double RawTemperatureLow[SENSOR_TEMP_QTY],
     RawTemperatureRange[SENSOR_TEMP_QTY];
 extern double provisionalRawTemperatureLow[SENSOR_TEMP_QTY];
-extern int temperature_array_pos;  // temperature sensor number turn to measure
+extern int temperature_array_pos; // temperature sensor number turn to measure
 extern float diffSkinTemperature,
-    diffAirTemperature;  // difference between measured temperature and user
-                         // input real temperature
+    diffAirTemperature; // difference between measured temperature and user
+                        // input real temperature
 extern bool humidifierState, humidifierStateChange;
-extern int previousHumidity;  // previous sampled humidity
-extern float diffHumidity;    // difference between measured humidity and user
-                              // input real humidity
+extern int previousHumidity; // previous sampled humidity
+extern float diffHumidity;   // difference between measured humidity and user
+                             // input real humidity
 
 extern byte autoCalibrationProcess;
 
@@ -69,24 +69,24 @@ extern bool WIFI_connection_status;
 extern bool roomSensorPresent;
 
 // room variables
-extern const float minDesiredTemp[2];  // minimum allowed temperature to be set
-extern const float maxDesiredTemp[2];  // maximum allowed temperature to be set
-extern const int presetTemp[2];        // preset baby skin temperature
+extern const float minDesiredTemp[2]; // minimum allowed temperature to be set
+extern const float maxDesiredTemp[2]; // maximum allowed temperature to be set
+extern const int presetTemp[2];       // preset baby skin temperature
 
 extern boolean A_set;
 extern boolean B_set;
-extern int encoderpinA;                  // pin  encoder A
-extern int encoderpinB;                  // pin  encoder B
-extern bool encPulsed, encPulsedBefore;  // encoder switch status
+extern int encoderpinA;                 // pin  encoder A
+extern int encoderpinB;                 // pin  encoder B
+extern bool encPulsed, encPulsedBefore; // encoder switch status
 extern bool updateUIData;
-extern volatile int EncMove;      // moved encoder
-extern volatile int lastEncMove;  // moved last encoder
+extern volatile int EncMove;     // moved encoder
+extern volatile int lastEncMove; // moved last encoder
 extern volatile int
-    EncMoveOrientation;             // set to -1 to increase values clockwise
-extern int last_encoder_move;       // moved encoder
-extern long encoder_debounce_time;  // in milliseconds, debounce time in encoder
-                                    // to filter signal bounces
-extern long last_encPulsed;         // last time encoder was pulsed
+    EncMoveOrientation;            // set to -1 to increase values clockwise
+extern int last_encoder_move;      // moved encoder
+extern long encoder_debounce_time; // in milliseconds, debounce time in encoder
+                                   // to filter signal bounces
+extern long last_encPulsed;        // last time encoder was pulsed
 
 // Text Graphic position variables
 extern int humidityX;
@@ -106,11 +106,10 @@ extern int barWidth, barHeight, tempBarPosX, tempBarPosY, humBarPosX,
 extern int screenTextColor, screenTextBackgroundColour;
 
 // User Interface display variables
-extern bool autoLock;  // setting that enables backlight switch OFF after a
-                       // given time of no user actions
+extern bool autoLock; // setting that enables backlight switch OFF after a
+                      // given time of no user actions
 extern long
-    lastbacklightHandler;  // last time there was a encoder movement or pulse
-
+    lastbacklightHandler; // last time there was a encoder movement or pulse
 
 extern bool selected;
 extern char cstring[128];
@@ -141,51 +140,56 @@ extern PID humidityControlPID;
 
 extern in3ator_parameters in3;
 
-void UI_settings() {
+void UI_settings()
+{
   byte numWords = 6;
-  page = SETTIGNS_PAGE;
+  page = SETTINGS_PAGE;
   print_text = true;
   tft.setTextSize(1);
   setTextColor(COLOUR_MENU_TEXT);
-  for (int i = false; i < numWords; i++) {
+  for (int i = false; i < numWords; i++)
+  {
     pos_text[i] = LEFT_MARGIN;
   }
   pos_text[DEFAULT_VALUES_UI_ROW] = CENTER;
   pos_text[HW_TEST_UI_ROW] = CENTER;
   pos_text[CALIBRATION_UI_ROW] = CENTER;
-  switch (in3.language) {
-    case ENGLISH:
-      words[LANGUAGE_UI_ROW] = convertStringToChar("in3.language");
-      words[SERIAL_NUMBER_UI_ROW] = convertStringToChar("Serial number");
-      words[DEFAULT_VALUES_UI_ROW] =
-          convertStringToChar("Set default values");
-      words[CALIBRATION_UI_ROW] = convertStringToChar("Calibration");
-      break;
-    case SPANISH:
-      words[LANGUAGE_UI_ROW] = convertStringToChar("Idioma");
-      words[SERIAL_NUMBER_UI_ROW] = convertStringToChar("Serial number");
-      words[DEFAULT_VALUES_UI_ROW] =
-          convertStringToChar("Fijar valores estandar");
-      words[CALIBRATION_UI_ROW] = convertStringToChar("Calibracion");
-      break;
-    case FRENCH:
-      words[LANGUAGE_UI_ROW] = convertStringToChar("Langue");
-      words[SERIAL_NUMBER_UI_ROW] = convertStringToChar("Serial number");
-      words[DEFAULT_VALUES_UI_ROW] =
-          convertStringToChar("Definir valeurs default");
-      words[CALIBRATION_UI_ROW] = convertStringToChar("Etalonner");
-      break;
-    case PORTUGUESE:
-      words[LANGUAGE_UI_ROW] = convertStringToChar("Idioma");
-      words[SERIAL_NUMBER_UI_ROW] = convertStringToChar("Serial number");
-      words[DEFAULT_VALUES_UI_ROW] =
-          convertStringToChar("Definir valores de fabrica");
-      words[CALIBRATION_UI_ROW] = convertStringToChar("Calibrar");
-      break;
+  switch (in3.language)
+  {
+  case ENGLISH:
+    words[LANGUAGE_UI_ROW] = convertStringToChar("in3.language");
+    words[SERIAL_NUMBER_UI_ROW] = convertStringToChar("Serial number");
+    words[DEFAULT_VALUES_UI_ROW] =
+        convertStringToChar("Set default values");
+    words[CALIBRATION_UI_ROW] = convertStringToChar("Calibration");
+    break;
+  case SPANISH:
+    words[LANGUAGE_UI_ROW] = convertStringToChar("Idioma");
+    words[SERIAL_NUMBER_UI_ROW] = convertStringToChar("Serial number");
+    words[DEFAULT_VALUES_UI_ROW] =
+        convertStringToChar("Fijar valores estandar");
+    words[CALIBRATION_UI_ROW] = convertStringToChar("Calibracion");
+    break;
+  case FRENCH:
+    words[LANGUAGE_UI_ROW] = convertStringToChar("Langue");
+    words[SERIAL_NUMBER_UI_ROW] = convertStringToChar("Serial number");
+    words[DEFAULT_VALUES_UI_ROW] =
+        convertStringToChar("Definir valeurs default");
+    words[CALIBRATION_UI_ROW] = convertStringToChar("Etalonner");
+    break;
+  case PORTUGUESE:
+    words[LANGUAGE_UI_ROW] = convertStringToChar("Idioma");
+    words[SERIAL_NUMBER_UI_ROW] = convertStringToChar("Serial number");
+    words[DEFAULT_VALUES_UI_ROW] =
+        convertStringToChar("Definir valores de fabrica");
+    words[CALIBRATION_UI_ROW] = convertStringToChar("Calibrar");
+    break;
   }
   words[WIFI_EN_UI_ROW] = convertStringToChar("WIFI");
+  words[CCID_UI_ROW] = convertStringToChar("CCID");
   words[HW_TEST_UI_ROW] = convertStringToChar("HW Test");
-  if (WiFi.status() == WL_CONNECTED) {
+  if (WiFi.status() == WL_CONNECTED)
+  {
     words[WIFI_EN_UI_ROW] = convertStringToChar("WIFI IP->");
   }
   menu_rows = numWords;
@@ -195,7 +199,8 @@ void UI_settings() {
   bar_pos = true;
   selected = false;
   ypos = graphicHeight(bar_pos - 1);
-  while (!GPIORead(ENC_SWITCH)) {
-  vTaskDelay(pdMS_TO_TICKS(SWITCH_DEBOUNCE_TIME_MS));    
+  while (!GPIORead(ENC_SWITCH))
+  {
+    vTaskDelay(pdMS_TO_TICKS(SWITCH_DEBOUNCE_TIME_MS));
   }
 }

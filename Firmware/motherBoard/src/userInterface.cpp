@@ -411,7 +411,7 @@ void userInterfaceHandler(int UI_page)
           break;
         }
         break;
-      case SETTIGNS_PAGE:
+      case SETTINGS_PAGE:
         switch (bar_pos - graphicTextOffset)
         {
         case LANGUAGE_UI_ROW:
@@ -488,6 +488,8 @@ void userInterfaceHandler(int UI_page)
             EncMove = false;
           }
           EEPROM.commit();
+          break;
+        case CCID_UI_ROW:
           break;
         case WIFI_EN_UI_ROW:
           WIFI_EN = !WIFI_EN;
@@ -791,7 +793,14 @@ bool back_mode()
     }
     if (back_bar == width_back)
     {
-      UI_mainMenu();
+      if (page == CALIBRATION_SENSORS_PAGE)
+      {
+        UI_settings();
+      }
+      else
+      {
+        UI_mainMenu();
+      }
       return true;
     }
     vTaskDelay(pdMS_TO_TICKS(((time_back_draw + time_back_wait) / width_back)));

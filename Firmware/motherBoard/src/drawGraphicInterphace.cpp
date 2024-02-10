@@ -138,6 +138,9 @@ extern PID airControlPID;
 extern PID skinControlPID;
 extern PID humidityControlPID;
 
+extern GPRSstruct GPRS;
+
+
 extern in3ator_parameters in3;
 
 void setTextColor(int16_t colour) { screenTextColor = colour; }
@@ -975,7 +978,7 @@ void graphics(uint8_t UI_page, uint8_t UI_language, uint8_t UI_print_text,
           break;
         }
         break;
-      case SETTIGNS_PAGE:
+      case SETTINGS_PAGE:
         switch (i)
         {
         case LANGUAGE_UI_ROW:
@@ -998,6 +1001,9 @@ void graphics(uint8_t UI_page, uint8_t UI_language, uint8_t UI_print_text,
           break;
         case SERIAL_NUMBER_UI_ROW:
           drawRightNumber(UI_var_0, unitPosition, ypos);
+          break;
+        case CCID_UI_ROW:
+              drawCentreString(convertStringToChar(cstring,GPRS.CCID),tft_width / 2, ypos, textFontSize);
           break;
         case WIFI_EN_UI_ROW:
           if (UI_var_1)

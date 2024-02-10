@@ -23,11 +23,11 @@
 
 */
 
-#define HW_NUM 13
+#define HW_NUM 12
 #define HW_REVISION 'A'
 #define HWversion String(HW_NUM) + "." + String(HW_REVISION)
 #define FWversion "13.1"
-#define WIFI_NAME "In3_v" + String(FWversion) + "/" + String(HWversion)
+#define WIFI_NAME "In3ator"
 #define CURRENT_FIRMWARE_TITLE "in3ator"
 
 #define DEFAULT_WIFI_EN ON
@@ -53,7 +53,7 @@
 #define HUMIDIFIER_INTERFACE HUMIDIFIER_I2C
 #endif
 
-#define GPIO_EXP_BASE 100  // To differentiate with ESP32 GPIO
+#define GPIO_EXP_BASE 100 // To differentiate with ESP32 GPIO
 
 #if (HW_NUM >= 9)
 // PINOUT
@@ -95,7 +95,7 @@
 #define HEATER 27
 #define ENC_B 32
 #define SCREENBACKLIGHT 33
-#define ACTUATORS_EN 34  // fake pin
+#define ACTUATORS_EN 34 // fake pin
 #define SYSTEM_CURRENT_SENSOR 36
 #define BABY_NTC_PIN 39
 
@@ -105,12 +105,10 @@
 // Hardware
 // PINOUT
 
-
-
 #define AFE44XX_CS 2
 #define TFT_DC 4
 #define BUZZER 5
-#define TFT_CS 15  // fake GPIO
+#define TFT_CS 15 // fake GPIO
 #define I2C_SDA 21
 #define I2C_SCL 22
 #define ENC_A 25
@@ -163,13 +161,13 @@
 
 // number assignment of each environmental sensor for later call in variable
 #define SKIN_SENSOR 0
-#define NTC_QTY 1  // number of NTC
+#define NTC_QTY 1 // number of NTC
 #define ROOM_DIGITAL_TEMP_SENSOR 1
 #define AMBIENT_DIGITAL_TEMP_SENSOR 2
-#define SENSOR_TEMP_QTY 3  // number of total temperature sensors in system
+#define SENSOR_TEMP_QTY 3 // number of total temperature sensors in system
 #define ROOM_DIGITAL_HUM_SENSOR 0
 #define AMBIENT_DIGITAL_HUM_SENSOR 1
-#define SENSOR_HUM_QTY 2  // number of total humidity sensors in system
+#define SENSOR_HUM_QTY 2 // number of total humidity sensors in system
 
 #define SYSTEM_SHUNT_CHANNEL INA3221_CH1
 #define PHOTOTHERAPY_SHUNT_CHANNEL INA3221_CH2
@@ -182,16 +180,16 @@
 #define HUMIDIFIER_SHUNT 1
 
 #define SDCard false
-#define SYSTEM_SHUNT 2  // miliohms
-#define FAN_SHUNT 100   // miliohms
+#define SYSTEM_SHUNT 2 // miliohms
+#define FAN_SHUNT 100  // miliohms
 #if (HW_NUM >= 12)
-#define PHOTOTHERAPY_SHUNT 82  // miliohms
+#define PHOTOTHERAPY_SHUNT 82 // miliohms
 #else
-#define PHOTOTHERAPY_SHUNT 20  // miliohms
+#define PHOTOTHERAPY_SHUNT 20 // miliohms
 #endif
-#define BATTERY_SHUNT 27000  // miliohms
-#define USB_SHUNT 100        // miliohms
-#define HEATER_SHUNT 2       // miliohms
+#define BATTERY_SHUNT 27000 // miliohms
+#define USB_SHUNT 100       // miliohms
+#define HEATER_SHUNT 2      // miliohms
 
 #define DISPLAY_DEFAULT_ROTATION 3
 
@@ -210,14 +208,14 @@
 #define maxDACvalue 4095
 // #define PWM_MAX_VALUE maxADCvalue
 #define PWM_MAX_VALUE (pow(2, DEFAULT_PWM_RESOLUTION) - 1)
-#define FAN_PWM PWM_MAX_VALUE / 2
+#define FAN_PWM PWM_MAX_VALUE
 
 #if (ADC_READ_FUNCTION == MILLIVOTSREAD_ADC)
-#define ADC_TO_DISCARD_MIN 500   // in mV
-#define ADC_TO_DISCARD_MAX 2500  // in mV
+#define ADC_TO_DISCARD_MIN 500  // in mV
+#define ADC_TO_DISCARD_MAX 2500 // in mV
 #else
-#define ADC_TO_DISCARD_MIN maxADCvalue / 5      // in ADC points
-#define ADC_TO_DISCARD_MAX maxADCvalue * 4 / 5  // in ADC points
+#define ADC_TO_DISCARD_MIN maxADCvalue / 5     // in ADC points
+#define ADC_TO_DISCARD_MAX maxADCvalue * 4 / 5 // in ADC points
 #endif
 
 #define DIG_TEMP_TO_DISCARD_MAX 60
@@ -240,12 +238,12 @@
 
 #if (HW_NUM <= 8 || (HW_NUM == 9 && HW_REVISION == 'A'))
 #define SCREEN_BRIGHTNESS_FACTOR \
-  0.1  // Max brightness will be multiplied by this constant
+  0.1 // Max brightness will be multiplied by this constant
 #define BACKLIGHT_POWER_SAFE_PERCENTAGE 0.6
 #define BACKLIGHT_CONTROL INVERTED_BACKLIGHT_CONTROL
 #else
 #define SCREEN_BRIGHTNESS_FACTOR \
-  0.7  // Max brightness will be multiplied by this constant
+  0.7 // Max brightness will be multiplied by this constant
 #define BACKLIGHT_POWER_SAFE_PERCENTAGE 0.3
 #define BACKLIGHT_CONTROL DIRECT_BACKLIGHT_CONTROL
 #endif
