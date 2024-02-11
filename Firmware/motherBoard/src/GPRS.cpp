@@ -456,8 +456,72 @@ void GPRSCheckOTA()
   }
 }
 
+void switchAlarmTelemetryGPRS(int alarm, bool value)
+{
+  String alarmKey;
+  switch (alarm)
+  {
+  case HUMIDITY_ALARM:
+    alarmKey = HUMIDITY_ALARM_KEY;
+    break;
+  case TEMPERATURE_ALARM:
+    alarmKey = TEMPERATURE_ALARM_KEY;
+    break;
+  case AIR_THERMAL_CUTOUT_ALARM:
+    alarmKey = AIR_THERMAL_CUTOUT_ALARM_KEY;
+    break;
+  case SKIN_THERMAL_CUTOUT_ALARM:
+    alarmKey = SKIN_THERMAL_CUTOUT_ALARM_KEY;
+    break;
+  case AIR_SENSOR_ISSUE_ALARM:
+    alarmKey = AIR_SENSOR_ISSUE_ALARM_KEY;
+    break;
+  case SKIN_SENSOR_ISSUE_ALARM:
+    alarmKey = SKIN_SENSOR_ISSUE_ALARM_KEY;
+    break;
+  case FAN_ISSUE_ALARM:
+    alarmKey = FAN_ISSUE_ALARM_KEY;
+    break;
+  case HEATER_ISSUE_ALARM:
+    alarmKey = HEATER_ISSUE_ALARM_KEY;
+    break;
+  case POWER_SUPPLY_ALARM:
+    alarmKey = POWER_SUPPLY_ALARM_KEY;
+    break;
+  default:
+    return;
+  }
+  addVariableToTelemetryGPRSJSON[alarmKey] = value;
+}
+
+void addAlarmTelemetriesToGPRSJSON()
+{
+  int alarmReported = false;
+  for (int i = NO_ALARMS + 1; i < NUM_ALARMS; i++)
+  {
+    if (in3.alarmToReport[i])
+    {
+      switchAlarmTelemetryGPRS(i, true);
+      alarmReported = true;
+      in3.previousAlarmReport = true;
+    }
+  }
+  if (!alarmReported)
+  {
+    if (in3.previousAlarmReport)
+    {
+      in3.previousAlarmReport = false;
+      for (int i = NO_ALARMS + 1; i < NUM_ALARMS; i++)
+      {
+        switchAlarmTelemetryGPRS(i, false);
+      }
+    }
+  }
+}
+
 void addConfigTelemetriesToGPRSJSON()
 {
+  addAlarmTelemetriesToGPRSJSON();
   addVariableToTelemetryGPRSJSON[SN_KEY] = in3.serialNumber;
   addVariableToTelemetryGPRSJSON[HW_NUM_KEY] = HW_NUM;
   addVariableToTelemetryGPRSJSON[HW_REV_KEY] = String(HW_REVISION);
@@ -506,6 +570,7 @@ void addConfigTelemetriesToGPRSJSON()
 
 void addTelemetriesToGPRSJSON()
 {
+  addAlarmTelemetriesToGPRSJSON();
   if (GPRS.longitud || GPRS.latitud)
   {
     addVariableToTelemetryGPRSJSON[LOCATION_LONGTITUD_KEY] = GPRS.longitud;

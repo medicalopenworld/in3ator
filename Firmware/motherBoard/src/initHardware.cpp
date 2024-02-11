@@ -467,11 +467,11 @@ void initializeTFT()
   // tft.setController(DISPLAY_CONTROLLER_IC);
   // tft.begin(DISPLAY_SPI_CLK);
   tft.init();
-  #if (HW_NUM == 6)
+#if (HW_NUM == 6)
   GPIOWrite(TFT_CS_EXP, HIGH);
   delay(5);
   GPIOWrite(TFT_CS_EXP, LOW);
-  #endif
+#endif
   tft.setRotation(DISPLAY_DEFAULT_ROTATION);
   tft.fillScreen(TFT_BLACK);
   tft_width = tft.width();
@@ -607,6 +607,7 @@ bool actuatorsTest()
   {
     addErrorToVar(HW_error, HEATER_CONSUMPTION_MIN_ERROR);
     logE("[HW] -> Fail -> Heater current consumption is too low");
+    in3.alarmToReport[HEATER_ISSUE_ALARM] = true;
     setAlarm(HEATER_ISSUE_ALARM);
     return (true);
   }
@@ -614,6 +615,7 @@ bool actuatorsTest()
   {
     addErrorToVar(HW_error, HEATER_CONSUMPTION_MAX_ERROR);
     logE("[HW] -> Fail -> Heater current consumption is too high");
+    in3.alarmToReport[HEATER_ISSUE_ALARM] = true;
     setAlarm(HEATER_ISSUE_ALARM);
     return (true);
   }

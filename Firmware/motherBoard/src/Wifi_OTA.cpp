@@ -280,8 +280,72 @@ void WIFI_TB_Init()
   }
 }
 
+void switchAlarmTelemetryWIFI(int alarm, bool value)
+{
+  String alarmKey;
+  switch (alarm)
+  {
+  case HUMIDITY_ALARM:
+    alarmKey = HUMIDITY_ALARM_KEY;
+    break;
+  case TEMPERATURE_ALARM:
+    alarmKey = TEMPERATURE_ALARM_KEY;
+    break;
+  case AIR_THERMAL_CUTOUT_ALARM:
+    alarmKey = AIR_THERMAL_CUTOUT_ALARM_KEY;
+    break;
+  case SKIN_THERMAL_CUTOUT_ALARM:
+    alarmKey = SKIN_THERMAL_CUTOUT_ALARM_KEY;
+    break;
+  case AIR_SENSOR_ISSUE_ALARM:
+    alarmKey = AIR_SENSOR_ISSUE_ALARM_KEY;
+    break;
+  case SKIN_SENSOR_ISSUE_ALARM:
+    alarmKey = SKIN_SENSOR_ISSUE_ALARM_KEY;
+    break;
+  case FAN_ISSUE_ALARM:
+    alarmKey = FAN_ISSUE_ALARM_KEY;
+    break;
+  case HEATER_ISSUE_ALARM:
+    alarmKey = HEATER_ISSUE_ALARM_KEY;
+    break;
+  case POWER_SUPPLY_ALARM:
+    alarmKey = POWER_SUPPLY_ALARM_KEY;
+    break;
+  default:
+    return;
+  }
+  addVariableToTelemetryWIFIJSON[alarmKey] = value;
+}
+
+void addAlarmTelemetriesToWIFIJSON()
+{
+  int alarmReported = false;
+  for (int i = NO_ALARMS + 1; i < NUM_ALARMS; i++)
+  {
+    if (in3.alarmToReport[i])
+    {
+      switchAlarmTelemetryWIFI(i, true);
+      alarmReported = true;
+      in3.previousAlarmReport = true;
+    }
+  }
+  if (!alarmReported)
+  {
+    if (in3.previousAlarmReport)
+    {
+      in3.previousAlarmReport = false;
+      for (int i = NO_ALARMS + 1; i < NUM_ALARMS; i++)
+      {
+        switchAlarmTelemetryWIFI(i, false);
+      }
+    }
+  }
+}
+
 void addConfigTelemetriesToWIFIJSON()
 {
+  addAlarmTelemetriesToWIFIJSON();
   addVariableToTelemetryWIFIJSON[SN_KEY] = in3.serialNumber;
   addVariableToTelemetryWIFIJSON[HW_NUM_KEY] = HW_NUM;
   addVariableToTelemetryWIFIJSON[HW_REV_KEY] = String(HW_REVISION);
@@ -313,6 +377,7 @@ void addConfigTelemetriesToWIFIJSON()
 
 void addTelemetriesToWIFIJSON()
 {
+  addAlarmTelemetriesToWIFIJSON();
   addVariableToTelemetryWIFIJSON[SKIN_TEMPERATURE_KEY] = roundSignificantDigits(
       in3.temperature[SKIN_SENSOR], TELEMETRIES_DECIMALS);
   addVariableToTelemetryWIFIJSON[AIR_TEMPERATURE_KEY] = roundSignificantDigits(

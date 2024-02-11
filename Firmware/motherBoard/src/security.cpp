@@ -112,7 +112,6 @@ extern bool autoLock; // setting that enables backlight switch OFF after a
 extern long
     lastbacklightHandler; // last time there was a encoder movement or pulse
 
-
 extern bool selected;
 extern char cstring[128];
 extern char *textToWrite;
@@ -163,7 +162,7 @@ extern PID humidityControlPID;
 #define SKIN_THERMAL_CUTOUT_HYSTERESIS 1
 #define enableAlarms true
 
-#define MINIMUM_SUCCESSFULL_SENSOR_UPDATE 30000 // in millis
+#define MINIMUM_SUCCESSFULL_SENSOR_UPDATE 20000 // in millis
 
 bool alarmOnGoing[NUM_ALARMS];
 bool displayAlarm[NUM_ALARMS];
@@ -191,6 +190,7 @@ bool evaluateAlarm(byte alarmID, float setPoint, float measuredValue,
     {
       if ((abs(setPoint - measuredValue) + hysteresisValue) > errorMargin)
       {
+        in3.alarmToReport[alarmID] = true;
         if (!alarmOnGoing[alarmID])
         {
           setAlarm(alarmID);
@@ -199,6 +199,7 @@ bool evaluateAlarm(byte alarmID, float setPoint, float measuredValue,
       }
       else
       {
+        in3.alarmToReport[alarmID] = false;
         if (alarmOnGoing[alarmID])
         {
           resetAlarm(alarmID);
@@ -209,6 +210,7 @@ bool evaluateAlarm(byte alarmID, float setPoint, float measuredValue,
     {
       if ((measuredValue + hysteresisValue) > setPoint)
       {
+        in3.alarmToReport[alarmID] = true;
         if (!alarmOnGoing[alarmID])
         {
           setAlarm(alarmID);
@@ -217,6 +219,7 @@ bool evaluateAlarm(byte alarmID, float setPoint, float measuredValue,
       }
       else
       {
+        in3.alarmToReport[alarmID] = false;
         if (alarmOnGoing[alarmID])
         {
           resetAlarm(alarmID);
@@ -255,22 +258,24 @@ void checkStatusOfSensor(byte sensor)
   {
     // if (xQueueReceive(sharedSensorQueue, &lastSuccesfullSensorUpdate[sensor], portMAX_DELAY))
     // {
-      if (millis() - lastSuccesfullSensorUpdate[sensor] >
-          MINIMUM_SUCCESSFULL_SENSOR_UPDATE)
+    if (millis() - lastSuccesfullSensorUpdate[sensor] >
+        MINIMUM_SUCCESSFULL_SENSOR_UPDATE)
+    {
+      in3.alarmToReport[alarmID] = true;
+      if (!alarmOnGoing[alarmID])
       {
-        if (!alarmOnGoing[alarmID])
-        {
-          setAlarm(alarmID);
-        }
+        setAlarm(alarmID);
       }
-      else
+    }
+    else
+    {
+      in3.alarmToReport[alarmID] = false;
+      if (alarmOnGoing[alarmID])
       {
-        if (alarmOnGoing[alarmID])
-        {
-          resetAlarm(alarmID);
-        }
+        resetAlarm(alarmID);
       }
-//    }
+    }
+    //    }
   }
 }
 
@@ -460,11 +465,13 @@ void powerSupplyCheck()
   {
     if (digitalCurrentSensorPresent[MAIN] && in3.system_voltage > MIN_SYSTEM_VOLTAGE_TRIGGER && in3.system_voltage < MAX_SYSTEM_VOLTAGE_TRIGGER)
     {
+      in3.alarmToReport[POWER_SUPPLY_ALARM] = true;
       if (!alarmOnGoing[POWER_SUPPLY_ALARM])
         setAlarm(POWER_SUPPLY_ALARM);
     }
     else
     {
+      in3.alarmToReport[POWER_SUPPLY_ALARM] = false;
       if (alarmOnGoing[POWER_SUPPLY_ALARM])
         resetAlarm(POWER_SUPPLY_ALARM);
     }

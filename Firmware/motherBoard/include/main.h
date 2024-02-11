@@ -4,7 +4,7 @@
 #define TINY_GSM_MODEM_SIM800
 #define modemSerial Serial2
 #define THINGSBOARD_ENABLE_DYNAMIC 1
-//#define THINGSBOARD_ENABLE_STREAM_UTILS 1
+// #define THINGSBOARD_ENABLE_STREAM_UTILS 1
 #include <Arduino.h>
 #include <TinyGsmClient.h>
 #include "ThingsBoard.h"
@@ -84,6 +84,111 @@
 #define FIRMWARE_PACKET_SIZE 4096
 #define WAIT_FAILED_OTA_CHUNKS 10U * 1000U * 1000U
 
+// User Interface display constants
+#define valuePosition 245
+#define separatorPosition 240
+#define unitPosition 315
+#define textFontSize 2 // text default size
+#define width_select 20
+#define TFT_HEIGHT_HEADING 34
+#define TFT_SEPARATOR_HEIGHT 4
+#define width_back 50
+#define side_gap 0
+#define letter_height 26
+#define letter_width 14
+#define logo 40
+#define arrow_height 6
+#define arrow_tail 5
+#define headint_text_height TFT_HEIGHT_HEADING / 5
+#define initialSensorsValue "XX"
+#define barThickness 3
+#define blinkTimeON 1000 // displayed text ON time
+#define blinkTimeOFF 100 // displayed text OFF time
+#define time_back_draw 255
+#define time_back_wait 255
+
+// pages number in UI. Configuration and information will be displayed depending
+// on the page number
+
+typedef enum
+{
+  MAIN_MENU_PAGE = 1,
+  ACTUATORS_PROGRESS_PAGE,
+  SETTINGS_PAGE,
+  CALIBRATION_SENSORS_PAGE,
+  FIRST_POINT_CALIBRATION_PAGE,
+  SECOND_POINT_CALIBRATION_PAGE,
+  AUTO_CALIBRATION_PAGE,
+  FINE_TUNE_CALIBRATION_PAGE,
+} UI_PAGES;
+
+// languages numbers that will be called in language variable
+typedef enum
+{
+  SPANISH = 0,
+  ENGLISH,
+  FRENCH,
+  PORTUGUESE,
+  NUM_LANGUAGES,
+
+} UI_LANGUAGES;
+#define defaultLanguage ENGLISH // Preset number configuration when booting for first time
+
+typedef enum
+{
+  NTC_BABY_MIN_ERROR = 0,
+  NTC_BABY_MAX_ERROR,
+  DIG_TEMP_ROOM_MIN_ERROR,
+  DIG_TEMP_ROOM_MAX_ERROR,
+  DIG_HUM_ROOM_MIN_ERROR,
+  DIG_HUM_ROOM_MAX_ERROR,
+  DIGITAL_SENSOR_NOTFOUND,
+  HEATER_CONSUMPTION_MIN_ERROR,
+  FAN_CONSUMPTION_MIN_ERROR,
+  PHOTOTHERAPY_CONSUMPTION_MIN_ERROR,
+  HUMIDIFIER_CONSUMPTION_MIN_ERROR,
+  HEATER_CONSUMPTION_MAX_ERROR,
+  FAN_CONSUMPTION_MAX_ERROR,
+  PHOTOTHERAPY_CONSUMPTION_MAX_ERROR,
+  HUMIDIFIER_CONSUMPTION_MAX_ERROR,
+  STANDBY_CONSUMPTION_MAX_ERROR,
+  DEFECTIVE_SCREEN,
+  DEFECTIVE_BUZZER,
+  DEFECTIVE_CURRENT_SENSOR,
+  UNCALIBRATED_SENSOR,
+} HW_ERROR_ID;
+
+typedef enum
+{
+  NO_ALARMS = 0,
+  HUMIDITY_ALARM,
+  TEMPERATURE_ALARM,
+  AIR_THERMAL_CUTOUT_ALARM,
+  SKIN_THERMAL_CUTOUT_ALARM,
+  AIR_SENSOR_ISSUE_ALARM,
+  SKIN_SENSOR_ISSUE_ALARM,
+  FAN_ISSUE_ALARM,
+  HEATER_ISSUE_ALARM,
+  POWER_SUPPLY_ALARM,
+  NUM_ALARMS,
+} ALARMS_ID;
+
+typedef enum
+{
+  EVENT_2G = 0,
+  EVENT_WIFI,
+  EVENT_SERVER_CONNECTION,
+  EVENT_OTA_ONGOING,
+} UI_EVENTS_ID;
+
+typedef enum
+{
+  EVENT_2G_UI_POS = 5,
+  EVENT_SERVER_CONNECTION_UI_POS = EVENT_2G_UI_POS + 2 * letter_width,
+  EVENT_WIFI_UI_POS = EVENT_SERVER_CONNECTION_UI_POS + letter_width,
+  EVENT_OTA_ONGOING_UI_POS = EVENT_WIFI_UI_POS + letter_width,
+} UI_EVENTS_ID_POS;
+
 #define SN_KEY "SN"
 #define HW_NUM_KEY "HW_num"
 #define HW_REV_KEY "HW_revision"
@@ -135,6 +240,15 @@
 #define HUMIDIFIER_ACTIVE_TIME_KEY "Humidifier_active_time"
 #define GPRS_CONNECTIVITY_KEY "GPRS_connection"
 #define WIFI_CONNECTIVITY_KEY "WIFI_connection"
+#define HUMIDITY_ALARM_KEY "hum_alarm"
+#define TEMPERATURE_ALARM_KEY "temp_alarm"
+#define AIR_THERMAL_CUTOUT_ALARM_KEY "air_TC_alarm"
+#define SKIN_THERMAL_CUTOUT_ALARM_KEY "skin_TC_alarm"
+#define AIR_SENSOR_ISSUE_ALARM_KEY "air_sensor_alarm"
+#define SKIN_SENSOR_ISSUE_ALARM_KEY "skin_sensor_alarm"
+#define FAN_ISSUE_ALARM_KEY "fan_alarm"
+#define HEATER_ISSUE_ALARM_KEY "heater_alarm"
+#define POWER_SUPPLY_ALARM_KEY "power_alarm"
 
 #define CALIBRATION_RAW_TEMPERATURE_RANGE_SKIN_KEY "Cal_raw_range_skin_temp"
 #define CALIBRATION_RAW_TEMPERATURE_LOW_SKIN_KEY "Cal_raw_low_skin_temp"
@@ -227,10 +341,8 @@
 // configuration variables
 #define SWITCH_DEBOUNCE_TIME_MS 30 // encoder debouncing time
 #define timePressToSettings \
-  3000                        // in millis, time to press to go to settings window in UI
+  3000                         // in millis, time to press to go to settings window in UI
 #define DEBUG_LOOP_PRINT 60000 // in millis,
-
-
 
 #define DEFAULT_CONTROL_MODE AIR_CONTROL
 
@@ -242,8 +354,6 @@
 #define turnedOn 0     // transmit first turned ON with hardware verification
 #define room 1         // transmit room variables
 #define aliveRefresh 2 // message to let know that incubator is still ON
-
-
 
 // sensor variables
 #define defaultCurrentSamples 30
@@ -278,114 +388,7 @@
 #endif
 #define encPulseDebounce 200
 
-// User Interface display constants
-#define valuePosition 245
-#define separatorPosition 240
-#define unitPosition 315
-#define textFontSize 2 // text default size
-#define width_select 20
-#define TFT_HEIGHT_HEADING 34
-#define TFT_SEPARATOR_HEIGHT 4
-#define width_back 50
-#define side_gap 0
-#define letter_height 26
-#define letter_width 14
-#define logo 40
-#define arrow_height 6
-#define arrow_tail 5
-#define headint_text_height TFT_HEIGHT_HEADING / 5
-#define initialSensorsValue "XX"
-#define barThickness 3
-#define blinkTimeON 1000 // displayed text ON time
-#define blinkTimeOFF 100 // displayed text OFF time
-#define time_back_draw 255
-#define time_back_wait 255
-
 #define DEFAULT_AUTOLOCK ON
-
-// pages number in UI. Configuration and information will be displayed depending
-// on the page number
-
-typedef enum
-{
-  MAIN_MENU_PAGE = 1,
-  ACTUATORS_PROGRESS_PAGE,
-  SETTINGS_PAGE,
-  CALIBRATION_SENSORS_PAGE,
-  FIRST_POINT_CALIBRATION_PAGE,
-  SECOND_POINT_CALIBRATION_PAGE,
-  AUTO_CALIBRATION_PAGE,
-  FINE_TUNE_CALIBRATION_PAGE,
-} UI_PAGES;
-
-// languages numbers that will be called in language variable
-typedef enum
-{
-  SPANISH = 0,
-  ENGLISH,
-  FRENCH,
-  PORTUGUESE,
-  NUM_LANGUAGES,
-
-} UI_LANGUAGES;
-#define defaultLanguage ENGLISH    // Preset number configuration when booting for first time
-
-typedef enum
-{
-  NTC_BABY_MIN_ERROR = 0,
-  NTC_BABY_MAX_ERROR,
-  DIG_TEMP_ROOM_MIN_ERROR,
-  DIG_TEMP_ROOM_MAX_ERROR,
-  DIG_HUM_ROOM_MIN_ERROR,
-  DIG_HUM_ROOM_MAX_ERROR,
-  DIGITAL_SENSOR_NOTFOUND,
-  HEATER_CONSUMPTION_MIN_ERROR,
-  FAN_CONSUMPTION_MIN_ERROR,
-  PHOTOTHERAPY_CONSUMPTION_MIN_ERROR,
-  HUMIDIFIER_CONSUMPTION_MIN_ERROR,
-  HEATER_CONSUMPTION_MAX_ERROR,
-  FAN_CONSUMPTION_MAX_ERROR,
-  PHOTOTHERAPY_CONSUMPTION_MAX_ERROR,
-  HUMIDIFIER_CONSUMPTION_MAX_ERROR,
-  STANDBY_CONSUMPTION_MAX_ERROR,
-  DEFECTIVE_SCREEN,
-  DEFECTIVE_BUZZER,
-  DEFECTIVE_CURRENT_SENSOR,
-  UNCALIBRATED_SENSOR,
-} HW_ERROR_ID;
-
-typedef enum
-{
-  NO_ALARMS = 0,
-  HUMIDITY_ALARM,
-  TEMPERATURE_ALARM,
-  AIR_THERMAL_CUTOUT_ALARM,
-  SKIN_THERMAL_CUTOUT_ALARM,
-  AIR_SENSOR_ISSUE_ALARM,
-  SKIN_SENSOR_ISSUE_ALARM,
-  FAN_ISSUE_ALARM,
-  HEATER_ISSUE_ALARM,
-  POWER_SUPPLY_ALARM,
-  NUM_ALARMS,
-} ALARMS_ID;
-
-typedef enum
-{
-  EVENT_2G = 0,
-  EVENT_WIFI,
-  EVENT_SERVER_CONNECTION,
-  EVENT_OTA_ONGOING,
-} UI_EVENTS_ID;
-
-typedef enum
-{
-  EVENT_2G_UI_POS = 5,
-  EVENT_SERVER_CONNECTION_UI_POS = EVENT_2G_UI_POS + 2 * letter_width,
-  EVENT_WIFI_UI_POS = EVENT_SERVER_CONNECTION_UI_POS + letter_width,
-  EVENT_OTA_ONGOING_UI_POS = EVENT_WIFI_UI_POS + letter_width,
-} UI_EVENTS_ID_POS;
-
-
 
 // Graphic variables
 #define ERASE false
@@ -519,6 +522,8 @@ typedef struct
   float humidifier_active_time = false;
 
   bool alarmsEnabled = true;
+  bool alarmToReport[NUM_ALARMS];
+  bool previousAlarmReport;
 
   float fan_rpm = false;
   bool fanEncoderUpdate = false;
@@ -609,7 +614,7 @@ void clearDisplayedAlarm(byte alarm);
 void clearAlarmPendingToClear(byte alarm);
 char *alarmIDtoString(byte alarmID);
 
-void checkSetMessage(int UI_page,int UI_menu_rows);
+void checkSetMessage(int UI_page, int UI_menu_rows);
 
 bool updateRoomSensor();
 bool updateAmbientSensor();
