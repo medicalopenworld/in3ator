@@ -249,7 +249,7 @@ void setup()
   sharedSensorQueue = xQueueCreate(SENSOR_TEMP_QTY, sizeof(long));
   initGPIO();
 
-  if(!GPIORead(ENC_SWITCH))
+  if (!GPIORead(ENC_SWITCH))
   {
     goToSettings = true;
   }
@@ -311,10 +311,20 @@ void setup()
   EEPROM.writeString(EEPROM_THINGSBOARD_TOKEN, "ckGEZct8wPuHEhfiFC23");
   EEPROM.write(EEPROM_THINGSBOARD_PROVISIONED, true);
   EEPROM.commit();
+  digitalWrite(ACTUATORS_EN, HIGH);
 }
-
+long lastPWMIncrease = false;
+byte PWMSpeed = false;
 void loop()
 {
+  if (millis() - lastPWMIncrease > 5000)
+  {
+    lastPWMIncrease = millis();
+    PWMSpeed += 10;
+    Serial.println(PWMSpeed);
+    ledcWrite(FAN_PWM_CHANNEL, PWMSpeed);
+  }
+
   watchdogReload();
   updateData();
   vTaskDelay(pdMS_TO_TICKS(LOOP_TASK_PERIOD_MS));

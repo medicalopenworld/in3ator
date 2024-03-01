@@ -66,10 +66,10 @@ void PIDInit()
 void heaterPowerConsumptionCheck()
 {
   int heaterSafeMAXPWM_before = in3.heaterSafeMAXPWM;
-  if (millis() - lastHeaterPowerCheck > CURRENT_UPDATE_PERIOD_MS)
+  if (millis() - lastHeaterPowerCheck > CURRENT_CHECK_PERIOD_MS)
   {
     lastHeaterPowerCheck = millis();
-    if (in3.heater_current > HEATER_MAX_POWER_AMPS)
+    if (in3.heater_current > HEATER_MAX_POWER_AMPS || in3.system_current > HEATER_MAX_POWER_AMPS)
     {
       in3.heaterSafeMAXPWM -= HEATER_POWER_FACTOR_DECREASE;
       if (in3.heaterSafeMAXPWM < 0)
@@ -77,7 +77,7 @@ void heaterPowerConsumptionCheck()
         in3.heaterSafeMAXPWM = 0;
       }
     }
-    else if (in3.heater_current < HEATER_SAFE_POWER_AMPS)
+    else if (in3.heater_current < HEATER_SAFE_POWER_AMPS || in3.system_current < HEATER_SAFE_POWER_AMPS)
     {
       in3.heaterSafeMAXPWM += HEATER_POWER_FACTOR_INCREASE;
       if (in3.heaterSafeMAXPWM > HEATER_MAX_PWM)
@@ -162,24 +162,23 @@ void PIDHandler()
 
 void startPID(byte var)
 {
-  in3.heaterSafeMAXPWM = HEATER_MAX_PWM;
+  in3.heaterSafeMAXPWM = HEATER_START_PWM;
   switch (var)
   {
   case airPID:
-    airControlPID.SetOutputLimits(false, HEATER_MAX_PWM);
     airControlPID.SetTunings(Kp[airPID], false, Kd[airPID]);
     airControlPID.SetControllerDirection(DIRECT);
     airControlPID.SetSampleTime(PID_TEMPERATURE_SAMPLE_TIME);
     airControlPID.SetMode(AUTOMATIC);
-    airControlPID.SetOutputLimits(0, HEATER_MAX_PWM); // reset safe limits
+    airControlPID.SetOutputLimits(0, in3.heaterSafeMAXPWM); // reset safe limits
     break;
   case skinPID:
-    skinControlPID.SetOutputLimits(false, HEATER_MAX_PWM);
     skinControlPID.SetTunings(Kp[skinPID], false, Kd[skinPID]);
     skinControlPID.SetControllerDirection(DIRECT);
     airControlPID.SetSampleTime(PID_TEMPERATURE_SAMPLE_TIME);
     skinControlPID.SetMode(AUTOMATIC);
-    skinControlPID.SetOutputLimits(0, HEATER_MAX_PWM); // reset safe limits
+    skinControlPID.SetOutputLimits(0, in3.heaterSafeMAXPWM); // reset safe limits
+
     break;
   case humidityPID:
     humidifierStateChange = true;

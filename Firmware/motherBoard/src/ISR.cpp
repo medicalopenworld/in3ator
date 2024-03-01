@@ -169,7 +169,7 @@ void IRAM_ATTR encSwitchHandler()
                  buzzerRotaryEncoderTone);
       if (ongoingAlarms())
       {
-        // shutBuzzer();
+        shutBuzzer();
         disableAllAlarms();
       }
       // logI"[ENCODER] -> Pushed");

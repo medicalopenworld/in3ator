@@ -298,6 +298,7 @@ typedef enum
 #define NTC_SAMPLES_TEST 100
 #define DIGITAL_CURRENT_SENSOR_READ_PERIOD_MS 500
 #define CURRENT_UPDATE_PERIOD_MS 100 // in millis
+#define CURRENT_CHECK_PERIOD_MS 2000
 #define VOLTAGE_UPDATE_PERIOD_MS 50  // in millis
 #define UI_SENSOR_UPDATE_PERIOD_MS 1000
 
@@ -342,7 +343,7 @@ typedef enum
 #define SWITCH_DEBOUNCE_TIME_MS 30 // encoder debouncing time
 #define timePressToSettings \
   3000                         // in millis, time to press to go to settings window in UI
-#define DEBUG_LOOP_PRINT 60000 // in millis,
+#define DEBUG_LOOP_PRINT 1000 // in millis,
 
 #define DEFAULT_CONTROL_MODE AIR_CONTROL
 

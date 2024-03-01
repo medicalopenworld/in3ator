@@ -413,6 +413,10 @@ void resetAlarm(byte alarmID)
   logAlarm("[ALARM] ->" + String(alarmIDtoString(alarmID)) + " has been disable");
   alarmOnGoing[alarmID] = false;
   clearedAlarm[alarmID] = true;
+  if (!ongoingAlarms())
+  {
+    shutBuzzer();
+  }
 }
 
 void disableAllAlarms()
@@ -421,10 +425,6 @@ void disableAllAlarms()
   {
     if (alarmOnGoing[i])
     {
-      if (millis() - lastAlarmTrigger[i] > minsToMillis(ALARM_TIME_DELAY))
-      {
-        shutBuzzer();
-      }
       lastAlarmTrigger[i] = millis();
     }
   }
@@ -457,6 +457,10 @@ void checkAlarms()
                     lastAlarmTrigger[HUMIDITY_ALARM]);
     }
   }
+  // if (!ongoingAlarms())
+  // {
+  //   shutBuzzer();
+  // }
 }
 
 void powerSupplyCheck()

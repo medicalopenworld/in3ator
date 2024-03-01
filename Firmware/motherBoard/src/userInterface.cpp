@@ -171,11 +171,7 @@ void checkAlarmsToDisplay()
   {
     clearAlarmPendingToClear(alarmToClear);
     drawHeading(page, in3.serialNumber);
-    if (!ongoingAlarms())
-    {
-      shutBuzzer();
-    }
-    else
+    if (ongoingAlarms())
     {
       drawAlarmMessage(alarmIDtoString(activeAlarm()));
     }

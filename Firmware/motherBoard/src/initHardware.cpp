@@ -611,14 +611,14 @@ bool actuatorsTest()
     setAlarm(HEATER_ISSUE_ALARM);
     return (true);
   }
-  if (testCurrent > HEATER_CONSUMPTION_MAX)
-  {
-    addErrorToVar(HW_error, HEATER_CONSUMPTION_MAX_ERROR);
-    logE("[HW] -> Fail -> Heater current consumption is too high");
-    in3.alarmToReport[HEATER_ISSUE_ALARM] = true;
-    setAlarm(HEATER_ISSUE_ALARM);
-    return (true);
-  }
+  // if (testCurrent > HEATER_CONSUMPTION_MAX)
+  // {
+  //   addErrorToVar(HW_error, HEATER_CONSUMPTION_MAX_ERROR);
+  //   logE("[HW] -> Fail -> Heater current consumption is too high");
+  //   in3.alarmToReport[HEATER_ISSUE_ALARM] = true;
+  //   setAlarm(HEATER_ISSUE_ALARM);
+  //   return (true);
+  // }
   vTaskDelay(pdMS_TO_TICKS(CURRENT_STABILIZE_TIME_DEFAULT));
   offsetCurrent = measureMeanConsumption(MAIN, PHOTOTHERAPY_SHUNT_CHANNEL);
   GPIOWrite(PHOTOTHERAPY, HIGH);

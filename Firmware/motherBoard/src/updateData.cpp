@@ -111,7 +111,6 @@ extern bool autoLock; // setting that enables backlight switch OFF after a
 extern long
     lastbacklightHandler; // last time there was a encoder movement or pulse
 
-
 extern bool selected;
 extern char cstring[128];
 extern char *textToWrite;
@@ -396,6 +395,7 @@ void updateData()
         logI("[SENSORS] -> BATTERY voltage is: " + String(in3.BATTERY_voltage, 2) +
              " V");
       }
+      logI("[ALARMS] -> Alarms active: " + String(activeAlarm()));
       // logI("[SENSORS] -> ON_OFF: " + String(GPIORead(ON_OFF_SWITCH)));
       logI("[LATENCY] -> Looped " +
            String(loopCounts * 1000 / (millis() - lastDebugUpdate)) +
