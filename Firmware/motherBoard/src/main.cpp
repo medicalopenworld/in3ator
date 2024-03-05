@@ -317,14 +317,6 @@ long lastPWMIncrease = false;
 byte PWMSpeed = false;
 void loop()
 {
-  if (millis() - lastPWMIncrease > 5000)
-  {
-    lastPWMIncrease = millis();
-    PWMSpeed += 10;
-    Serial.println(PWMSpeed);
-    ledcWrite(FAN_PWM_CHANNEL, PWMSpeed);
-  }
-
   watchdogReload();
   updateData();
   vTaskDelay(pdMS_TO_TICKS(LOOP_TASK_PERIOD_MS));
