@@ -767,10 +767,49 @@ void initDebug()
        String(HWversion) + ", SN: " + String(in3.serialNumber));
 }
 
+void security_check_reboot_cause()
+{
+  in3.resetReason = esp_reset_reason();
+  switch (in3.resetReason)
+  {
+  case ESP_RST_POWERON: // Power-on reset
+    logI("[HW] -> Power-on reset");
+    break;
+  case ESP_RST_EXT: // Reset by external pin
+    logI("[HW] -> Reset by external pin");
+    break;
+  case ESP_RST_SW: // Software reset via esp_restart
+    logI("[HW] -> Software reset");
+    break;
+  case ESP_RST_PANIC: // Software reset due to exception/panic
+    logI("[HW] -> Reset due to exception/panic");
+    break;
+  case ESP_RST_INT_WDT: // Reset (software or hardware) due to interrupt watchdog
+    logI("[HW] -> Reset due to interrupt watchdog");
+    break;
+  case ESP_RST_TASK_WDT: // Reset due to task watchdog
+    logI("[HW] -> Reset due to task watchdog");
+    break;
+  case ESP_RST_WDT: // Reset due to other watchdogs
+    logI("[HW] -> Reset due to other watchdogs");
+    break;
+  case ESP_RST_DEEPSLEEP: // Reset after exiting deep sleep mode
+    logI("[HW] -> Reset after exiting deep sleep mode");
+    break;
+  case ESP_RST_BROWNOUT: // Brownout reset (voltage too low)
+    logI("[HW] -> Brownout reset (voltage too low)");
+    break;
+  // Add any other reset reasons you are interested in
+  default:
+    logI("Reset for another reason");
+  }
+}
+
 void initHardware(bool printOutputTest)
 {
   initDebug();
   // brownOutConfig(false);
+  security_check_reboot_cause();
   initEEPROM();
   initSensors();
   logI("[HW] -> Initialiting hardware");

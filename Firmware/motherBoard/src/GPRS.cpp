@@ -345,11 +345,10 @@ void GPRSSetPostPeriod()
 void GPRSProvisionResponse(const Provision_Data &data)
 {
   logCon("[GPRS] -> Received device provision response");
-  int jsonSize = JSON_STRING_SIZE(measureJson(data));
-
+  const size_t jsonSize = Helper::Measure_Json(data);
   char buffer[jsonSize];
   serializeJson(data, buffer, jsonSize);
-  logCon("[GPRS] -> " + String(buffer));
+  // logCon("[GPRS] -> " + String(buffer));
   if (strncmp(data["status"], "SUCCESS", strlen("SUCCESS")) != 0)
   {
     logCon("[GPRS] -> Provision response contains the error: ");
@@ -406,25 +405,22 @@ void TBProvision()
     if (!tb_provision.connect(THINGSBOARD_SERVER, "provision",
                               THINGSBOARD_PORT))
     {
-      logI("Failed to connect");
+      logCon("Failed to connect");
       return;
     }
-    const Provision_Callback provisionCallback(
-        Access_Token(), &GPRSProvisionResponse, PROVISION_DEVICE_KEY,
-        PROVISION_DEVICE_SECRET, GPRS.CCID.c_str());
-    GPRS.provision_request_sent =
-        tb_provision.Provision_Request(provisionCallback);
+    const Provision_Callback provisionCallback(Access_Token(), &GPRSProvisionResponse, PROVISION_DEVICE_KEY, PROVISION_DEVICE_SECRET, GPRS.CCID.c_str());
+    GPRS.provision_request_sent = tb_provision.Provision_Request(provisionCallback);
   }
   else
   {
     GPRS.provision_request_sent = true;
     if (GPRS.provision_request_processed)
     {
-      logI("Provision request was sent!");
+      logCon("Provision request was sent!");
     }
     else
     {
-      logI("Provision request FAILED!");
+      logCon("Provision request FAILED!");
     }
   }
 }
@@ -440,7 +436,7 @@ void addIntVariableToTelemetryJSON(JsonObject &json, const char *key,
 
 void GPRSCheckOTA()
 {
-  logI("Checking GPRS firwmare Update...");
+  logCon("Checking GPRS firwmare Update...");
   if (!currentFWSent)
   {
     // Firmware state send at the start of the firmware, to inform the cloud about the current firmware and that it was installed correctly,
@@ -523,6 +519,7 @@ void addConfigTelemetriesToGPRSJSON()
 {
   addAlarmTelemetriesToGPRSJSON();
   addVariableToTelemetryGPRSJSON[SN_KEY] = in3.serialNumber;
+  addVariableToTelemetryGPRSJSON[SYSTEM_RESET_REASON] = in3.resetReason;
   addVariableToTelemetryGPRSJSON[HW_NUM_KEY] = HW_NUM;
   addVariableToTelemetryGPRSJSON[HW_REV_KEY] = String(HW_REVISION);
   addVariableToTelemetryGPRSJSON[FW_VERSION_KEY] = FWversion;

@@ -20,6 +20,7 @@
 #include <Filters.h>
 #include <RotaryEncoder.h>
 #include <Wire.h>
+#include "esp_system.h"
 
 #include <AH/Timing/MillisMicrosTimer.hpp>
 #include <Filters/Butterworth.hpp>
@@ -197,6 +198,7 @@ typedef enum
 #define IMEI_KEY "IMEI"
 #define APN_KEY "APN"
 #define COP_KEY "COP"
+#define SYSTEM_RESET_REASON "RST_reason"
 #define SYS_CURR_STANDBY_TEST_KEY "SYS_current_stanby_test"
 #define HEATER_CURR_TEST_KEY "Heater_current_test"
 #define FAN_CURR_TEST_KEY "Fan_current_test"
@@ -506,6 +508,7 @@ typedef struct
   double BATTERY_current = false;
   double BATTERY_voltage = false;
   int serialNumber = false;
+  int resetReason = false;
 
   bool controlMode = DEFAULT_CONTROL_MODE;
   bool temperatureControl = false;
@@ -655,6 +658,7 @@ void initEEPROM();
 void drawHardwareErrorMessage(long error, bool criticalError,
                               bool calibrationError);
 void initAlarms();
+void security_check_reboot_cause();
 void IRAM_ATTR encSwitchHandler();
 void IRAM_ATTR encoderISR();
 void IRAM_ATTR fanEncoderISR();

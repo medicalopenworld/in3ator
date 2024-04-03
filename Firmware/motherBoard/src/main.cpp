@@ -308,13 +308,11 @@ void setup()
     ;
   ;
   logI("UI task successfully created!\n");
-  EEPROM.writeString(EEPROM_THINGSBOARD_TOKEN, "ckGEZct8wPuHEhfiFC23");
-  EEPROM.write(EEPROM_THINGSBOARD_PROVISIONED, true);
-  EEPROM.commit();
-  digitalWrite(ACTUATORS_EN, HIGH);
+  // EEPROM.writeString(EEPROM_THINGSBOARD_TOKEN, "OrfyuWllrB2ersiZUM8v");
+  // EEPROM.write(EEPROM_THINGSBOARD_PROVISIONED, true);
+  // EEPROM.commit();
 }
-long lastPWMIncrease = false;
-byte PWMSpeed = false;
+
 void loop()
 {
   watchdogReload();

@@ -1,7 +1,6 @@
 
 #ifndef _WIFI_OTA_H_
 #define _WIFI_OTA_H_
-// #define THINGSBOARD_ENABLE_DYNAMIC 1
 
 #include <Arduino.h>
 

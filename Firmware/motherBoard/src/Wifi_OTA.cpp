@@ -347,6 +347,7 @@ void addConfigTelemetriesToWIFIJSON()
 {
   addAlarmTelemetriesToWIFIJSON();
   addVariableToTelemetryWIFIJSON[SN_KEY] = in3.serialNumber;
+  addVariableToTelemetryWIFIJSON[SYSTEM_RESET_REASON] = in3.resetReason;
   addVariableToTelemetryWIFIJSON[HW_NUM_KEY] = HW_NUM;
   addVariableToTelemetryWIFIJSON[HW_REV_KEY] = String(HW_REVISION);
   addVariableToTelemetryWIFIJSON[FW_VERSION_KEY] = FWversion;
