@@ -43,9 +43,6 @@ Arduino_MQTT_Client mqttClientGPRS(client);
 // tb(client);
 
 // Initialize ThingsBoard client provision instance
-ThingsBoard tb_provision(mqttClientGPRS, MAX_MESSAGE_SIZE);
-
-// Initialize ThingsBoard client provision instance
 ThingsBoard tb(mqttClientGPRS, MAX_MESSAGE_SIZE);
 
 StaticJsonDocument<JSON_OBJECT_SIZE(THINGSBOARD_FIELDS_AMOUNT)> GPRS_JSON;
@@ -388,41 +385,29 @@ void GPRSProvisionResponse(const Provision_Data &data)
     logCon("[GPRS] -> Unexpected provision credentialsType");
     return;
   }
-  if (tb_provision.connected())
+  if (tb.connected())
   {
-    tb_provision.disconnect();
+    tb.disconnect();
   }
   GPRS.provision_request_processed = true;
 }
 
 void TBProvision()
 {
-  if (!tb_provision.connected())
+  if (!tb.connected())
   {
-    // Connect to the ThingsBoard
-    logCon("[GPRS] -> Sending provision request to: " +
-           String(THINGSBOARD_SERVER));
-    if (!tb_provision.connect(THINGSBOARD_SERVER, "provision",
+    if (!tb.connect(THINGSBOARD_SERVER, "provision",
                               THINGSBOARD_PORT))
     {
       logCon("Failed to connect");
       return;
     }
-    const Provision_Callback provisionCallback(Access_Token(), &GPRSProvisionResponse, PROVISION_DEVICE_KEY, PROVISION_DEVICE_SECRET, GPRS.CCID.c_str());
-    GPRS.provision_request_sent = tb_provision.Provision_Request(provisionCallback);
   }
-  else
-  {
-    GPRS.provision_request_sent = true;
-    if (GPRS.provision_request_processed)
-    {
-      logCon("Provision request was sent!");
-    }
-    else
-    {
-      logCon("Provision request FAILED!");
-    }
-  }
+  // Connect to the ThingsBoard
+  logCon("[GPRS] -> Sending provision request to: " +
+         String(THINGSBOARD_SERVER));
+  const Provision_Callback provisionCallback(Access_Token(), &GPRSProvisionResponse, PROVISION_DEVICE_KEY, PROVISION_DEVICE_SECRET, GPRS.CCID.c_str());
+  GPRS.provision_request_sent = tb.Provision_Request(provisionCallback);
 }
 
 void addIntVariableToTelemetryJSON(JsonObject &json, const char *key,
@@ -689,7 +674,7 @@ void GPRSPost()
     {
       TBProvision();
     }
-    tb_provision.loop();
+    tb.loop();
   }
   else
   {
