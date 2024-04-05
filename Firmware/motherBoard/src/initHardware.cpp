@@ -369,18 +369,20 @@ void initCurrentSensor(bool currentSensor)
   }
 }
 
-void initPowerAlarm() {}
-
 void addErrorToVar(long &errorVar, int error) { errorVar |= (1 << error); }
 
 void initSensors()
 {
-  long error = HW_error;
-  logI("[HW] -> Initialiting sensors");
   initCurrentSensor(MAIN);
   initCurrentSensor(SECUNDARY);
   initRoomSensor();
   initAmbientSensor();
+}
+
+void testSensors()
+{
+  long error = HW_error;
+  logI("[HW] -> Initialiting sensors");
   // sensors verification
   for (int i = 0; i <= NTC_SAMPLES_TEST; i++)
   {
@@ -431,7 +433,7 @@ void initSensors()
   }
 }
 
-void standByCurrentTest()
+void testStandByCurrent()
 {
   long error = HW_error;
   float testCurrent;
@@ -460,9 +462,7 @@ void standByCurrentTest()
   in3.system_current_standby_test = testCurrent;
 }
 
-void initSenseCircuit() { standByCurrentTest(); }
-
-void initializeTFT()
+void initTFT()
 {
   // tft.setController(DISPLAY_CONTROLLER_IC);
   // tft.begin(DISPLAY_SPI_CLK);
@@ -494,7 +494,7 @@ void initializeTFT()
   // Serial.println(x, HEX);
 }
 
-void initTFT()
+void testTFT()
 {
   long error = HW_error;
   float testCurrent, offsetCurrent;
@@ -514,7 +514,6 @@ void initTFT()
   // GPIOWrite(TFT_RST, HIGH); // alternating HIGH/LOW
   // delay(5);
 #endif
-  initializeTFT();
   loadlogo();
   if (BACKLIGHT_CONTROL == DIRECT_BACKLIGHT_CONTROL)
   {
@@ -560,7 +559,7 @@ void initTFT()
   in3.display_current_test = testCurrent;
 }
 
-void initBuzzer()
+void testBuzzer()
 {
   long error = HW_error;
   float testCurrent, offsetCurrent;
@@ -765,6 +764,11 @@ void initDebug()
   vTaskDelay(pdMS_TO_TICKS(CURRENT_STABILIZE_TIME_DEFAULT));
   logI("in3ator debug uart, version v" + String(FWversion) + "/" +
        String(HWversion) + ", SN: " + String(in3.serialNumber));
+
+  if (WIFI_EN)
+  {
+    wifiInit();
+  }
 }
 
 void security_check_reboot_cause()
@@ -772,6 +776,9 @@ void security_check_reboot_cause()
   in3.resetReason = esp_reset_reason();
   switch (in3.resetReason)
   {
+  case ESP_RST_BROWNOUT: // Brownout reset (voltage too low)
+    logI("[HW] -> Brownout reset (voltage too low)");
+    break;
   case ESP_RST_POWERON: // Power-on reset
     logI("[HW] -> Power-on reset");
     break;
@@ -781,24 +788,17 @@ void security_check_reboot_cause()
   case ESP_RST_SW: // Software reset via esp_restart
     logI("[HW] -> Software reset");
     break;
-  case ESP_RST_PANIC: // Software reset due to exception/panic
-    logI("[HW] -> Reset due to exception/panic");
-    break;
-  case ESP_RST_INT_WDT: // Reset (software or hardware) due to interrupt watchdog
-    logI("[HW] -> Reset due to interrupt watchdog");
-    break;
-  case ESP_RST_TASK_WDT: // Reset due to task watchdog
-    logI("[HW] -> Reset due to task watchdog");
-    break;
-  case ESP_RST_WDT: // Reset due to other watchdogs
-    logI("[HW] -> Reset due to other watchdogs");
-    break;
   case ESP_RST_DEEPSLEEP: // Reset after exiting deep sleep mode
     logI("[HW] -> Reset after exiting deep sleep mode");
     break;
-  case ESP_RST_BROWNOUT: // Brownout reset (voltage too low)
-    logI("[HW] -> Brownout reset (voltage too low)");
+  case ESP_RST_PANIC:    // Software reset due to exception/panic
+  case ESP_RST_INT_WDT:  // Reset (software or hardware) due to interrupt watchdog
+  case ESP_RST_TASK_WDT: // Reset due to task watchdog
+  case ESP_RST_WDT:      // Reset due to other watchdogs
+    logI("[HW] -> Reset due to error");
+    in3.restoreState = true;
     break;
+
   // Add any other reset reasons you are interested in
   default:
     logI("Reset for another reason");
@@ -808,22 +808,22 @@ void security_check_reboot_cause()
 void initHardware(bool printOutputTest)
 {
   initDebug();
-  // brownOutConfig(false);
+  logI("[HW] -> Initialiting hardware");
   security_check_reboot_cause();
   initEEPROM();
   initSensors();
-  logI("[HW] -> Initialiting hardware");
-  initSenseCircuit();
   initTFT();
-  initPowerAlarm();
-  initBuzzer();
   initInterrupts();
   PIDInit();
-  in3.HW_critical_error = initActuators();
-  if (WIFI_EN)
+  if (!in3.restoreState)
   {
-    wifiInit();
+    testStandByCurrent();
+    testTFT();
+    testBuzzer();
   }
+  ledcWrite(SCREENBACKLIGHT_PWM_CHANNEL, BACKLIGHT_POWER_DEFAULT);
+  testSensors();
+  in3.HW_critical_error = initActuators();
   if (!HW_error)
   {
     logI("[HW] -> HARDWARE OK");
@@ -842,7 +842,10 @@ void initHardware(bool printOutputTest)
     while (GPIORead(ENC_SWITCH))
       ;
   }
-  buzzerTone(2, buzzerStandbyToneDuration, buzzerStandbyTone);
+  if (!in3.restoreState)
+  {
+    buzzerTone(2, buzzerStandbyToneDuration, buzzerStandbyTone);
+  }
   watchdogInit(WDT_TIMEOUT);
   initAlarms();
   GPIOWrite(ACTUATORS_EN, LOW);

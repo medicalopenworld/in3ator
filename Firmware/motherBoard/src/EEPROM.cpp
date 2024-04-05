@@ -90,7 +90,7 @@ void loaddefaultValues()
   EEPROM.write(EEPROM_WIFI_EN, WIFI_EN);
   EEPROM.write(EEPROM_LANGUAGE, in3.language);
   EEPROM.write(EEPROM_CONTROL_MODE, in3.controlMode);
-  EEPROM.write(EEPROM_DESIRED_CONTROL_MODE, in3.desiredControlTemperature);
+  EEPROM.writeFloat(EEPROM_DESIRED_CONTROL_TEMPERATURE, in3.desiredControlTemperature);
   EEPROM.commit();
 }
 
@@ -138,8 +138,33 @@ void recapVariables()
   in3.serialNumber = EEPROM.read(EEPROM_SERIAL_NUMBER);
   WIFI_EN = EEPROM.read(EEPROM_WIFI_EN);
   in3.controlMode = EEPROM.read(EEPROM_CONTROL_MODE);
-  in3.desiredControlTemperature = EEPROM.read(EEPROM_DESIRED_CONTROL_MODE);
+  in3.desiredControlTemperature = EEPROM.readFloat(EEPROM_DESIRED_CONTROL_TEMPERATURE);
   in3.desiredControlHumidity = EEPROM.read(EEPROM_DESIRED_CONTROL_HUMIDITY);
+
+  if (in3.restoreState)
+  {
+    in3.actuation = EEPROM.read(EEPROM_CONTROL_ACTIVE);
+    switch (in3.actuation)
+    {
+    case CONTROL_TEMPERATURE:
+      in3.temperatureControl = true;
+      in3.humidityControl = false;
+      break;
+    case CONTROL_HUMIDITY:
+      in3.temperatureControl = false;
+      in3.humidityControl = true;
+      break;
+    case CONTROL_TEMP_AND_HUMIDITY:
+      in3.temperatureControl = true;
+      in3.humidityControl = true;
+      break;
+    default:
+      in3.temperatureControl = false;
+      in3.humidityControl = false;
+      in3.restoreState = false;
+      break;
+    }
+  }
 }
 
 void saveCalibrationToEEPROM()

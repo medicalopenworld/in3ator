@@ -219,13 +219,20 @@ void security_Task(void *pvParameters)
 
 void UI_Task(void *pvParameters)
 {
-  if (goToSettings)
+  if (in3.restoreState)
   {
-    UI_settings();
+    UI_actuatorsProgress();
   }
   else
   {
-    UI_mainMenu();
+    if (goToSettings)
+    {
+      UI_settings();
+    }
+    else
+    {
+      UI_mainMenu();
+    }
   }
   for (;;)
   {

@@ -317,7 +317,7 @@ void userInterfaceHandler(int UI_page)
               updateUIData = false;
             }
           }
-          EEPROM.write(EEPROM_DESIRED_CONTROL_MODE,
+          EEPROM.writeFloat(EEPROM_DESIRED_CONTROL_TEMPERATURE,
                        in3.desiredControlTemperature);
           EEPROM.commit();
           break;

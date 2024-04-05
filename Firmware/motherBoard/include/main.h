@@ -111,6 +111,10 @@
 // pages number in UI. Configuration and information will be displayed depending
 // on the page number
 
+#define CONTROL_TEMPERATURE 1
+#define CONTROL_HUMIDITY 2
+#define CONTROL_TEMP_AND_HUMIDITY 3
+
 typedef enum
 {
   MAIN_MENU_PAGE = 1,
@@ -301,7 +305,7 @@ typedef enum
 #define DIGITAL_CURRENT_SENSOR_READ_PERIOD_MS 500
 #define CURRENT_UPDATE_PERIOD_MS 100 // in millis
 #define CURRENT_CHECK_PERIOD_MS 2000
-#define VOLTAGE_UPDATE_PERIOD_MS 50  // in millis
+#define VOLTAGE_UPDATE_PERIOD_MS 50 // in millis
 #define UI_SENSOR_UPDATE_PERIOD_MS 1000
 
 // buzzer variables
@@ -323,8 +327,9 @@ typedef enum
 #define EEPROM_LANGUAGE 30
 #define EEPROM_SERIAL_NUMBER 40
 #define EEPROM_WIFI_EN 50
+#define EEPROM_CONTROL_ACTIVE 60
 #define EEPROM_CONTROL_MODE 70
-#define EEPROM_DESIRED_CONTROL_MODE 80
+#define EEPROM_DESIRED_CONTROL_TEMPERATURE 80
 #define EEPROM_DESIRED_CONTROL_HUMIDITY 90
 #define EEPROM_RAW_SKIN_TEMP_LOW_CORRECTION 100
 #define EEPROM_RAW_SKIN_TEMP_RANGE_CORRECTION 110
@@ -344,7 +349,7 @@ typedef enum
 // configuration variables
 #define SWITCH_DEBOUNCE_TIME_MS 30 // encoder debouncing time
 #define timePressToSettings \
-  3000                         // in millis, time to press to go to settings window in UI
+  3000                        // in millis, time to press to go to settings window in UI
 #define DEBUG_LOOP_PRINT 1000 // in millis,
 
 #define DEFAULT_CONTROL_MODE AIR_CONTROL
@@ -509,6 +514,8 @@ typedef struct
   double BATTERY_voltage = false;
   int serialNumber = false;
   int resetReason = false;
+  bool restoreState = false;
+  int actuation = false;
 
   bool controlMode = DEFAULT_CONTROL_MODE;
   bool temperatureControl = false;
