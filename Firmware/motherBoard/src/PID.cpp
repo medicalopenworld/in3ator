@@ -186,8 +186,8 @@ void startPID(byte var)
     humidityControlPID.SetTunings(Kp[humidityPID], false, Kd[humidityPID]);
     humidityControlPID.SetControllerDirection(DIRECT);
     humidityControlPID.SetOutputLimits(
-        humidifierTimeCycle * humidifierDutyCycleMin / 100,
-        humidifierTimeCycle * humidifierDutyCycleMax / 100);
+        humidifierTimeCycle * HUMIDIFIER_DUTY_CYCLE_MIN / 100,
+        humidifierTimeCycle * HUMIDIFIER_DUTY_CYCLE_MAX / 100);
     airControlPID.SetSampleTime(PID_HUMIDITY_SAMPLE_TIME);
     humidityControlPID.SetMode(AUTOMATIC);
     break;

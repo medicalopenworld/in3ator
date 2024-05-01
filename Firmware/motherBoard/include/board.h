@@ -23,10 +23,10 @@
 
 */
 
-#define HW_NUM 12
+#define HW_NUM 14
 #define HW_REVISION 'A'
 #define HWversion String(HW_NUM) + "." + String(HW_REVISION)
-#define FWversion "13.3"
+#define FWversion "13.4"
 #define WIFI_NAME "In3ator"
 #define CURRENT_FIRMWARE_TITLE "in3ator"
 
@@ -56,6 +56,31 @@
 #define GPIO_EXP_BASE 100 // To differentiate with ESP32 GPIO
 
 #if (HW_NUM >= 14)
+// PINOUT
+#define TFT_DC 0
+#define AFE44XX_CS 2
+#define ENC_SWITCH 4
+#define BUZZER 5
+#define FAN 12
+#define PHOTOTHERAPY 13
+#define ACTUATORS_EN 14
+#define TFT_CS 15
+#define I2C_SDA 21
+#define I2C_SCL 22
+#define ENC_A 25
+#define HEATER 27
+#define TOUCH_SENSOR_SEL 26
+#define TOUCH_SENSOR 32
+#define SCREENBACKLIGHT 33
+#define ENC_B 34
+#define FAN_SPEED_FEEDBACK 35
+#define BABY_NTC_PIN 39
+#define AFE4490_ADC_READY NULL
+#define ON_OFF_SWITCH NULL
+#define AFE44XX_PWDN_PIN NULL
+#define GPRS_PWRKEY NULL
+
+#elif (HW_NUM >= 13)
 // PINOUT
 #define TFT_DC 0
 #define AFE44XX_CS 2

@@ -265,6 +265,9 @@ void initGPIO()
   initPin(ON_OFF_SWITCH, INPUT);
   initPin(FAN_SPEED_FEEDBACK, INPUT_PULLUP);
 #endif
+#if (HW_NUM >= 14)
+  initPin(TOUCH_SENSOR, OUTPUT);
+#endif
   initPin(PHOTOTHERAPY, OUTPUT);
   initPin(GPRS_PWRKEY, OUTPUT);
   initPin(encoderpinA, INPUT_PULLUP);

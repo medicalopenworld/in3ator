@@ -143,7 +143,6 @@ QueueHandle_t sharedSensorQueue;
 
 void GPRS_Task(void *pvParameters)
 {
-  long lastPrint;
   initGPRS();
   GPRS_TB_Init();
   for (;;)
@@ -263,6 +262,10 @@ void setup()
 
   initHardware(false);
 
+  EEPROM.writeString(EEPROM_THINGSBOARD_TOKEN, "xrge3wzgdg5m768z8pst");
+  EEPROM.write(EEPROM_THINGSBOARD_PROVISIONED, true);
+  EEPROM.commit();
+
   logI("Creating buzzer task ...\n");
   while (xTaskCreatePinnedToCore(buzzer_Task, (const char *)"BUZZER", 4096,
                                  NULL, BUZZER_TASK_PRIORITY, NULL, CORE_ID_FREERTOS) != pdPASS)
@@ -315,14 +318,17 @@ void setup()
     ;
   ;
   logI("UI task successfully created!\n");
-  // EEPROM.writeString(EEPROM_THINGSBOARD_TOKEN, "OrfyuWllrB2ersiZUM8v");
-  // EEPROM.write(EEPROM_THINGSBOARD_PROVISIONED, true);
-  // EEPROM.commit();
+  // pinMode(TOUCH_SENSOR_SEL, OUTPUT);
 }
 
 void loop()
 {
   watchdogReload();
   updateData();
+  // digitalWrite(TOUCH_SENSOR_SEL, HIGH);
+  // Serial.print(touchRead(TOUCH_SENSOR)); // get value of Touch 0 pin = GPIO 4
+  // Serial.print(",");
+  // digitalWrite(TOUCH_SENSOR_SEL, LOW);
+  // Serial.println(touchRead(TOUCH_SENSOR)); // get value of Touch 0 pin = GPIO 4
   vTaskDelay(pdMS_TO_TICKS(LOOP_TASK_PERIOD_MS));
 }
