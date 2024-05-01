@@ -377,9 +377,8 @@ typedef enum
 #define ROOM_SENSOR_I2C_ADDRESS 0x70
 
 // #define system constants
-#define humidifierDutyCycleMax \
-  100                            // maximum humidity cycle in heater to be set
-#define humidifierDutyCycleMin 0 // minimum humidity cycle in heater to be set
+#define HUMIDIFIER_DUTY_CYCLE_MAX 95 // maximum humidity cycle in heater to be set
+#define HUMIDIFIER_DUTY_CYCLE_MIN 0 // minimum humidity cycle in heater to be set
 
 #define stepTemperatureIncrement 0.1 // maximum allowed temperature to be set
 #define stepHumidityIncrement 5      // maximum allowed temperature to be set
