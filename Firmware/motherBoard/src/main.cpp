@@ -143,6 +143,7 @@ QueueHandle_t sharedSensorQueue;
 
 void GPRS_Task(void *pvParameters)
 {
+  long lastPrint;
   initGPRS();
   GPRS_TB_Init();
   for (;;)
@@ -262,9 +263,10 @@ void setup()
 
   initHardware(false);
 
-  EEPROM.writeString(EEPROM_THINGSBOARD_TOKEN, "xrge3wzgdg5m768z8pst");
-  EEPROM.write(EEPROM_THINGSBOARD_PROVISIONED, true);
-  EEPROM.commit();
+  // EEPROM.writeString(EEPROM_THINGSBOARD_TOKEN, "e2BH7oJgkTUxSHdPIDtU"); //8944477200000012659
+  // EEPROM.writeString(EEPROM_THINGSBOARD_TOKEN, "QtLydi9CVbrjCV9ODRMh"); //8944477200000012865
+  // EEPROM.write(EEPROM_THINGSBOARD_PROVISIONED, true);
+  // EEPROM.commit();
 
   logI("Creating buzzer task ...\n");
   while (xTaskCreatePinnedToCore(buzzer_Task, (const char *)"BUZZER", 4096,
@@ -318,6 +320,13 @@ void setup()
     ;
   ;
   logI("UI task successfully created!\n");
+
+  // Serial.begin(115200);
+  // charger.setChargeVoltageLimit(14.4);
+  // charger.setInputCurrentLimit(3);
+  // charger.writeByte(REG18_NTC_Control_1, 0x55);
+  // charger.writeByte(REG0E_Timer_Control, 0);
+  // charger.setChargeCurrentLimit(2.0);
   // pinMode(TOUCH_SENSOR_SEL, OUTPUT);
 }
 

@@ -40,6 +40,7 @@
 #include "esp32/ulp.h"
 #include "in3ator_humidifier.h"
 #include "board.h"
+#include <BQ25792_Driver.h>
 
 #include <Espressif_Updater.h>
 #include <Espressif_MQTT_Client.h>
@@ -587,6 +588,7 @@ void alarmTimerStart();
 void timeTrackHandler();
 
 bool ongoingCriticalAlarm();
+bool ongoingCriticalWiringAlarm();
 void setAlarm(byte alarmID);
 void resetAlarm(byte alarmID);
 

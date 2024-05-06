@@ -113,7 +113,7 @@ void PIDHandler()
       airControlPID.SetTunings(Kp[airPID], Ki[airPID], Kd[airPID]);
     }
     airControlPID.Compute();
-    ledcWrite(HEATER_PWM_CHANNEL, HeaterPIDOutput * ongoingCriticalAlarm());
+    ledcWrite(HEATER_PWM_CHANNEL, HeaterPIDOutput * !ongoingCriticalAlarm());
   }
   if (skinControlPID.GetMode() == AUTOMATIC)
   {
@@ -123,7 +123,7 @@ void PIDHandler()
       skinControlPID.SetTunings(Kp[skinPID], Ki[skinPID], Kd[skinPID]);
     }
     skinControlPID.Compute();
-    ledcWrite(HEATER_PWM_CHANNEL, HeaterPIDOutput * ongoingCriticalAlarm());
+    ledcWrite(HEATER_PWM_CHANNEL, HeaterPIDOutput * !ongoingCriticalAlarm());
   }
   if (humidityControlPID.GetMode() == AUTOMATIC)
   {

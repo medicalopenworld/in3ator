@@ -327,11 +327,17 @@ bool ongoingAlarms()
 
 bool ongoingCriticalAlarm()
 {
-  return (!(alarmOnGoing[AIR_THERMAL_CUTOUT_ALARM] ||
+  return (alarmOnGoing[AIR_THERMAL_CUTOUT_ALARM] ||
             alarmOnGoing[SKIN_THERMAL_CUTOUT_ALARM] ||
             alarmOnGoing[AIR_SENSOR_ISSUE_ALARM] ||
             alarmOnGoing[SKIN_SENSOR_ISSUE_ALARM] ||
-            alarmOnGoing[HEATER_ISSUE_ALARM] || alarmOnGoing[POWER_SUPPLY_ALARM]));
+            alarmOnGoing[HEATER_ISSUE_ALARM] || alarmOnGoing[POWER_SUPPLY_ALARM]);
+  // return (true);
+}
+
+bool ongoingCriticalWiringAlarm()
+{
+  return (alarmOnGoing[HEATER_ISSUE_ALARM] || alarmOnGoing[POWER_SUPPLY_ALARM]);
   // return (true);
 }
 
