@@ -40,7 +40,7 @@
 #include "esp32/ulp.h"
 #include "in3ator_humidifier.h"
 #include "board.h"
-#include <BQ25792_Driver.h>
+// #include <BQ25792_Driver.h>
 
 #include <Espressif_Updater.h>
 #include <Espressif_MQTT_Client.h>
@@ -53,8 +53,8 @@
 #define LOG_ALARMS false
 
 #define WDT_TIMEOUT 75
-#define HEATER_MAX_POWER_AMPS 10.5
-#define HEATER_SAFE_POWER_AMPS 9.5
+#define HEATER_MAX_POWER_AMPS 12.5
+#define HEATER_SAFE_POWER_AMPS 11.5
 #define HEATER_POWER_FACTOR_INCREASE 5
 #define HEATER_POWER_FACTOR_DECREASE 5
 

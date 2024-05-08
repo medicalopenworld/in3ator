@@ -253,7 +253,7 @@ void TimeTrack_Task(void *pvParameters)
 void setup()
 {
 
-  sharedSensorQueue = xQueueCreate(SENSOR_TEMP_QTY, sizeof(long));
+  // sharedSensorQueue = xQueueCreate(SENSOR_TEMP_QTY, sizeof(long));
   initGPIO();
 
   if (!GPIORead(ENC_SWITCH))
