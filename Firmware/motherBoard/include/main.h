@@ -3,7 +3,7 @@
 
 #define TINY_GSM_MODEM_SIM800
 #define modemSerial Serial2
-#define THINGSBOARD_ENABLE_DYNAMIC 1
+// #define THINGSBOARD_ENABLE_DYNAMIC 1
 // #define THINGSBOARD_ENABLE_STREAM_UTILS 1
 #include <Arduino.h>
 #include <TinyGsmClient.h>
@@ -308,6 +308,7 @@ typedef enum
 #define CURRENT_CHECK_PERIOD_MS 2000
 #define VOLTAGE_UPDATE_PERIOD_MS 50 // in millis
 #define UI_SENSOR_UPDATE_PERIOD_MS 1000
+#define POWER_SUPPLY_CHECK_PERIOD 2000 // 2 secs
 
 // buzzer variables
 #define buzzerStandbyPeriod \
@@ -379,7 +380,7 @@ typedef enum
 
 // #define system constants
 #define HUMIDIFIER_DUTY_CYCLE_MAX 95 // maximum humidity cycle in heater to be set
-#define HUMIDIFIER_DUTY_CYCLE_MIN 0 // minimum humidity cycle in heater to be set
+#define HUMIDIFIER_DUTY_CYCLE_MIN 0  // minimum humidity cycle in heater to be set
 
 #define stepTemperatureIncrement 0.1 // maximum allowed temperature to be set
 #define stepHumidityIncrement 5      // maximum allowed temperature to be set
@@ -447,6 +448,17 @@ typedef enum
 // auto calibration
 #define AUTO_CALIB_MESSAGE_UI_ROW 0
 
+// Inverted colour options
+// #define BLACK 0xFFFF    // Inverted Black
+// #define BLUE 0xFFE0     // Inverted Blue
+// #define RED 0x07FF      // Inverted Red
+// #define GREEN 0xF81F    // Inverted Green
+// #define CYAN 0xF800     // Inverted Cyan
+// #define MAGENTA 0x07E0  // Inverted Magenta
+// #define YELLOW 0x001F   // Inverted Yellow
+// #define WHITE 0x0000    // Inverted White
+// #define ORANGE 0x02DF   // Inverted Orange
+
 // colour options
 #define BLACK 0x0000
 #define BLUE 0x001F
@@ -456,8 +468,9 @@ typedef enum
 #define MAGENTA 0xF81F
 #define YELLOW 0xFFE0
 #define WHITE 0xFFFF
+#define ORANGE 0xFD20
 
-#define COLOUR_WARNING_TEXT ILI9341_ORANGE
+#define COLOUR_WARNING_TEXT ORANGE
 #define COLOUR_MENU BLACK
 #define COLOUR_BAR BLACK
 #define COLOUR_MENU_TEXT WHITE
