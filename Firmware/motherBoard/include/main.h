@@ -3,7 +3,8 @@
 
 #define TINY_GSM_MODEM_SIM800
 #define modemSerial Serial2
-// #define THINGSBOARD_ENABLE_DYNAMIC 1
+#define THINGSBOARD_ENABLE_PSRAM 0
+#define THINGSBOARD_ENABLE_DYNAMIC 1
 // #define THINGSBOARD_ENABLE_STREAM_UTILS 1
 #include <Arduino.h>
 #include <TinyGsmClient.h>
