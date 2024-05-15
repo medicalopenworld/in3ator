@@ -143,7 +143,6 @@ QueueHandle_t sharedSensorQueue;
 
 void GPRS_Task(void *pvParameters)
 {
-  long lastPrint;
   initGPRS();
   GPRS_TB_Init();
   for (;;)
@@ -263,8 +262,7 @@ void setup()
 
   initHardware(false);
 
-  // EEPROM.writeString(EEPROM_THINGSBOARD_TOKEN, "e2BH7oJgkTUxSHdPIDtU"); //8944477200000012659
-  // EEPROM.writeString(EEPROM_THINGSBOARD_TOKEN, "QtLydi9CVbrjCV9ODRMh"); //8944477200000012865
+  // EEPROM.writeString(EEPROM_THINGSBOARD_TOKEN, "mQBHGw5KcVTsICEXfO7W"); //8944477200000012865
   // EEPROM.write(EEPROM_THINGSBOARD_PROVISIONED, true);
   // EEPROM.commit();
 

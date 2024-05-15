@@ -183,7 +183,7 @@ void basicHumidityControl()
 void turnActuators(bool mode)
 {
   ledcWrite(HEATER_PWM_CHANNEL, mode * HEATER_MAX_PWM * !ongoingCriticalAlarm());
-  if (mode && ongoingCriticalWiringAlarm())
+  if (mode && !ongoingCriticalWiringAlarm())
   {
     in3_hum.turn(ON);
   }
@@ -207,9 +207,9 @@ void turnFans(bool mode)
   GPIOWrite(ACTUATORS_EN, mode || in3.phototherapy);
 #if (HW_NUM >= 8)
   // ledcWrite(HEATER_PWM_CHANNEL, mode * HEATER_MAX_PWM);
-  ledcWrite(FAN_PWM_CHANNEL, (mode && ongoingCriticalWiringAlarm()) * FAN_PWM);
+  ledcWrite(FAN_PWM_CHANNEL, (mode && !ongoingCriticalWiringAlarm()) * FAN_PWM);
 #else
-  GPIOWrite(FAN, in3.phototherapy || mode && ongoingCriticalWiringAlarm());
+  GPIOWrite(FAN, in3.phototherapy || mode && !ongoingCriticalWiringAlarm());
 #endif
 }
 

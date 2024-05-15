@@ -605,7 +605,7 @@ void blinkGoBackMessage()
     state_blink = !state_blink;
     if (state_blink)
     {
-      setTextColor(ILI9341_ORANGE);
+      setTextColor(ORANGE);
     }
     else
     {

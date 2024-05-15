@@ -169,6 +169,7 @@ bool displayAlarm[NUM_ALARMS];
 bool clearedAlarm[NUM_ALARMS];
 long lastAlarmTrigger[NUM_ALARMS];
 float alarmSensedValue;
+long lastPowerSupplyCheck;
 
 extern in3ator_parameters in3;
 
@@ -328,10 +329,10 @@ bool ongoingAlarms()
 bool ongoingCriticalAlarm()
 {
   return (alarmOnGoing[AIR_THERMAL_CUTOUT_ALARM] ||
-            alarmOnGoing[SKIN_THERMAL_CUTOUT_ALARM] ||
-            alarmOnGoing[AIR_SENSOR_ISSUE_ALARM] ||
-            alarmOnGoing[SKIN_SENSOR_ISSUE_ALARM] ||
-            alarmOnGoing[HEATER_ISSUE_ALARM] || alarmOnGoing[POWER_SUPPLY_ALARM]);
+          alarmOnGoing[SKIN_THERMAL_CUTOUT_ALARM] ||
+          alarmOnGoing[AIR_SENSOR_ISSUE_ALARM] ||
+          alarmOnGoing[SKIN_SENSOR_ISSUE_ALARM] ||
+          alarmOnGoing[HEATER_ISSUE_ALARM] || alarmOnGoing[POWER_SUPPLY_ALARM]);
   // return (true);
 }
 
@@ -471,21 +472,26 @@ void checkAlarms()
 
 void powerSupplyCheck()
 {
-  if (HW_NUM >= 13)
+#if (HW_NUM >= 13)
   {
-    if (digitalCurrentSensorPresent[MAIN] && in3.system_voltage > MIN_SYSTEM_VOLTAGE_TRIGGER && in3.system_voltage < MAX_SYSTEM_VOLTAGE_TRIGGER)
+    if (millis() - lastPowerSupplyCheck > POWER_SUPPLY_CHECK_PERIOD)
     {
-      in3.alarmToReport[POWER_SUPPLY_ALARM] = true;
-      if (!alarmOnGoing[POWER_SUPPLY_ALARM])
-        setAlarm(POWER_SUPPLY_ALARM);
-    }
-    else
-    {
-      in3.alarmToReport[POWER_SUPPLY_ALARM] = false;
-      if (alarmOnGoing[POWER_SUPPLY_ALARM])
-        resetAlarm(POWER_SUPPLY_ALARM);
+      lastPowerSupplyCheck = millis();
+      if (digitalCurrentSensorPresent[MAIN] && in3.system_voltage > MIN_SYSTEM_VOLTAGE_TRIGGER && in3.system_voltage < MAX_SYSTEM_VOLTAGE_TRIGGER)
+      {
+        in3.alarmToReport[POWER_SUPPLY_ALARM] = true;
+        if (!alarmOnGoing[POWER_SUPPLY_ALARM])
+          setAlarm(POWER_SUPPLY_ALARM);
+      }
+      else
+      {
+        in3.alarmToReport[POWER_SUPPLY_ALARM] = false;
+        if (alarmOnGoing[POWER_SUPPLY_ALARM])
+          resetAlarm(POWER_SUPPLY_ALARM);
+      }
     }
   }
+#endif
 }
 
 void securityCheck()
