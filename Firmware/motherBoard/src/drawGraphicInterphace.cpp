@@ -140,7 +140,6 @@ extern PID humidityControlPID;
 
 extern GPRSstruct GPRS;
 
-
 extern in3ator_parameters in3;
 
 void setTextColor(int16_t colour) { screenTextColor = colour; }
@@ -768,6 +767,18 @@ void loadlogo()
     tft.fillRect(0, tft_height / 2, tft_width, tft_height / 2, YELLOW);
     setTextColor(WHITE);
   }
+  else if (SENEGAL_MODE)
+  {
+    tft.fillRect(0, 0, tft_width / 3, tft_height, GREEN);
+    tft.fillRect(tft_width / 3, 0, tft_width / 3, tft_height, YELLOW);
+    tft.fillRect(2 * tft_width / 3, 0, tft_width / 3, tft_height, RED);
+    setTextColor(WHITE);
+    // GPIOWrite(PHOTOTHERAPY, true);
+    // ledcWrite(SCREENBACKLIGHT_PWM_CHANNEL, BACKLIGHT_POWER_DEFAULT);
+    // // turnFans(in3.phototherapy);
+    // while (digitalRead(ENC_SWITCH))
+    //   ;
+  }
   else
   {
     tft.fillScreen(introBackColor);
@@ -1003,7 +1014,7 @@ void graphics(uint8_t UI_page, uint8_t UI_language, uint8_t UI_print_text,
           drawRightNumber(UI_var_0, unitPosition, ypos);
           break;
         case CCID_UI_ROW:
-              drawCentreString(convertStringToChar(cstring,GPRS.CCID),tft_width / 2, ypos, textFontSize);
+          drawCentreString(convertStringToChar(cstring, GPRS.CCID), tft_width / 2, ypos, textFontSize);
           break;
         case WIFI_EN_UI_ROW:
           if (UI_var_1)

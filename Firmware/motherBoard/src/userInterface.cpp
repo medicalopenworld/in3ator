@@ -556,7 +556,7 @@ void userInterfaceHandler(int UI_page)
           autoCalibration();
           break;
         case RESET_CALIB_UI_ROW:
-          recapVariables();
+          resetCalibration();
           UI_calibration();
           break;
         }

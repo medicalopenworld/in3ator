@@ -94,6 +94,16 @@ void loaddefaultValues()
   EEPROM.commit();
 }
 
+void resetCalibration()
+{
+  RawTemperatureLow[SKIN_SENSOR] = false;
+  RawTemperatureRange[SKIN_SENSOR] = false;
+  ReferenceTemperatureRange = false;
+  ReferenceTemperatureLow = false;
+  fineTuneSkinTemperature = false;
+  fineTuneAirTemperature = false;
+}
+
 void recapVariables()
 {
   autoLock = EEPROM.read(EEPROM_AUTO_LOCK);

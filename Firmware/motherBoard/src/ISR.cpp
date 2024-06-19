@@ -178,5 +178,3 @@ void IRAM_ATTR encSwitchHandler()
     lastbacklightHandler = millis();
   }
 }
-
-void IRAM_ATTR ON_OFF_Switch_ISR() {}

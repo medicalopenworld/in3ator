@@ -136,10 +136,10 @@ extern PID humidityControlPID;
 extern in3ator_parameters in3;
 
 #define CALIBRATION_ERROR 0.05
-#define TIME_BETWEEN_SAMPLES 1 // minutes
+#define TIME_BETWEEN_SAMPLES 0.5 // minutes
 #define SAMPLES_WITHIN_ERROR 3
 #define DEFAULT_CALIBRATION_TEMPERATURE 36
-#define MINIMUM_DIFFERENCE_TEMPERATURE 8
+#define MINIMUM_DIFFERENCE_TEMPERATURE 2
 
 bool checkStableTemperatures(double *referenceSensorHistory,
                              double *sensorToCalibrateHistory,

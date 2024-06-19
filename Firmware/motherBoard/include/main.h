@@ -66,6 +66,7 @@
 #define FAN_MAX_CURRENT_OVERRIDE false
 
 #define UKRAINE_MODE false
+#define SENEGAL_MODE false
 
 #define CORE_ID_FREERTOS 1
 
@@ -657,6 +658,7 @@ void UI_calibration();
 void firstPointCalibration();
 void fineTuneCalibration();
 void autoCalibration();
+void resetCalibration();
 void recapVariables();
 void clearCalibrationValues();
 void secondPointCalibration();
@@ -684,7 +686,6 @@ void security_check_reboot_cause();
 void IRAM_ATTR encSwitchHandler();
 void IRAM_ATTR encoderISR();
 void IRAM_ATTR fanEncoderISR();
-void IRAM_ATTR ON_OFF_Switch_ISR();
 void backlightHandler();
 
 void fanSpeedHandler();

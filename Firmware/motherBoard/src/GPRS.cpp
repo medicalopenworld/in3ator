@@ -123,7 +123,9 @@ void initGPRS()
 {
   Serial2.begin(MODEM_BAUD);
   GPRS.powerUp = true;
+#if (GPRS_PWRKEY)
   GPIOWrite(GPRS_PWRKEY, HIGH);
+#endif
 }
 
 bool GPRSCheckNewEvent()
@@ -235,18 +237,22 @@ void GPRSPowerUp()
   {
   case 0:
     GPRS.processTime = millis();
+#if (GPRS_PWRKEY)
     GPIOWrite(GPRS_PWRKEY, LOW);
+#endif
     GPRS.process++;
     GPRS.packetSentenceTime = millis();
     logCon("[GPRS] -> powering up GPRS");
     break;
   case 1:
+#if (GPRS_PWRKEY)
     if (millis() - GPRS.packetSentenceTime > 1000)
     {
       GPIOWrite(GPRS_PWRKEY, HIGH);
       GPRS.process++;
       logCon("[GPRS] -> GPRS powered");
     }
+#endif
     break;
   case 2:
     if (millis() - GPRS.packetSentenceTime > 1000)
@@ -397,7 +403,7 @@ void TBProvision()
   if (!tb.connected())
   {
     if (!tb.connect(THINGSBOARD_SERVER, "provision",
-                              THINGSBOARD_PORT))
+                    THINGSBOARD_PORT))
     {
       logCon("Failed to connect");
       return;

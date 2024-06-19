@@ -262,31 +262,32 @@ void initGPIO()
   initPin(HUMIDIFIER_PWM, OUTPUT);
 #endif
 #if (HW_NUM >= 10)
-  initPin(ON_OFF_SWITCH, INPUT);
   initPin(FAN_SPEED_FEEDBACK, INPUT_PULLUP);
 #endif
 #if (HW_NUM >= 14)
   initPin(TOUCH_SENSOR, OUTPUT);
 #endif
   initPin(PHOTOTHERAPY, OUTPUT);
+#if (GPRS_PWRKEY)
   initPin(GPRS_PWRKEY, OUTPUT);
-  initPin(encoderpinA, INPUT_PULLUP);
-  initPin(encoderpinB, INPUT_PULLUP);
-  initPin(ENC_SWITCH, INPUT_PULLUP);
-  initPin(TFT_CS, OUTPUT);
-  initPin(PHOTOTHERAPY, OUTPUT);
-  GPIOWrite(PHOTOTHERAPY, LOW);
-  initPin(FAN, OUTPUT);
-  initPin(HEATER, OUTPUT);
-  initPin(BUZZER, OUTPUT);
-  initPin(SCREENBACKLIGHT, OUTPUT);
-  initPin(ACTUATORS_EN, OUTPUT);
-  GPIOWrite(ACTUATORS_EN, HIGH);
-  GPIOWrite(PHOTOTHERAPY, LOW);
-  // GPIOWrite(FAN, LOW);
-  //  initPin(ON_OFF_SWITCH, INPUT);
-  initPWMGPIO();
-  logI("[HW] -> GPIOs initilialized");
+#endif
+initPin(encoderpinA, INPUT_PULLUP);
+initPin(encoderpinB, INPUT_PULLUP);
+initPin(ENC_SWITCH, INPUT_PULLUP);
+initPin(TFT_CS, OUTPUT);
+initPin(PHOTOTHERAPY, OUTPUT);
+GPIOWrite(PHOTOTHERAPY, LOW);
+initPin(FAN, OUTPUT);
+initPin(HEATER, OUTPUT);
+initPin(BUZZER, OUTPUT);
+initPin(SCREENBACKLIGHT, OUTPUT);
+initPin(ACTUATORS_EN, OUTPUT);
+GPIOWrite(ACTUATORS_EN, HIGH);
+GPIOWrite(PHOTOTHERAPY, LOW);
+// GPIOWrite(FAN, LOW);
+//  initPin(ON_OFF_SWITCH, INPUT);
+initPWMGPIO();
+logI("[HW] -> GPIOs initilialized");
 }
 
 void initInterrupts()
@@ -297,7 +298,6 @@ void initInterrupts()
 
 #if (HW_NUM >= 10)
   attachInterrupt(FAN_SPEED_FEEDBACK, fanEncoderISR, CHANGE);
-  attachInterrupt(ON_OFF_SWITCH, ON_OFF_Switch_ISR, FALLING);
 #endif
 }
 
