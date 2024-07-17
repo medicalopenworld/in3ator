@@ -199,12 +199,23 @@ int tft_width, tft_height;
 extern in3ator_parameters in3;
 TCA9535 TCA(0x20);
 
-void initI2C()
+bool initI2C()
 {
-  logI("[HW] -> Initializing i2c port");
-  Wire.begin(I2C_SDA, I2C_SCL);
-  wire = &Wire;
-  logI("[HW] -> I2c port initialized");
+  int clkSpeed = false;
+  for (int i = 0; i < INIT_I2C_RETRIES; i++)
+  {
+    logI("[HW] -> Initializing i2c port");
+    Wire.begin(I2C_SDA, I2C_SCL);
+    wire = &Wire;
+    clkSpeed = Wire.getClock();
+    if (clkSpeed)
+    {
+      logI("[HW] -> I2c port initialized with clock speed: " + String(clkSpeed));
+      return true;
+    }
+  }
+  logI("[HW] -> I2c init error");
+  return false;
 }
 
 void initPWMGPIO()
@@ -271,23 +282,23 @@ void initGPIO()
 #if (GPRS_PWRKEY)
   initPin(GPRS_PWRKEY, OUTPUT);
 #endif
-initPin(encoderpinA, INPUT_PULLUP);
-initPin(encoderpinB, INPUT_PULLUP);
-initPin(ENC_SWITCH, INPUT_PULLUP);
-initPin(TFT_CS, OUTPUT);
-initPin(PHOTOTHERAPY, OUTPUT);
-GPIOWrite(PHOTOTHERAPY, LOW);
-initPin(FAN, OUTPUT);
-initPin(HEATER, OUTPUT);
-initPin(BUZZER, OUTPUT);
-initPin(SCREENBACKLIGHT, OUTPUT);
-initPin(ACTUATORS_EN, OUTPUT);
-GPIOWrite(ACTUATORS_EN, HIGH);
-GPIOWrite(PHOTOTHERAPY, LOW);
-// GPIOWrite(FAN, LOW);
-//  initPin(ON_OFF_SWITCH, INPUT);
-initPWMGPIO();
-logI("[HW] -> GPIOs initilialized");
+  initPin(encoderpinA, INPUT_PULLUP);
+  initPin(encoderpinB, INPUT_PULLUP);
+  initPin(ENC_SWITCH, INPUT_PULLUP);
+  initPin(TFT_CS, OUTPUT);
+  initPin(PHOTOTHERAPY, OUTPUT);
+  GPIOWrite(PHOTOTHERAPY, LOW);
+  initPin(FAN, OUTPUT);
+  initPin(HEATER, OUTPUT);
+  initPin(BUZZER, OUTPUT);
+  initPin(SCREENBACKLIGHT, OUTPUT);
+  initPin(ACTUATORS_EN, OUTPUT);
+  GPIOWrite(ACTUATORS_EN, HIGH);
+  GPIOWrite(PHOTOTHERAPY, LOW);
+  // GPIOWrite(FAN, LOW);
+  //  initPin(ON_OFF_SWITCH, INPUT);
+  initPWMGPIO();
+  logI("[HW] -> GPIOs initilialized");
 }
 
 void initInterrupts()
@@ -326,50 +337,56 @@ void initAmbientSensor()
   }
 }
 
-void initCurrentSensor(bool currentSensor)
+bool initCurrentSensor(bool currentSensor)
 {
-  if (currentSensor == MAIN)
+  for (int i = 0; i < INIT_CURRENT_SENSOR_RETRIES; i++)
   {
-    logI("[HW] -> Initialiting MAIN current sensor");
-    wire->beginTransmission(MAIN_DIGITAL_CURRENT_SENSOR_I2C_ADDRESS);
-  }
-  else
-  {
-    logI("[HW] -> Initialiting SECUNDARY current sensor");
-    wire->beginTransmission(SECUNDARY_DIGITAL_CURRENT_SENSOR_I2C_ADDRESS);
-  }
-  if (!(wire->endTransmission()))
-  {
-    digitalCurrentSensorPresent[currentSensor] = true;
-    logI("[HW] ->digital sensor detected");
     if (currentSensor == MAIN)
     {
-      mainDigitalCurrentSensor.begin();
-      mainDigitalCurrentSensor.reset();
-      // Set shunt resistors to 10 mOhm for all channels
-      mainDigitalCurrentSensor.setShuntRes(SYSTEM_SHUNT, PHOTOTHERAPY_SHUNT,
-                                           FAN_SHUNT);
-      mainDigitalCurrentSensor.setShuntConversionTime(
-          INA3221_REG_CONF_CT_140US);
-      mainDigitalCurrentSensor.setAveragingMode(INA3221_REG_CONF_AVG_128);
+      logI("[HW] -> Initialiting MAIN current sensor");
+      wire->beginTransmission(MAIN_DIGITAL_CURRENT_SENSOR_I2C_ADDRESS);
     }
     else
     {
-      digitalCurrentSensorPresent[currentSensor] = true;
-      secundaryDigitalCurrentSensor.begin();
-      secundaryDigitalCurrentSensor.reset();
-      // Set shunt resistors to 10 mOhm for all channels
-      secundaryDigitalCurrentSensor.setShuntRes(HEATER_SHUNT, USB_SHUNT,
-                                                BATTERY_SHUNT);
-      secundaryDigitalCurrentSensor.setShuntConversionTime(
-          INA3221_REG_CONF_CT_140US);
-      secundaryDigitalCurrentSensor.setAveragingMode(INA3221_REG_CONF_AVG_128);
+      logI("[HW] -> Initialiting SECUNDARY current sensor");
+      wire->beginTransmission(SECUNDARY_DIGITAL_CURRENT_SENSOR_I2C_ADDRESS);
     }
+    if (!(wire->endTransmission()))
+    {
+      digitalCurrentSensorPresent[currentSensor] = true;
+      logI("[HW] ->digital sensor detected");
+      if (currentSensor == MAIN)
+      {
+        mainDigitalCurrentSensor.begin();
+        mainDigitalCurrentSensor.reset();
+        // Set shunt resistors to 10 mOhm for all channels
+        mainDigitalCurrentSensor.setShuntRes(SYSTEM_SHUNT, PHOTOTHERAPY_SHUNT,
+                                             FAN_SHUNT);
+        mainDigitalCurrentSensor.setShuntConversionTime(
+            INA3221_REG_CONF_CT_140US);
+        mainDigitalCurrentSensor.setAveragingMode(INA3221_REG_CONF_AVG_128);
+      }
+      else
+      {
+        digitalCurrentSensorPresent[currentSensor] = true;
+        secundaryDigitalCurrentSensor.begin();
+        secundaryDigitalCurrentSensor.reset();
+        // Set shunt resistors to 10 mOhm for all channels
+        secundaryDigitalCurrentSensor.setShuntRes(HEATER_SHUNT, USB_SHUNT,
+                                                  BATTERY_SHUNT);
+        secundaryDigitalCurrentSensor.setShuntConversionTime(
+            INA3221_REG_CONF_CT_140US);
+        secundaryDigitalCurrentSensor.setAveragingMode(INA3221_REG_CONF_AVG_128);
+      }
+      return (true);
+    }
+    else
+    {
+      logE("[HW] -> no digital sensor detected");
+    }
+    vTaskDelay(pdMS_TO_TICKS(INIT_CURRENT_SENSOR_DELAY));
   }
-  else
-  {
-    logE("[HW] -> no digital sensor detected");
-  }
+  return (false);
 }
 
 void addErrorToVar(long &errorVar, int error) { errorVar |= (1 << error); }
@@ -613,6 +630,8 @@ bool actuatorsTest()
     setAlarm(HEATER_ISSUE_ALARM);
     return (true);
   }
+  EEPROM.write(EEPROM_HEATER_TEST, true);
+  EEPROM.commit();
   // if (testCurrent > HEATER_CONSUMPTION_MAX)
   // {
   //   addErrorToVar(HW_error, HEATER_CONSUMPTION_MAX_ERROR);
@@ -642,12 +661,11 @@ bool actuatorsTest()
     logE("[HW] -> Fail -> PHOTOTHERAPY current consumption is too high");
     return (true);
   }
-  vTaskDelay(pdMS_TO_TICKS(CURRENT_STABILIZE_TIME_DEFAULT));
   offsetCurrent = measureMeanConsumption(
-      MAIN, SYSTEM_SHUNT_CHANNEL); // <- UPDATE THIS CODE TO ASK I2C DATA
+      SECUNDARY, USB_SHUNT_CHANNEL); // <- UPDATE THIS CODE TO ASK I2C DATA
   in3_hum.turn(ON);
   vTaskDelay(pdMS_TO_TICKS(CURRENT_STABILIZE_TIME_DEFAULT));
-  testCurrent = measureMeanConsumption(MAIN, SYSTEM_SHUNT_CHANNEL) -
+  testCurrent = measureMeanConsumption(SECUNDARY, USB_SHUNT_CHANNEL) -
                 offsetCurrent; // <- UPDATE THIS CODE TO ASK I2C DATA
   logI("[HW] -> Humidifier current consumption: " + String(testCurrent) +
        " Amps");
@@ -717,6 +735,11 @@ bool initActuators()
 #else
   in3_hum.begin();
 #endif
+  if (!digitalCurrentSensorPresent[MAIN] && EEPROM.read(EEPROM_HEATER_TEST) && USE_SYSTEM_WITHOUT_ACTUATORS_TEST)
+  {
+    logI("[HW] -> Fail -> No current sensor present, but still giving possibility to use incubator");
+    return false;
+  }
   return (actuatorsTest());
 }
 
@@ -761,19 +784,6 @@ bool GPIORead(uint8_t GPIO)
   }
 }
 
-void initDebug()
-{
-  Serial.begin(115200);
-  vTaskDelay(pdMS_TO_TICKS(CURRENT_STABILIZE_TIME_DEFAULT));
-  logI("in3ator debug uart, version v" + String(FWversion) + "/" +
-       String(HWversion) + ", SN: " + String(in3.serialNumber));
-
-  if (WIFI_EN)
-  {
-    wifiInit();
-  }
-}
-
 void security_check_reboot_cause()
 {
   in3.resetReason = esp_reset_reason();
@@ -810,7 +820,6 @@ void security_check_reboot_cause()
 
 void initHardware(bool printOutputTest)
 {
-  initDebug();
   logI("[HW] -> Initialiting hardware");
   security_check_reboot_cause();
   initEEPROM();

@@ -252,6 +252,10 @@ void TimeTrack_Task(void *pvParameters)
 void setup()
 {
 
+  Serial.begin(115200);
+  logI("in3ator debug uart, version v" + String(FWversion) + "/" +
+       String(HWversion) + ", SN: " + String(in3.serialNumber));
+
   // sharedSensorQueue = xQueueCreate(SENSOR_TEMP_QTY, sizeof(long));
   initGPIO();
 
@@ -261,7 +265,10 @@ void setup()
   }
 
   initHardware(false);
-
+  if (WIFI_EN)
+  {
+    wifiInit();
+  }
   // EEPROM.writeString(EEPROM_THINGSBOARD_TOKEN, "x0Tu1UQDIyLr5Owedmy4"); //8944477200000012865
   // EEPROM.write(EEPROM_THINGSBOARD_PROVISIONED, true);
   // EEPROM.commit();
@@ -336,6 +343,5 @@ void loop()
   // Serial.print(touchRead(TOUCH_SENSOR)); // get value of Touch 0 pin = GPIO 4
   // Serial.print(",");
   // digitalWrite(TOUCH_SENSOR_SEL, LOW);
-  // Serial.println(touchRead(TOUCH_SENSOR)); // get value of Touch 0 pin = GPIO 4
   vTaskDelay(pdMS_TO_TICKS(LOOP_TASK_PERIOD_MS));
 }

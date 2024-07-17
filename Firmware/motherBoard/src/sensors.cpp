@@ -111,7 +111,6 @@ extern bool autoLock; // setting that enables backlight switch OFF after a
 extern long
     lastbacklightHandler; // last time there was a encoder movement or pulse
 
-
 extern bool selected;
 extern char cstring[128];
 extern char *textToWrite;
@@ -216,7 +215,7 @@ double measureMeanConsumption(bool sensor, int shunt)
 #else
   if (digitalCurrentSensorPresent[sensor])
   {
-    if (sensor)
+    if (sensor == SECUNDARY)
     {
       return (secundaryDigitalCurrentSensor.getCurrent(
           ina3221_ch_t(shunt))); // Amperes
@@ -361,15 +360,8 @@ bool updateRoomSensor()
         return true;
       }
     }
-    else
-    {
-      initRoomSensor();
-    }
   }
-  else
-  {
-    initRoomSensor();
-  }
+  initRoomSensor();
   return false;
 }
 

@@ -53,6 +53,7 @@
 #define LOG_ERRORS false
 #define LOG_ALARMS false
 
+#define USE_SYSTEM_WITHOUT_ACTUATORS_TEST true //only if previous test was OK and that fail cause is not being able to read current measurements
 #define WDT_TIMEOUT 75
 #define HEATER_MAX_POWER_AMPS 12.5
 #define HEATER_SAFE_POWER_AMPS 11.5
@@ -76,6 +77,8 @@
 
 #define BROWN_OUT_BATTERY_MODE 0
 #define BROWN_OUT_NORMAL_MODE 0
+#define INIT_I2C_RETRIES 3
+#define INIT_CURRENT_SENSOR_RETRIES 3
 
 #define ENABLE_WIFI_OTA true // enable wifi OTA
 #define ENABLE_GPRS_OTA true // enable GPRS OTA
@@ -333,6 +336,7 @@ typedef enum
 #define EEPROM_WIFI_EN 50
 #define EEPROM_CONTROL_ACTIVE 60
 #define EEPROM_CONTROL_MODE 70
+#define EEPROM_HEATER_TEST 75
 #define EEPROM_DESIRED_CONTROL_TEMPERATURE 80
 #define EEPROM_DESIRED_CONTROL_HUMIDITY 90
 #define EEPROM_RAW_SKIN_TEMP_LOW_CORRECTION 100
@@ -492,6 +496,8 @@ typedef enum
 #define BACKLIGHT_NO_INTERACTION_TIME \
   12000 // time to decrease backlight display if no user actions
 
+#define INIT_I2C_DELAY 50
+#define INIT_CURRENT_SENSOR_DELAY 50
 #define BACKLIGHT_DELAY 2
 #define INIT_TFT_DELAY 300
 #define WHILE_LOOP_DELAY 1
