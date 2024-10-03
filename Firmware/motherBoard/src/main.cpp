@@ -140,14 +140,58 @@ long lastRoomSensorUpdate, lastCurrentSensorUpdate;
 
 in3ator_parameters in3;
 
+TaskHandle_t taskHandle =
+    NULL; // Handle for the task we want to delete if it hangs
+long GPRS_lastMillisTaskClear;
+bool TB_connected;
+
 QueueHandle_t sharedSensorQueue;
+// Mutex for protecting the shared variable
+SemaphoreHandle_t GPRS_monitor_mutex;
+
+void GPRSMonitorTask(void *pvParameters) {
+  for (;;) {
+    if (xSemaphoreTake(GPRS_monitor_mutex, portMAX_DELAY)) // Lock the mutex
+    {
+      if (millis() - GPRS_lastMillisTaskClear > GPRS_MONITOR_TASK_DELETE) {
+        vTaskDelete(taskHandle); // Delete the hung task
+        // Serial.println("Task deleted. Restarting task...");
+
+        // // Optionally restart the task
+        // while (xTaskCreatePinnedToCore(GPRS_Task, (const char *)"GPRS", 8192,
+        //                                NULL, GPRS_TAST_PRIORITY, &taskHandle,
+        //                                CORE_ID_FREERTOS) != pdPASS)
+        //   ;
+        // logI("GPRS task successfully created!\n");
+        vTaskDelete(NULL); // Delete the monitor task
+      }
+      if (GPRSIsConnectedToServer() || WIFIIsConnectedToServer()) {
+        vTaskDelete(NULL); // Delete the monitor task
+      }
+      // Unlock the mutex
+      xSemaphoreGive(GPRS_monitor_mutex);
+    }
+    vTaskDelay(pdMS_TO_TICKS(GPRS_MONITOR_TASK_PERIOD));
+  }
+}
 
 void GPRS_Task(void *pvParameters) {
+  xTaskCreatePinnedToCore(GPRSMonitorTask, (const char *)"GPRS_MONITOR", 4096,
+                          NULL, GPRS_MONITOR_TASK_PRIORITY, NULL,
+                          CORE_MONITOR_FREERTOS);
   initGPRS();
   GPRS_TB_Init();
   for (;;) {
     if (!WIFIIsConnected()) {
       GPRS_Handler();
+    }
+    if (xSemaphoreTake(GPRS_monitor_mutex, portMAX_DELAY)) // Lock the mutex
+    {
+      // Modify the shared variable
+      GPRS_lastMillisTaskClear = millis();
+
+      // Unlock the mutex
+      xSemaphoreGive(GPRS_monitor_mutex);
     }
     vTaskDelay(pdMS_TO_TICKS(GPRS_TASK_PERIOD_MS));
   }
@@ -272,7 +316,7 @@ void setup() {
   logI("sensors task successfully created!\n");
   logI("Creating GPRS task ...\n");
   while (xTaskCreatePinnedToCore(GPRS_Task, (const char *)"GPRS", 8192, NULL,
-                                 GPRS_TAST_PRIORITY, NULL,
+                                 GPRS_TAST_PRIORITY, &taskHandle,
                                  CORE_ID_FREERTOS) != pdPASS)
     ;
   logI("GPRS task successfully created!\n");
@@ -300,12 +344,13 @@ void setup() {
   logI("Time track task successfully created!\n");
 
   logI("Creating UI task ...\n");
-  while (xTaskCreatePinnedToCore(UI_Task, (const char *)"UI", 4096,
-                                 NULL, UI_TASK_PRIORITY, NULL,
+  while (xTaskCreatePinnedToCore(UI_Task, (const char *)"UI", 4096, NULL,
+                                 UI_TASK_PRIORITY, NULL,
                                  CORE_ID_FREERTOS) != pdPASS)
     ;
   ;
   logI("UI task successfully created!\n");
+
   // charger.reset();
   // delay(500); // give the charger time to reboot
   // charger.setChargeVoltageLimit(14.4);

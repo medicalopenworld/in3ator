@@ -345,6 +345,8 @@ void GPRSProvisionResponse(const JsonObjectConst &data) {
 
 void TBProvision() {
   if (!tb.connected()) {
+    logCon("[GPRS] -> Connecting for provision to: " +
+           String(THINGSBOARD_SERVER));
     if (!tb.connect(THINGSBOARD_SERVER, "provision", THINGSBOARD_PORT)) {
       logCon("Failed to connect");
       return;

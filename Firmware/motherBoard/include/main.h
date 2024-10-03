@@ -21,6 +21,7 @@
 #include <RotaryEncoder.h>
 #include <Wire.h>
 #include "esp_system.h"
+#include "freertos/semphr.h"
 
 #include <AH/Timing/MillisMicrosTimer.hpp>
 #include <Filters/Butterworth.hpp>
@@ -48,8 +49,8 @@
 #include <Espressif_MQTT_Client.h>
 #include <Arduino_MQTT_Client.h>
 
-#define LOG_GPRS false
-#define LOG_MODEM_DATA false
+#define LOG_GPRS true
+#define LOG_MODEM_DATA true
 #define LOG_INFORMATION true
 #define LOG_ERRORS false
 #define LOG_ALARMS false
@@ -70,6 +71,7 @@
 #define UKRAINE_MODE false
 #define SENEGAL_MODE false
 
+#define CORE_MONITOR_FREERTOS 0
 #define CORE_ID_FREERTOS 1
 
 #define HOLD_PRESS_TO_GO_TO_SETTINGS 0
@@ -294,9 +296,10 @@ typedef enum
 #define UI_TASK_PRIORITY 7
 #define SENSORS_TASK_PRIORITY 8
 #define SECURITY_TASK_PRIORITY 9
+#define GPRS_MONITOR_TASK_PRIORITY 10
 
-#define GPRS_TASK_PERIOD_MS 1
-#define OTA_TASK_PERIOD_MS 1
+#define GPRS_TASK_PERIOD_MS 100
+#define OTA_TASK_PERIOD_MS 100
 #define SENSORS_TASK_PERIOD_MS 1
 #define ROOM_SENSOR_UPDATE_PERIOD_MS 500
 #define DIGITAL_CURRENT_SENSOR_PERIOD_MS 5
@@ -308,6 +311,8 @@ typedef enum
 #define FAN_TASK_PERIOD_MS 10
 #define LOOP_TASK_PERIOD_MS 1000
 #define CALIBRATION_TASK_PERIOD_MS 100
+#define GPRS_MONITOR_TASK_PERIOD 5000
+#define GPRS_MONITOR_TASK_DELETE 30000
 
 #define NTC_SAMPLES_TEST 100
 #define DIGITAL_CURRENT_SENSOR_READ_PERIOD_MS 500
