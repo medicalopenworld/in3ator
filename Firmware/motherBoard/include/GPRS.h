@@ -34,6 +34,8 @@
 #define CLIENT_PASSWORD "password"
 #define CLIENT_USERNAME "userName"
 
+#define FW_STATE_UPDATED "UPDATED"
+
 constexpr char ACCESS_TOKEN_CRED_TYPE[] PROGMEM = "ACCESS_TOKEN";
 constexpr char MQTT_BASIC_CRED_TYPE[] PROGMEM = "MQTT_BASIC";
 

@@ -51,9 +51,9 @@ Espressif_Updater updater_WIFI;
 
 const OTA_Update_Callback OTAcallback(&progressCallback, &updatedCallback,
                                       CURRENT_FIRMWARE_TITLE, FWversion,
-                                      &updater_WIFI,
-                                      FIRMWARE_FAILURE_RETRIES,
-                                      FIRMWARE_PACKET_SIZE, WAIT_FAILED_OTA_CHUNKS);
+                                      &updater_WIFI, FIRMWARE_FAILURE_RETRIES,
+                                      FIRMWARE_PACKET_SIZE,
+                                      WAIT_FAILED_OTA_CHUNKS);
 
 /*
    Login page
@@ -148,8 +148,7 @@ const char *serverIndex =
 /*
    setup function
 */
-void wifiInit(void)
-{
+void wifiInit(void) {
   // Connect to WiFi network
   WiFi.setHostname(
       String(String(WIFI_NAME) + "-" + String(in3.serialNumber)).c_str());
@@ -161,66 +160,52 @@ void wifiInit(void)
 
 void wifiDisable() { WiFi.mode(WIFI_OFF); }
 
-void configWifiServer()
-{
+void configWifiServer() {
   // Wait for connection
   logI("Connected to " + String(ssid) + "IP address" + WiFi.localIP());
 
   /*use mdns for wifiHost name resolution*/
-  if (!MDNS.begin(wifiHost))
-  { // http://esp32.local
+  if (!MDNS.begin(wifiHost)) { // http://esp32.local
     logI("Error setting up MDNS responder!");
   }
   logI("mDNS responder started");
   /*return index page which is stored in ServerIndex */
-  wifiServer.on("/", HTTP_GET, []()
-                {
+  wifiServer.on("/", HTTP_GET, []() {
     wifiServer.sendHeader("Connection", "close");
-    wifiServer.send(200, "text/html", loginIndex); });
-  wifiServer.on("/serverIndex", HTTP_GET, []()
-                {
+    wifiServer.send(200, "text/html", loginIndex);
+  });
+  wifiServer.on("/serverIndex", HTTP_GET, []() {
     wifiServer.sendHeader("Connection", "close");
-    wifiServer.send(200, "text/html", serverIndex); });
+    wifiServer.send(200, "text/html", serverIndex);
+  });
   /*handling uploading firmware file */
   wifiServer.on(
       "/update", HTTP_POST,
-      []()
-      {
+      []() {
         wifiServer.sendHeader("Connection", "close");
         wifiServer.send(200, "text/plain", (Update.hasError()) ? "FAIL" : "OK");
         ESP.restart();
       },
-      []()
-      {
+      []() {
         HTTPUpload &upload = wifiServer.upload();
-        if (upload.status == UPLOAD_FILE_START)
-        {
-          Serial.printf("Update: %s\n", upload.filename.c_str());
+        if (upload.status == UPLOAD_FILE_START) {
+          // debugSerial.printf("Update: %s\n", upload.filename.c_str());
           if (!Update.begin(
-                  UPDATE_SIZE_UNKNOWN))
-          { // start with max available size
+                  UPDATE_SIZE_UNKNOWN)) { // start with max available size
             Update.printError(Serial);
           }
-        }
-        else if (upload.status == UPLOAD_FILE_WRITE)
-        {
+        } else if (upload.status == UPLOAD_FILE_WRITE) {
           /* flashing firmware to ESP*/
           if (Update.write(upload.buf, upload.currentSize) !=
-              upload.currentSize)
-          {
+              upload.currentSize) {
             Update.printError(Serial);
           }
-        }
-        else if (upload.status == UPLOAD_FILE_END)
-        {
+        } else if (upload.status == UPLOAD_FILE_END) {
           if (Update.end(
-                  true))
-          { // true to set the size to the current progress
-            Serial.printf("Update Success: %u\nRebooting...\n",
-                          upload.totalSize);
-          }
-          else
-          {
+                  true)) { // true to set the size to the current progress
+            logI(
+                String("Update Success: %u\nRebooting...\n", upload.totalSize));
+          } else {
             Update.printError(Serial);
           }
         }
@@ -228,28 +213,22 @@ void configWifiServer()
   wifiServer.begin();
 }
 
-void WIFI_UpdatedCallback(const bool &success)
-{
-  if (success)
-  {
+void WIFI_UpdatedCallback(const bool &success) {
+  if (success) {
     logI("[WIFI] -> Done, OTA will be implemented on next boot");
     // esp_restart();
-  }
-  else
-  {
+  } else {
     logI("[WIFI] -> No new firmware");
     Update.abort();
   }
 }
 
-bool WIFICheckNewEvent()
-{
+bool WIFICheckNewEvent() {
   bool retVal = false;
   bool WifiStatus = (WiFi.status() == WL_CONNECTED);
   bool serverConnectionStatus = WIFIIsConnectedToServer();
   if (serverConnectionStatus != Wifi_TB.lastServerConnectionStatus ||
-      WifiStatus != Wifi_TB.lastWIFIConnectionStatus)
-  {
+      WifiStatus != Wifi_TB.lastWIFIConnectionStatus) {
     retVal = true;
   }
   Wifi_TB.lastWIFIConnectionStatus = WifiStatus;
@@ -259,32 +238,26 @@ bool WIFICheckNewEvent()
 
 bool WIFIIsConnected() { return (WiFi.status() == WL_CONNECTED); }
 
-bool WIFIIsConnectedToServer()
-{
+bool WIFIIsConnectedToServer() {
   return (Wifi_TB.serverConnectionStatus && WIFIIsConnected());
 }
 
-void WIFICheckOTA()
-{
+void WIFICheckOTA() {
   logI("[WIFI] -> Checking WIFI firwmare Update...");
   tb_wifi.Firmware_Send_Info(CURRENT_FIRMWARE_TITLE, FWversion);
   tb_wifi.Start_Firmware_Update(OTAcallback);
 }
 
-void WIFI_TB_Init()
-{
+void WIFI_TB_Init() {
   Wifi_TB.provisioned = EEPROM.read(EEPROM_THINGSBOARD_PROVISIONED);
-  if (Wifi_TB.provisioned)
-  {
+  if (Wifi_TB.provisioned) {
     Wifi_TB.device_token = EEPROM.readString(EEPROM_THINGSBOARD_TOKEN);
   }
 }
 
-void switchAlarmTelemetryWIFI(int alarm, bool value)
-{
+void switchAlarmTelemetryWIFI(int alarm, bool value) {
   String alarmKey;
-  switch (alarm)
-  {
+  switch (alarm) {
   case HUMIDITY_ALARM:
     alarmKey = HUMIDITY_ALARM_KEY;
     break;
@@ -318,33 +291,26 @@ void switchAlarmTelemetryWIFI(int alarm, bool value)
   addVariableToTelemetryWIFIJSON[alarmKey] = value;
 }
 
-void addAlarmTelemetriesToWIFIJSON()
-{
+void addAlarmTelemetriesToWIFIJSON() {
   int alarmReported = false;
-  for (int i = NO_ALARMS + 1; i < NUM_ALARMS; i++)
-  {
-    if (in3.alarmToReport[i])
-    {
+  for (int i = NO_ALARMS + 1; i < NUM_ALARMS; i++) {
+    if (in3.alarmToReport[i]) {
       switchAlarmTelemetryWIFI(i, true);
       alarmReported = true;
       in3.previousAlarmReport = true;
     }
   }
-  if (!alarmReported)
-  {
-    if (in3.previousAlarmReport)
-    {
+  if (!alarmReported) {
+    if (in3.previousAlarmReport) {
       in3.previousAlarmReport = false;
-      for (int i = NO_ALARMS + 1; i < NUM_ALARMS; i++)
-      {
+      for (int i = NO_ALARMS + 1; i < NUM_ALARMS; i++) {
         switchAlarmTelemetryWIFI(i, false);
       }
     }
   }
 }
 
-void addConfigTelemetriesToWIFIJSON()
-{
+void addConfigTelemetriesToWIFIJSON() {
   addAlarmTelemetriesToWIFIJSON();
   addVariableToTelemetryWIFIJSON[SN_KEY] = in3.serialNumber;
   addVariableToTelemetryWIFIJSON[SYSTEM_RESET_REASON] = in3.resetReason;
@@ -376,16 +342,16 @@ void addConfigTelemetriesToWIFIJSON()
   addVariableToTelemetryWIFIJSON[WIFI_CONNECTIVITY_KEY] = true;
 }
 
-void addTelemetriesToWIFIJSON()
-{
+void addTelemetriesToWIFIJSON() {
   addAlarmTelemetriesToWIFIJSON();
+  addVariableToTelemetryWIFIJSON[SKIN_CAPACITANCE_KEY] =
+      in3.skinSensorCapacitance;
   addVariableToTelemetryWIFIJSON[SKIN_TEMPERATURE_KEY] = roundSignificantDigits(
       in3.temperature[SKIN_SENSOR], TELEMETRIES_DECIMALS);
   addVariableToTelemetryWIFIJSON[AIR_TEMPERATURE_KEY] = roundSignificantDigits(
       in3.temperature[ROOM_DIGITAL_TEMP_SENSOR], TELEMETRIES_DECIMALS);
   if (in3.temperature[AMBIENT_DIGITAL_TEMP_SENSOR] &&
-      in3.humidity[AMBIENT_DIGITAL_HUM_SENSOR])
-  {
+      in3.humidity[AMBIENT_DIGITAL_HUM_SENSOR]) {
     addVariableToTelemetryWIFIJSON[AMBIENT_TEMPERATURE_KEY] =
         roundSignificantDigits(in3.temperature[AMBIENT_DIGITAL_TEMP_SENSOR],
                                TELEMETRIES_DECIMALS);
@@ -409,16 +375,14 @@ void addTelemetriesToWIFIJSON()
   addVariableToTelemetryWIFIJSON[BAT_VOLTAGE_KEY] =
       roundSignificantDigits(in3.BATTERY_voltage, TELEMETRIES_DECIMALS);
 
-  if (in3.temperatureControl || in3.humidityControl)
-  {
+  if (in3.temperatureControl || in3.humidityControl) {
     addVariableToTelemetryWIFIJSON[FAN_CURRENT_KEY] =
         roundSignificantDigits(in3.fan_current, TELEMETRIES_DECIMALS);
     addVariableToTelemetryWIFIJSON[CONTROL_ACTIVE_TIME_KEY] =
         roundSignificantDigits(in3.control_active_time, TELEMETRIES_DECIMALS);
     addVariableToTelemetryWIFIJSON[FAN_ACTIVE_TIME_KEY] =
         roundSignificantDigits(in3.fan_active_time, TELEMETRIES_DECIMALS);
-    if (in3.temperatureControl)
-    {
+    if (in3.temperatureControl) {
       addVariableToTelemetryWIFIJSON[HEATER_CURRENT_KEY] =
           roundSignificantDigits(in3.heater_current, TELEMETRIES_DECIMALS);
       addVariableToTelemetryWIFIJSON[DESIRED_TEMPERATURE_KEY] =
@@ -426,37 +390,28 @@ void addTelemetriesToWIFIJSON()
       addVariableToTelemetryWIFIJSON[HEATER_ACTIVE_TIME_KEY] =
           roundSignificantDigits(in3.heater_active_time, TELEMETRIES_DECIMALS);
     }
-    if (in3.humidityControl)
-    {
+    if (in3.humidityControl) {
       addVariableToTelemetryWIFIJSON[DESIRED_HUMIDITY_ROOM_KEY] =
           in3.desiredControlHumidity;
     }
-    if (!Wifi_TB.firstConfigPost)
-    {
+    if (!Wifi_TB.firstConfigPost) {
       Wifi_TB.firstConfigPost = true;
       addVariableToTelemetryWIFIJSON[CONTROL_ACTIVE_KEY] = true;
-      if (in3.temperatureControl)
-      {
-        if (in3.controlMode == AIR_CONTROL)
-        {
+      if (in3.temperatureControl) {
+        if (in3.controlMode == AIR_CONTROL) {
           addVariableToTelemetryWIFIJSON[CONTROL_MODE_KEY] = "AIR";
-        }
-        else
-        {
+        } else {
           addVariableToTelemetryWIFIJSON[CONTROL_MODE_KEY] = "SKIN";
         }
       }
     }
-  }
-  else
-  {
+  } else {
     Wifi_TB.firstConfigPost = false;
     addVariableToTelemetryWIFIJSON[CONTROL_ACTIVE_KEY] = false;
     addVariableToTelemetryWIFIJSON[STANBY_TIME_KEY] =
         roundSignificantDigits(in3.standby_time, TELEMETRIES_DECIMALS);
   }
-  if (in3.humidityControl)
-  {
+  if (in3.humidityControl) {
     addVariableToTelemetryWIFIJSON[HUMIDIFIER_CURRENT_KEY] =
         roundSignificantDigits(in3.humidifier_current, TELEMETRIES_DECIMALS);
     addVariableToTelemetryWIFIJSON[HUMIDIFIER_VOLTAGE_KEY] =
@@ -465,8 +420,7 @@ void addTelemetriesToWIFIJSON()
         roundSignificantDigits(in3.humidifier_active_time,
                                TELEMETRIES_DECIMALS);
   }
-  if (in3.phototherapy)
-  {
+  if (in3.phototherapy) {
     addVariableToTelemetryWIFIJSON[PHOTOTHERAPY_CURRENT_KEY] =
         roundSignificantDigits(in3.phototherapy_current, TELEMETRIES_DECIMALS);
     addVariableToTelemetryWIFIJSON[PHOTHERAPY_ACTIVE_TIME_KEY] =
@@ -475,97 +429,71 @@ void addTelemetriesToWIFIJSON()
   }
 }
 
-void WEB_OTA()
-{
-  if (WiFi.status() == WL_CONNECTED)
-  {
-    if (!WIFI_connection_status)
-    {
+void WEB_OTA() {
+  if (WiFi.status() == WL_CONNECTED) {
+    if (!WIFI_connection_status) {
       configWifiServer();
       WIFI_connection_status = true;
-    }
-    else
-    {
+    } else {
       wifiServer.handleClient();
     }
-  }
-  else
-  {
+  } else {
     WIFI_connection_status = false;
   }
 }
 
-void WIFI_TB_OTA()
-{
-  if (WiFi.status() == WL_CONNECTED)
-  {
-    if (!tb_wifi.connected())
-    {
+void WIFI_TB_OTA() {
+  if (WiFi.status() == WL_CONNECTED) {
+    if (!tb_wifi.connected()) {
       // Connect to the ThingsBoard
       logI("[WIFI] -> Connecting over WIFI to: " + String(THINGSBOARD_SERVER) +
            " with token " + String(Wifi_TB.device_token));
-      if (!tb_wifi.connect(THINGSBOARD_SERVER, Wifi_TB.device_token.c_str()))
-      {
+      if (!tb_wifi.connect(THINGSBOARD_SERVER, Wifi_TB.device_token.c_str())) {
         logI("[WIFI] ->Failed to connect");
         return;
-      }
-      else
-      {
-        if (!Wifi_TB.firstPublish)
-        {
+      } else {
+        if (!Wifi_TB.firstPublish) {
           addConfigTelemetriesToWIFIJSON();
           if (tb_wifi.sendTelemetryJson(addVariableToTelemetryWIFIJSON,
                                         JSON_STRING_SIZE(measureJson(
-                                            addVariableToTelemetryWIFIJSON))))
-          {
+                                            addVariableToTelemetryWIFIJSON)))) {
             logI("[WIFI] -> WIFI MQTT PUBLISH CONFIG SUCCESS");
-          }
-          else
-          {
+          } else {
             logI("[WIFI] -> WIFI MQTT PUBLISH CONFIG FAIL");
           }
           WIFI_JSON.clear();
         }
         Wifi_TB.serverConnectionStatus = true;
-        if (ENABLE_WIFI_OTA && !Wifi_TB.OTA_requested)
-        {
+        if (ENABLE_WIFI_OTA && !Wifi_TB.OTA_requested) {
           Wifi_TB.OTA_requested = true;
         }
         WIFICheckOTA();
       }
-    }
-    else
-    {
-      if (millis() - Wifi_TB.lastMQTTPublish > WIFI_PUBLISH_INTERVAL)
-      {
+    } else {
+      if (millis() - Wifi_TB.lastMQTTPublish > WIFI_PUBLISH_INTERVAL) {
         addTelemetriesToWIFIJSON();
         if (tb_wifi.sendTelemetryJson(addVariableToTelemetryWIFIJSON,
                                       JSON_STRING_SIZE(measureJson(
-                                          addVariableToTelemetryWIFIJSON))))
-        {
+                                          addVariableToTelemetryWIFIJSON)))) {
           logI("[WIFI] -> WIFI MQTT PUBLISH TELEMETRIES SUCCESS");
-        }
-        else
-        {
+        } else {
           logI("[WIFI] -> WIFI MQTT PUBLISH TELEMETRIES FAIL");
         }
         WIFI_JSON.clear();
         Wifi_TB.lastMQTTPublish = millis();
       }
     }
-  }
-  else
-  {
+  } else {
     Wifi_TB.serverConnectionStatus = false;
   }
   tb_wifi.loop();
 }
 
-void WifiOTAHandler(void)
-{
+void WifiOTAHandler(void) {
   WIFI_TB_OTA();
   WEB_OTA();
-  if (WiFi.status() != 0xff && WiFi.status() != WL_CONNECTED && millis() > 60000) // If no connection in 1 minute, disable WIFI
+  if (WiFi.status() != 0xff && WiFi.status() != WL_CONNECTED &&
+      millis() > 60000) // If no connection in 1 minute, disable WIFI
   {
     wifiDisable();
     logI("[WIFI] -> WIFI DISABLED");

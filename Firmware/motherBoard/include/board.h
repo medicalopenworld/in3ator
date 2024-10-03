@@ -23,7 +23,7 @@
 
 */
 
-#define HW_NUM 12
+#define HW_NUM 14
 #define HW_REVISION 'A'
 #define HWversion String(HW_NUM) + "." + String(HW_REVISION)
 #define FWversion "13.7"
@@ -54,8 +54,38 @@
 #endif
 
 #define GPIO_EXP_BASE 100 // To differentiate with ESP32 GPIO
+#if (HW_NUM > 14)
+// PINOUT
+#define TOUCH_SENSOR 1
+#define TOUCH_SENSOR_SEL 2
+#define BUZZER 5
+#define LED 7
+#define I2C_SDA 8
+#define I2C_SCL 9
+#define BABY_NTC_PIN 10
+#define FAN 12
+#define PHOTOTHERAPY 13
+#define ACTUATORS_EN 14
+#define HEATER 16
+#define AFE44XX_CS 21
+#define FAN_SPEED_FEEDBACK 38
+#define AFE4490_ADC_READY 45
+#define SERIAL2_RX_PIN 48
+#define SERIAL2_TX_PIN 47
 
-#if (HW_NUM >= 14)
+#define FAKE_PIN 46
+
+#define SCREENBACKLIGHT FAKE_PIN
+#define ON_OFF_SWITCH FAKE_PIN
+#define AFE44XX_PWDN_PIN FAKE_PIN
+#define GPRS_PWRKEY FAKE_PIN
+#define TFT_DC FAKE_PIN
+#define ENC_SWITCH FAKE_PIN
+#define ENC_A FAKE_PIN
+#define ENC_B FAKE_PIN
+#define TFT_CS FAKE_PIN
+
+#elif (HW_NUM == 14)
 // PINOUT
 #define TFT_DC 0
 #define AFE44XX_CS 2
@@ -75,6 +105,8 @@
 #define ENC_B 34
 #define FAN_SPEED_FEEDBACK 35
 #define BABY_NTC_PIN 39
+#define SERIAL2_RX_PIN 16
+#define SERIAL2_TX_PIN 17
 #define AFE4490_ADC_READY NULL
 #define ON_OFF_SWITCH NULL
 #define AFE44XX_PWDN_PIN NULL
@@ -89,6 +121,8 @@
 #define FAN 12
 #define PHOTOTHERAPY 13
 #define ACTUATORS_EN 14
+#define SERIAL2_RX_PIN 16
+#define SERIAL2_TX_PIN 17
 // #define TFT_CS 15
 #define I2C_SDA 21
 #define I2C_SCL 22
@@ -115,6 +149,8 @@
 #define PHOTOTHERAPY 13
 #define ACTUATORS_EN 14
 #define TFT_CS 15
+#define SERIAL2_RX_PIN 16
+#define SERIAL2_TX_PIN 17
 #define I2C_SDA 21
 #define I2C_SCL 22
 #define ENC_A 25
@@ -137,6 +173,8 @@
 #define PHOTOTHERAPY 13
 #define HUMIDIFIER_CTL 14
 #define TFT_CS 15
+#define SERIAL2_RX_PIN 16
+#define SERIAL2_TX_PIN 17
 #define I2C_SDA 21
 #define I2C_SCL 22
 #define ENC_A 25
@@ -158,6 +196,8 @@
 #define TFT_DC 4
 #define BUZZER 5
 #define TFT_CS 15 // fake GPIO
+#define SERIAL2_RX_PIN 16
+#define SERIAL2_TX_PIN 17
 #define I2C_SDA 21
 #define I2C_SCL 22
 #define ENC_A 25
@@ -208,6 +248,12 @@
 
 #endif
 
+#if ARDUINO_USB_MODE == 1
+#define debugSerial Serial0
+#else
+#define debugSerial Serial
+#endif
+
 // number assignment of each environmental sensor for later call in variable
 #define SKIN_SENSOR 0
 #define NTC_QTY 1 // number of NTC
@@ -243,9 +289,9 @@
 #define DISPLAY_DEFAULT_ROTATION 3
 
 #define SCREENBACKLIGHT_PWM_CHANNEL 0
-#define BUZZER_PWM_CHANNEL 2
-#define HEATER_PWM_CHANNEL 9
-#define FAN_PWM_CHANNEL 10
+#define BUZZER_PWM_CHANNEL 1
+#define HEATER_PWM_CHANNEL 2
+#define FAN_PWM_CHANNEL 3
 
 #define HUMIDIFIER_PWM_CHANNEL 4
 #define DEFAULT_PWM_RESOLUTION 8
@@ -287,12 +333,12 @@
 #define MAX_SYSTEM_VOLTAGE_TRIGGER 8
 
 #if (HW_NUM <= 8 || (HW_NUM == 9 && HW_REVISION == 'A'))
-#define SCREEN_BRIGHTNESS_FACTOR \
+#define SCREEN_BRIGHTNESS_FACTOR                                               \
   0.1 // Max brightness will be multiplied by this constant
 #define BACKLIGHT_POWER_SAFE_PERCENTAGE 0.6
 #define BACKLIGHT_CONTROL INVERTED_BACKLIGHT_CONTROL
 #else
-#define SCREEN_BRIGHTNESS_FACTOR \
+#define SCREEN_BRIGHTNESS_FACTOR                                               \
   0.7 // Max brightness will be multiplied by this constant
 #define BACKLIGHT_POWER_SAFE_PERCENTAGE 0.3
 #define BACKLIGHT_CONTROL DIRECT_BACKLIGHT_CONTROL

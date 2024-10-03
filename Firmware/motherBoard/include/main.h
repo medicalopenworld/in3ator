@@ -14,7 +14,6 @@
 #include <Update.h>
 #include <WebServer.h>
 #include <WiFi.h>
-#include <WiFiClient.h>
 // include libraries
 #include <Beastdevices_INA3221.h>
 #include <EEPROM.h>
@@ -41,6 +40,8 @@
 #include "esp32/ulp.h"
 #include "in3ator_humidifier.h"
 #include "board.h"
+#include <BQ25792_Driver.h>
+
 // #include <BQ25792_Driver.h>
 
 #include <Espressif_Updater.h>
@@ -49,7 +50,7 @@
 
 #define LOG_GPRS false
 #define LOG_MODEM_DATA false
-#define LOG_INFORMATION false
+#define LOG_INFORMATION true
 #define LOG_ERRORS false
 #define LOG_ALARMS false
 
@@ -221,6 +222,7 @@ typedef enum
 #define LOCATION_LATITUD_KEY "tri_latitud"
 #define TRI_ACCURACY_KEY "tri_accuracy"
 #define UI_LANGUAGE_KEY "UI_language"
+#define SKIN_CAPACITANCE_KEY "Skin_CAP"
 #define SKIN_TEMPERATURE_KEY "Skin_temp"
 #define AIR_TEMPERATURE_KEY "Air_temp"
 #define AMBIENT_TEMPERATURE_KEY "Amb_temp"
@@ -506,6 +508,7 @@ typedef enum
 
 typedef struct
 {
+  int skinSensorCapacitance;
   double temperature[SENSOR_TEMP_QTY];
   double humidity[SENSOR_HUM_QTY];
   double desiredControlTemperature = false;

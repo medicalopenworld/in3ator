@@ -221,31 +221,31 @@ void updateDisplaySensors()
 void logI(String dataString)
 {
   if (LOG_INFORMATION)
-    Serial.println(String(millis() / 1000) + ": " + dataString);
+    debugSerial.println(String(millis() / 1000) + ": " + dataString);
 }
 
 void logCon(String dataString)
 {
   if (LOG_GPRS)
-    Serial.println(String(millis() / 1000) + ": " + dataString);
+    debugSerial.println(String(millis() / 1000) + ": " + dataString);
 }
 
 void logModemData(String dataString)
 {
   if (LOG_MODEM_DATA)
-    Serial.println(String(millis() / 1000) + ": " + dataString);
+    debugSerial.println(String(millis() / 1000) + ": " + dataString);
 }
 
 void logE(String dataString)
 {
   if (LOG_ERRORS)
-    Serial.println(String(millis() / 1000) + ": " + dataString);
+    debugSerial.println(String(millis() / 1000) + ": " + dataString);
 }
 
 void logAlarm(String dataString)
 {
   if (LOG_ALARMS)
-    Serial.println(String(millis() / 1000) + ": " + dataString);
+    debugSerial.println(String(millis() / 1000) + ": " + dataString);
 }
 
 void backlightHandler()

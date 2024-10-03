@@ -38,6 +38,7 @@ Adafruit_SHT4x sht4 = Adafruit_SHT4x();
 RotaryEncoder encoder(ENC_A, ENC_B, RotaryEncoder::LatchMode::TWO03);
 Beastdevices_INA3221 mainDigitalCurrentSensor(INA3221_ADDR41_VCC);
 Beastdevices_INA3221 secundaryDigitalCurrentSensor(INA3221_ADDR40_GND);
+BQ25792 charger(0, 0);
 
 bool WIFI_EN = true;
 long lastDebugUpdate;
@@ -57,8 +58,8 @@ double temperatureMax[SENSOR_TEMP_QTY], temperatureMin[SENSOR_TEMP_QTY];
 int temperature_array_pos; // temperature sensor number turn to measure
 bool humidifierState, humidifierStateChange;
 int previousHumidity; // previous sampled humidity
-float diffHumidity;   // difference between measured humidity and user input real
-                      // humidity
+float diffHumidity; // difference between measured humidity and user input real
+                    // humidity
 
 byte autoCalibrationProcess;
 
@@ -90,7 +91,7 @@ volatile int lastEncMove;             // moved last encoder
 volatile int EncMoveOrientation = -1; // set to -1 to increase values clockwise
 volatile int last_encoder_move;       // moved encoder
 long encoder_debounce_time =
-    true;            // in milliseconds, debounce time in encoder to filter signal bounces
+    true; // in milliseconds, debounce time in encoder to filter signal bounces
 long last_encPulsed; // last time encoder was pulsed
 
 // Text Graphic position variables
@@ -112,8 +113,8 @@ int screenTextColor, screenTextBackgroundColour;
 
 // User Interface display variables
 bool goToSettings = false;
-bool autoLock;             // setting that enables backlight switch OFF after a given time
-                           // of no user actions
+bool autoLock; // setting that enables backlight switch OFF after a given time
+               // of no user actions
 long lastbacklightHandler; // last time there was a encoder movement or pulse
 
 bool selected;
@@ -141,43 +142,34 @@ in3ator_parameters in3;
 
 QueueHandle_t sharedSensorQueue;
 
-void GPRS_Task(void *pvParameters)
-{
+void GPRS_Task(void *pvParameters) {
   initGPRS();
   GPRS_TB_Init();
-  for (;;)
-  {
-    if (!WIFIIsConnected())
-    {
+  for (;;) {
+    if (!WIFIIsConnected()) {
       GPRS_Handler();
     }
     vTaskDelay(pdMS_TO_TICKS(GPRS_TASK_PERIOD_MS));
   }
 }
 
-void Backlight_Task(void *pvParameters)
-{
-  for (;;)
-  {
+void Backlight_Task(void *pvParameters) {
+  for (;;) {
     backlightHandler();
     vTaskDelay(pdMS_TO_TICKS(BACKLIGHT_TASK_PERIOD_MS));
   }
 }
 
-void sensors_Task(void *pvParameters)
-{
-  for (;;)
-  {
+void sensors_Task(void *pvParameters) {
+  for (;;) {
     fanSpeedHandler();
     measureNTCTemperature();
-    if (millis() - lastRoomSensorUpdate > ROOM_SENSOR_UPDATE_PERIOD_MS)
-    {
+    if (millis() - lastRoomSensorUpdate > ROOM_SENSOR_UPDATE_PERIOD_MS) {
       updateRoomSensor();
       updateAmbientSensor();
       lastRoomSensorUpdate = millis();
     }
-    if (millis() - lastCurrentSensorUpdate > DIGITAL_CURRENT_SENSOR_PERIOD_MS)
-    {
+    if (millis() - lastCurrentSensorUpdate > DIGITAL_CURRENT_SENSOR_PERIOD_MS) {
       powerMonitor();
       lastCurrentSensorUpdate = millis();
     }
@@ -185,122 +177,110 @@ void sensors_Task(void *pvParameters)
   }
 }
 
-void OTA_WIFI_Task(void *pvParameters)
-{
+void OTA_WIFI_Task(void *pvParameters) {
   WIFI_TB_Init();
-  for (;;)
-  {
+  for (;;) {
     WifiOTAHandler();
     vTaskDelay(pdMS_TO_TICKS(OTA_TASK_PERIOD_MS));
   }
 }
 
-void buzzer_Task(void *pvParameters)
-{
-  for (;;)
-  {
+void buzzer_Task(void *pvParameters) {
+  for (;;) {
     buzzerHandler();
     vTaskDelay(pdMS_TO_TICKS(BUZZER_TASK_PERIOD_MS));
   }
 }
 
-void security_Task(void *pvParameters)
-{
-  for (;;)
-  {
-    if (ALARM_SYSTEM_ENABLED && in3.alarmsEnabled)
-    {
+void security_Task(void *pvParameters) {
+  for (;;) {
+    if (ALARM_SYSTEM_ENABLED && in3.alarmsEnabled) {
       securityCheck();
     }
     vTaskDelay(pdMS_TO_TICKS(SECURITY_TASK_PERIOD_MS));
   }
 }
 
-void UI_Task(void *pvParameters)
-{
-  if (in3.restoreState)
-  {
+void UI_Task(void *pvParameters) {
+  if (in3.restoreState) {
     UI_actuatorsProgress();
-  }
-  else
-  {
-    if (goToSettings)
-    {
+  } else {
+    if (goToSettings) {
       UI_settings();
-    }
-    else
-    {
+    } else {
       UI_mainMenu();
     }
   }
-  for (;;)
-  {
+  for (;;) {
     userInterfaceHandler(page);
     vTaskDelay(pdMS_TO_TICKS(UI_TASK_PERIOD_MS));
   }
 }
 
-void TimeTrack_Task(void *pvParameters)
-{
-  for (;;)
-  {
+void TimeTrack_Task(void *pvParameters) {
+  for (;;) {
     timeTrackHandler();
     vTaskDelay(pdMS_TO_TICKS(TIME_TRACK_TASK_PERIOD_MS));
   }
 }
 
-void setup()
-{
+void setup() {
 
-  Serial.begin(115200);
+  debugSerial.begin(115200);
   logI("in3ator debug uart, version v" + String(FWversion) + "/" +
        String(HWversion) + ", SN: " + String(in3.serialNumber));
 
   // sharedSensorQueue = xQueueCreate(SENSOR_TEMP_QTY, sizeof(long));
   initGPIO();
+  initEEPROM();
+  initRoomSensor();
 
-  if (!GPIORead(ENC_SWITCH))
-  {
+  if (!GPIORead(ENC_SWITCH)) {
     goToSettings = true;
   }
 
   initHardware(false);
-  if (WIFI_EN)
-  {
+  if (WIFI_EN) {
     wifiInit();
   }
-  // EEPROM.writeString(EEPROM_THINGSBOARD_TOKEN, "x0Tu1UQDIyLr5Owedmy4"); //8944477200000012865
-  // EEPROM.write(EEPROM_THINGSBOARD_PROVISIONED, true);
+  // EEPROM.writeString(EEPROM_THINGSBOARD_TOKEN, "x0Tu1UQDIyLr5Owedmy4");
+  // //8944477200000012865 EEPROM.write(EEPROM_THINGSBOARD_PROVISIONED, true);
   // EEPROM.commit();
 
   logI("Creating buzzer task ...\n");
   while (xTaskCreatePinnedToCore(buzzer_Task, (const char *)"BUZZER", 4096,
-                                 NULL, BUZZER_TASK_PRIORITY, NULL, CORE_ID_FREERTOS) != pdPASS)
+                                 NULL, BUZZER_TASK_PRIORITY, NULL,
+                                 CORE_ID_FREERTOS) != pdPASS)
     ;
   ;
   logI("Buzzer task successfully created!\n");
   logI("Creating sensors task ...\n");
   while (xTaskCreatePinnedToCore(sensors_Task, (const char *)"SENSORS", 4096,
-                                 NULL, SENSORS_TASK_PRIORITY, NULL, CORE_ID_FREERTOS) != pdPASS)
+                                 NULL, SENSORS_TASK_PRIORITY, NULL,
+                                 CORE_ID_FREERTOS) != pdPASS)
     ;
   ;
   logI("sensors task successfully created!\n");
   // Task generation
-  logI("Creating security task ...\n");
-  while (xTaskCreatePinnedToCore(security_Task, (const char *)"SECURITY", 4096,
-                                 NULL, SECURITY_TASK_PRIORITY, NULL, CORE_ID_FREERTOS) != pdPASS)
-    ;
-  ;
+  // logI("Creating security task ...\n");
+  // while (xTaskCreatePinnedToCore(security_Task, (const char *)"SECURITY",
+  // 4096,
+  //                                NULL, SECURITY_TASK_PRIORITY, NULL,
+  //                                CORE_ID_FREERTOS) != pdPASS)
+  //   ;
+  // ;
   logI("sensors task successfully created!\n");
   logI("Creating GPRS task ...\n");
-  while (xTaskCreatePinnedToCore(GPRS_Task, (const char *)"GPRS", 8192, NULL, GPRS_TAST_PRIORITY,
-                                 NULL, CORE_ID_FREERTOS) != pdPASS)
+  while (xTaskCreatePinnedToCore(GPRS_Task, (const char *)"GPRS", 8192, NULL,
+                                 GPRS_TAST_PRIORITY, NULL,
+                                 CORE_ID_FREERTOS) != pdPASS)
     ;
   logI("GPRS task successfully created!\n");
 
   logI("Creating OTA task ...\n");
-  while (xTaskCreatePinnedToCore(OTA_WIFI_Task, (const char *)"OTA", 8192, NULL, OTA_TASK_PRIORITY,
-                                 NULL, CORE_ID_FREERTOS) != pdPASS)
+  while (xTaskCreatePinnedToCore(OTA_WIFI_Task, (const char *)"OTA", 8192, NULL,
+                                 OTA_TASK_PRIORITY, NULL,
+                                 CORE_ID_FREERTOS) != pdPASS)
     ;
   logI("OTA task successfully created!\n");
 
@@ -321,12 +301,13 @@ void setup()
 
   logI("Creating UI task ...\n");
   while (xTaskCreatePinnedToCore(UI_Task, (const char *)"UI", 4096,
-                                 NULL, UI_TASK_PRIORITY, NULL, CORE_ID_FREERTOS) != pdPASS)
+                                 NULL, UI_TASK_PRIORITY, NULL,
+                                 CORE_ID_FREERTOS) != pdPASS)
     ;
   ;
   logI("UI task successfully created!\n");
-
-  // Serial.begin(115200);
+  // charger.reset();
+  // delay(500); // give the charger time to reboot
   // charger.setChargeVoltageLimit(14.4);
   // charger.setInputCurrentLimit(3);
   // charger.writeByte(REG18_NTC_Control_1, 0x55);
@@ -335,13 +316,10 @@ void setup()
   // pinMode(TOUCH_SENSOR_SEL, OUTPUT);
 }
 
-void loop()
-{
+void loop() {
   watchdogReload();
   updateData();
-  // digitalWrite(TOUCH_SENSOR_SEL, HIGH);
-  // Serial.print(touchRead(TOUCH_SENSOR)); // get value of Touch 0 pin = GPIO 4
-  // Serial.print(",");
-  // digitalWrite(TOUCH_SENSOR_SEL, LOW);
+  // in3.skinSensorCapacitance = touchRead(TOUCH_SENSOR);
+
   vTaskDelay(pdMS_TO_TICKS(LOOP_TASK_PERIOD_MS));
 }

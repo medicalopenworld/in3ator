@@ -11,14 +11,14 @@
 #define PID_TEMPERATURE_SAMPLE_TIME 4000
 #define PID_HUMIDITY_SAMPLE_TIME 200
 
-#define KP_AIR 200
-#define KI_AIR 1
-#define KD_AIR 500
+#define KP_AIR 150
+#define KI_AIR 0.75
+#define KD_AIR 250
 #define AWO_SKIN 2
 
-#define KP_SKIN 200
-#define KI_SKIN 1
-#define KD_SKIN 500
+#define KP_SKIN 100
+#define KI_SKIN 0.5
+#define KD_SKIN 250
 #define AWO_AIR 2
 
 #define KP_HUMIDITY 200
