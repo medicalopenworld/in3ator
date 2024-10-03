@@ -362,5 +362,8 @@ void loop() {
   watchdogReload();
   updateData();
   // in3.skinSensorCapacitance = touchRead(TOUCH_SENSOR);
+  // Give amount of free heap memory (uncomment if you'd like to see it)
+  Serial.print("Free heap (bytes): ");
+  Serial.println(xPortGetFreeHeapSize());
   vTaskDelay(pdMS_TO_TICKS(LOOP_TASK_PERIOD_MS));
 }

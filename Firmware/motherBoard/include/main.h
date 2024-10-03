@@ -49,9 +49,9 @@
 #include <Espressif_MQTT_Client.h>
 #include <Arduino_MQTT_Client.h>
 
-#define LOG_GPRS true
-#define LOG_MODEM_DATA true
-#define LOG_INFORMATION true
+#define LOG_GPRS false
+#define LOG_MODEM_DATA false
+#define LOG_INFORMATION false
 #define LOG_ERRORS false
 #define LOG_ALARMS false
 
@@ -598,7 +598,6 @@ void buzzerConstantTone(int freq);
 void drawAlarmMessage(char *alertMessage);
 void drawHeading(int UI_page, int UI_serialNumber);
 void updateHeadingEvent(byte Event, bool event_status);
-char *convertStringToChar(String input);
 char *convertStringToChar(char *arrayInput, String input);
 int16_t drawCentreString(char *string, int16_t dX, int16_t poY, int16_t size);
 void eraseBar(int UI_menu_rows, int bar_pos);

@@ -140,57 +140,49 @@ extern PID humidityControlPID;
 
 extern in3ator_parameters in3;
 
-void UI_settings()
-{
+void UI_settings() {
   byte numWords = 6;
   page = SETTINGS_PAGE;
   print_text = true;
   tft.setTextSize(1);
   setTextColor(COLOUR_MENU_TEXT);
-  for (int i = false; i < numWords; i++)
-  {
+  for (int i = false; i < numWords; i++) {
     pos_text[i] = LEFT_MARGIN;
   }
   pos_text[DEFAULT_VALUES_UI_ROW] = CENTER;
   pos_text[HW_TEST_UI_ROW] = CENTER;
   pos_text[CALIBRATION_UI_ROW] = CENTER;
-  switch (in3.language)
-  {
+  switch (in3.language) {
   case ENGLISH:
-    words[LANGUAGE_UI_ROW] = convertStringToChar("in3.language");
-    words[SERIAL_NUMBER_UI_ROW] = convertStringToChar("Serial number");
-    words[DEFAULT_VALUES_UI_ROW] =
-        convertStringToChar("Set default values");
-    words[CALIBRATION_UI_ROW] = convertStringToChar("Calibration");
+    words[LANGUAGE_UI_ROW] = (char *)("in3.language");
+    words[SERIAL_NUMBER_UI_ROW] = (char *)("Serial number");
+    words[DEFAULT_VALUES_UI_ROW] = (char *)("Set default values");
+    words[CALIBRATION_UI_ROW] = (char *)("Calibration");
     break;
   case SPANISH:
-    words[LANGUAGE_UI_ROW] = convertStringToChar("Idioma");
-    words[SERIAL_NUMBER_UI_ROW] = convertStringToChar("Serial number");
-    words[DEFAULT_VALUES_UI_ROW] =
-        convertStringToChar("Fijar valores estandar");
-    words[CALIBRATION_UI_ROW] = convertStringToChar("Calibracion");
+    words[LANGUAGE_UI_ROW] = (char *)("Idioma");
+    words[SERIAL_NUMBER_UI_ROW] = (char *)("Serial number");
+    words[DEFAULT_VALUES_UI_ROW] = (char *)("Fijar valores estandar");
+    words[CALIBRATION_UI_ROW] = (char *)("Calibracion");
     break;
   case FRENCH:
-    words[LANGUAGE_UI_ROW] = convertStringToChar("Langue");
-    words[SERIAL_NUMBER_UI_ROW] = convertStringToChar("Serial number");
-    words[DEFAULT_VALUES_UI_ROW] =
-        convertStringToChar("Definir valeurs default");
-    words[CALIBRATION_UI_ROW] = convertStringToChar("Etalonner");
+    words[LANGUAGE_UI_ROW] = (char *)("Langue");
+    words[SERIAL_NUMBER_UI_ROW] = (char *)("Serial number");
+    words[DEFAULT_VALUES_UI_ROW] = (char *)("Definir valeurs default");
+    words[CALIBRATION_UI_ROW] = (char *)("Etalonner");
     break;
   case PORTUGUESE:
-    words[LANGUAGE_UI_ROW] = convertStringToChar("Idioma");
-    words[SERIAL_NUMBER_UI_ROW] = convertStringToChar("Serial number");
-    words[DEFAULT_VALUES_UI_ROW] =
-        convertStringToChar("Definir valores de fabrica");
-    words[CALIBRATION_UI_ROW] = convertStringToChar("Calibrar");
+    words[LANGUAGE_UI_ROW] = (char *)("Idioma");
+    words[SERIAL_NUMBER_UI_ROW] = (char *)("Serial number");
+    words[DEFAULT_VALUES_UI_ROW] = (char *)("Definir valores de fabrica");
+    words[CALIBRATION_UI_ROW] = (char *)("Calibrar");
     break;
   }
-  words[WIFI_EN_UI_ROW] = convertStringToChar("WIFI");
-  words[CCID_UI_ROW] = convertStringToChar("CCID");
-  words[HW_TEST_UI_ROW] = convertStringToChar("HW Test");
-  if (WiFi.status() == WL_CONNECTED)
-  {
-    words[WIFI_EN_UI_ROW] = convertStringToChar("WIFI IP->");
+  words[WIFI_EN_UI_ROW] = (char *)("WIFI");
+  words[CCID_UI_ROW] = (char *)("CCID");
+  words[HW_TEST_UI_ROW] = (char *)("HW Test");
+  if (WiFi.status() == WL_CONNECTED) {
+    words[WIFI_EN_UI_ROW] = (char *)("WIFI IP->");
   }
   menu_rows = numWords;
   graphics(page, in3.language, print_text, menu_rows, in3.serialNumber,
@@ -199,8 +191,7 @@ void UI_settings()
   bar_pos = true;
   selected = false;
   ypos = graphicHeight(bar_pos - 1);
-  while (!GPIORead(ENC_SWITCH))
-  {
+  while (!GPIORead(ENC_SWITCH)) {
     vTaskDelay(pdMS_TO_TICKS(SWITCH_DEBOUNCE_TIME_MS));
   }
 }

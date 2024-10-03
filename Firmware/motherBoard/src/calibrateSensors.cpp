@@ -206,19 +206,19 @@ void autoCalibration()
   {
   case ENGLISH:
     words[AUTO_CALIB_MESSAGE_UI_ROW] =
-        convertStringToChar("Calibrating...");
+        (char *)("Calibrating...");
     break;
   case SPANISH:
     words[AUTO_CALIB_MESSAGE_UI_ROW] =
-        convertStringToChar("Calibrating...");
+        (char *)("Calibrating...");
     break;
   case FRENCH:
     words[AUTO_CALIB_MESSAGE_UI_ROW] =
-        convertStringToChar("Calibrating...");
+        (char *)("Calibrating...");
     break;
   case PORTUGUESE:
     words[AUTO_CALIB_MESSAGE_UI_ROW] =
-        convertStringToChar("Calibrating...");
+        (char *)("Calibrating...");
     break;
   }
   menu_rows = numWords;
@@ -336,8 +336,8 @@ void fineTuneCalibration()
   }
   pos_text[SET_CALIB_UI_ROW] = CENTER;
   words[TEMP_CALIB_UI_ROW] =
-      convertStringToChar("Temperature adjust");
-  words[SET_CALIB_UI_ROW] = convertStringToChar("SET");
+      (char *)("Temperature adjust");
+  words[SET_CALIB_UI_ROW] = (char *)("SET");
   menu_rows = numWords;
   graphics(page, in3.language, print_text, menu_rows, false, false);
   drawHeading(page, in3.serialNumber);
@@ -367,23 +367,23 @@ void firstPointCalibration()
   {
   case ENGLISH:
     words[TEMP_CALIB_UI_ROW] =
-        convertStringToChar("First point");
-    words[SET_CALIB_UI_ROW] = convertStringToChar("SET");
+        (char *)("First point");
+    words[SET_CALIB_UI_ROW] = (char *)("SET");
     break;
   case SPANISH:
     words[TEMP_CALIB_UI_ROW] =
-        convertStringToChar("First point");
-    words[SET_CALIB_UI_ROW] = convertStringToChar("SET");
+        (char *)("First point");
+    words[SET_CALIB_UI_ROW] = (char *)("SET");
     break;
   case FRENCH:
     words[TEMP_CALIB_UI_ROW] =
-        convertStringToChar("First point");
-    words[SET_CALIB_UI_ROW] = convertStringToChar("SET");
+        (char *)("First point");
+    words[SET_CALIB_UI_ROW] = (char *)("SET");
     break;
   case PORTUGUESE:
     words[TEMP_CALIB_UI_ROW] =
-        convertStringToChar("First point");
-    words[SET_CALIB_UI_ROW] = convertStringToChar("SET");
+        (char *)("First point");
+    words[SET_CALIB_UI_ROW] = (char *)("SET");
     break;
   }
   menu_rows = numWords;
@@ -415,23 +415,23 @@ void secondPointCalibration()
   {
   case ENGLISH:
     words[TEMP_CALIB_UI_ROW] =
-        convertStringToChar("Second point");
-    words[SET_CALIB_UI_ROW] = convertStringToChar("SET");
+        (char *)("Second point");
+    words[SET_CALIB_UI_ROW] = (char *)("SET");
     break;
   case SPANISH:
     words[TEMP_CALIB_UI_ROW] =
-        convertStringToChar("Second point");
-    words[SET_CALIB_UI_ROW] = convertStringToChar("SET");
+        (char *)("Second point");
+    words[SET_CALIB_UI_ROW] = (char *)("SET");
     break;
   case FRENCH:
     words[TEMP_CALIB_UI_ROW] =
-        convertStringToChar("Second point");
-    words[SET_CALIB_UI_ROW] = convertStringToChar("SET");
+        (char *)("Second point");
+    words[SET_CALIB_UI_ROW] = (char *)("SET");
     break;
   case PORTUGUESE:
     words[TEMP_CALIB_UI_ROW] =
-        convertStringToChar("Second point");
-    words[SET_CALIB_UI_ROW] = convertStringToChar("SET");
+        (char *)("Second point");
+    words[SET_CALIB_UI_ROW] = (char *)("SET");
     break;
   }
   menu_rows = numWords;

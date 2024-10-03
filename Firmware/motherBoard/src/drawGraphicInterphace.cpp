@@ -203,7 +203,7 @@ void drawHeading(int UI_page, int UI_serialNumber)
     drawBack();
   }
   setTextColor(COLOUR_MENU);
-  drawCentreString(convertStringToChar(cstring, "in3_"),
+  drawCentreString((char *)("in3_"),
                    tft_width / 2 - 2 * letter_width - 10, headint_text_height,
                    textFontSize);
   drawCentreNumber(UI_serialNumber, tft_width / 2, headint_text_height);
@@ -227,20 +227,20 @@ void updateHeadingEvent(byte Event, bool event_status)
   switch (Event)
   {
   case EVENT_2G:
-    drawCentreString(convertStringToChar(cstring, "2G"), EVENT_2G_UI_POS,
+    drawCentreString((char *)("2G"), EVENT_2G_UI_POS,
                      headint_text_height, textFontSize);
     break;
   case EVENT_WIFI:
-    drawCentreString(convertStringToChar(cstring, "W"), EVENT_WIFI_UI_POS,
+    drawCentreString((char *)("W"), EVENT_WIFI_UI_POS,
                      headint_text_height, textFontSize);
     break;
   case EVENT_SERVER_CONNECTION:
-    drawCentreString(convertStringToChar(cstring, "S"),
+    drawCentreString((char *)("S"),
                      EVENT_SERVER_CONNECTION_UI_POS, headint_text_height,
                      textFontSize);
     break;
   case EVENT_OTA_ONGOING:
-    drawCentreString(convertStringToChar(cstring, "O"),
+    drawCentreString((char *)("O"),
                      EVENT_OTA_ONGOING_UI_POS, headint_text_height,
                      textFontSize);
     break;
@@ -330,24 +330,24 @@ void drawIntroMessage()
   switch (in3.language)
   {
   case ENGLISH:
-    words[0] = convertStringToChar("Welcome to in3ator");
-    words[1] = convertStringToChar("");
-    words[2] = convertStringToChar("Saving lives");
+    words[0] = (char *)("Welcome to in3ator");
+    words[1] = (char *)("");
+    words[2] = (char *)("Saving lives");
     break;
   case SPANISH:
-    words[0] = convertStringToChar("Bienvenido a in3");
-    words[1] = convertStringToChar("");
-    words[2] = convertStringToChar("Salvando vidas");
+    words[0] = (char *)("Bienvenido a in3");
+    words[1] = (char *)("");
+    words[2] = (char *)("Salvando vidas");
     break;
   case FRENCH:
-    words[0] = convertStringToChar("Bienvenue a in3");
-    words[1] = convertStringToChar("");
-    words[2] = convertStringToChar("Sauver des vies");
+    words[0] = (char *)("Bienvenue a in3");
+    words[1] = (char *)("");
+    words[2] = (char *)("Sauver des vies");
     break;
   case PORTUGUESE:
-    words[0] = convertStringToChar("Bem-vindo ao");
-    words[1] = convertStringToChar("");
-    words[2] = convertStringToChar("Salvando vidas");
+    words[0] = (char *)("Bem-vindo ao");
+    words[1] = (char *)("");
+    words[2] = (char *)("Salvando vidas");
     break;
   }
   for (int i = false; i < numWords; i++)
@@ -367,9 +367,9 @@ void drawAlarmMessage(char *alertMessage)
 
 void drawHumidityUnits()
 {
-  drawRightString(convertStringToChar(cstring, "/"), separatorPosition, ypos,
+  drawRightString((char *)("/"), separatorPosition, ypos,
                   textFontSize);
-  drawRightString(convertStringToChar(cstring, "%"), unitPosition, ypos,
+  drawRightString((char *)("%"), unitPosition, ypos,
                   textFontSize);
 }
 
@@ -403,17 +403,17 @@ void drawStop()
   switch (in3.language)
   {
   case SPANISH:
-    textToWrite = convertStringToChar(cstring, "Pulsa 2 seg para salir");
+    textToWrite = (char *)("Pulsa 2 seg para salir");
     break;
   case ENGLISH:
-    textToWrite = convertStringToChar(cstring, "Press 2 sec to go back");
+    textToWrite = (char *)("Press 2 sec to go back");
     break;
   case FRENCH:
-    textToWrite = convertStringToChar(cstring, "appuyez 2 sec pour voler");
+    textToWrite = (char *)("appuyez 2 sec pour voler");
     break;
   case PORTUGUESE:
     textToWrite =
-        convertStringToChar(cstring, "Pressione 2 segundos para sair");
+        (char *)("Pressione 2 segundos para sair");
     break;
   }
   drawCentreString(textToWrite, tft_width / 2, tft_height - letter_height,
@@ -465,16 +465,16 @@ void drawHelpMessage(byte UI_language)
   switch (UI_language)
   {
   case ENGLISH:
-    helpMessage = convertStringToChar(cstring, "Set desired parameters");
+    helpMessage = (char *)("Set desired parameters");
     break;
   case SPANISH:
-    helpMessage = convertStringToChar(cstring, "Introduce parametros");
+    helpMessage = (char *)("Introduce parametros");
     break;
   case FRENCH:
-    helpMessage = convertStringToChar(cstring, "Entrer parametres");
+    helpMessage = (char *)("Entrer parametres");
     break;
   case PORTUGUESE:
-    helpMessage = convertStringToChar(cstring, "Insira os parametros");
+    helpMessage = (char *)("Insira os parametros");
     break;
   }
 }
@@ -500,16 +500,16 @@ void drawStartMessage(bool UI_enableSet, int UI_menu_rows)
     switch (in3.language)
     {
     case SPANISH:
-      words[START_UI_ROW] = convertStringToChar(cstring, "EMPEZAR");
+      words[START_UI_ROW] = (char *)("EMPEZAR");
       break;
     case ENGLISH:
-      words[START_UI_ROW] = convertStringToChar(cstring, "START");
+      words[START_UI_ROW] = (char *)("START");
       break;
     case FRENCH:
-      words[START_UI_ROW] = convertStringToChar(cstring, "DEBUT");
+      words[START_UI_ROW] = (char *)("DEBUT");
       break;
     case PORTUGUESE:
-      words[START_UI_ROW] = convertStringToChar(cstring, "COMECAR");
+      words[START_UI_ROW] = (char *)("COMECAR");
       break;
     }
     drawCentreString(words[START_UI_ROW],
@@ -752,9 +752,9 @@ char *convertStringToChar(char *arrayInput, String input)
 
 void drawTemperatureUnits()
 {
-  drawRightString(convertStringToChar(cstring, "/"), separatorPosition, ypos,
+  drawRightString((char *)("/"), separatorPosition, ypos,
                   textFontSize);
-  drawRightString(convertStringToChar(cstring, "C"), unitPosition, ypos,
+  drawRightString((char *)("C"), unitPosition, ypos,
                   textFontSize);
 }
 
@@ -820,18 +820,18 @@ void drawHardwareErrorMessage(long error, bool criticalError,
     switch (in3.language)
     {
     case SPANISH:
-      textToWrite = convertStringToChar(cstring, " Por favor contacta");
+      textToWrite = (char *)(" Por favor contacta");
       break;
     case PORTUGUESE:
       textToWrite =
-          convertStringToChar(cstring, " Por favor entre em contato");
+          (char *)(" Por favor entre em contato");
       break;
     case ENGLISH:
-      textToWrite = convertStringToChar(cstring, " Please contact");
+      textToWrite = (char *)(" Please contact");
       break;
     case FRENCH:
       textToWrite =
-          convertStringToChar(cstring, " S'il vous plait contactez");
+          (char *)(" S'il vous plait contactez");
       break;
     }
     tft.println(textToWrite);
@@ -849,16 +849,16 @@ void drawHardwareErrorMessage(long error, bool criticalError,
   switch (in3.language)
   {
   case SPANISH:
-    textToWrite = convertStringToChar(cstring, "Presione para continuar");
+    textToWrite = (char *)("Presione para continuar");
     break;
   case PORTUGUESE:
-    textToWrite = convertStringToChar(cstring, "Pressione para continuar");
+    textToWrite = (char *)("Pressione para continuar");
     break;
   case ENGLISH:
-    textToWrite = convertStringToChar(cstring, "Press to continue");
+    textToWrite = (char *)("Press to continue");
     break;
   case FRENCH:
-    textToWrite = convertStringToChar(cstring, "Appuyez pour continuer");
+    textToWrite = (char *)("Appuyez pour continuer");
     break;
   }
   tft.println(textToWrite);
@@ -930,16 +930,16 @@ void graphics(uint8_t UI_page, uint8_t UI_language, uint8_t UI_print_text,
             switch (in3.language)
             {
             case SPANISH:
-              textToWrite = convertStringToChar(cstring, "AIRE");
+              textToWrite = (char *)("AIRE");
               break;
             case ENGLISH:
-              textToWrite = convertStringToChar(cstring, "AIR");
+              textToWrite = (char *)("AIR");
               break;
             case FRENCH:
-              textToWrite = convertStringToChar(cstring, "AIR");
+              textToWrite = (char *)("AIR");
               break;
             case PORTUGUESE:
-              textToWrite = convertStringToChar(cstring, "AR");
+              textToWrite = (char *)("AR");
               break;
             }
             drawRightString(textToWrite, unitPosition, ypos, textFontSize);
@@ -949,16 +949,16 @@ void graphics(uint8_t UI_page, uint8_t UI_language, uint8_t UI_print_text,
             switch (in3.language)
             {
             case SPANISH:
-              textToWrite = convertStringToChar(cstring, "PIEL");
+              textToWrite = (char *)("PIEL");
               break;
             case ENGLISH:
-              textToWrite = convertStringToChar(cstring, "SKIN");
+              textToWrite = (char *)("SKIN");
               break;
             case FRENCH:
-              textToWrite = convertStringToChar(cstring, "PEAU");
+              textToWrite = (char *)("PEAU");
               break;
             case PORTUGUESE:
-              textToWrite = convertStringToChar(cstring, "PELE");
+              textToWrite = (char *)("PELE");
               break;
             }
             drawRightString(textToWrite, unitPosition, ypos, textFontSize);
@@ -966,25 +966,25 @@ void graphics(uint8_t UI_page, uint8_t UI_language, uint8_t UI_print_text,
           break;
         case TEMPERATURE_UI_ROW:
           drawTemperatureUnits();
-          drawRightString(convertStringToChar(cstring, initialSensorsValue),
+          drawRightString((char *)(initialSensorsValue),
                           initialSensorPosition, temperatureY,
                           textFontSize);
           break;
         case LED_UI_ROW:
           if (UI_var_1)
           {
-            drawRightString(convertStringToChar(cstring, "ON"),
+            drawRightString((char *)("ON"),
                             unitPosition, ypos, textFontSize);
           }
           else
           {
-            drawRightString(convertStringToChar(cstring, "OFF"),
+            drawRightString((char *)("OFF"),
                             unitPosition, ypos, textFontSize);
           }
           break;
         case HUMIDITY_UI_ROW:
           drawHumidityUnits();
-          drawRightString(convertStringToChar(cstring, initialSensorsValue),
+          drawRightString((char *)(initialSensorsValue),
                           initialSensorPosition, humidityY, textFontSize);
           break;
         }
@@ -996,16 +996,16 @@ void graphics(uint8_t UI_page, uint8_t UI_language, uint8_t UI_print_text,
           switch (in3.language)
           {
           case SPANISH:
-            textToWrite = convertStringToChar(cstring, "SPA");
+            textToWrite = (char *)("SPA");
             break;
           case ENGLISH:
-            textToWrite = convertStringToChar(cstring, "ENG");
+            textToWrite = (char *)("ENG");
             break;
           case FRENCH:
-            textToWrite = convertStringToChar(cstring, "FRA");
+            textToWrite = (char *)("FRA");
             break;
           case PORTUGUESE:
-            textToWrite = convertStringToChar(cstring, "POR");
+            textToWrite = (char *)("POR");
             break;
           }
           drawRightString(textToWrite, unitPosition, ypos, textFontSize);
@@ -1014,12 +1014,12 @@ void graphics(uint8_t UI_page, uint8_t UI_language, uint8_t UI_print_text,
           drawRightNumber(UI_var_0, unitPosition, ypos);
           break;
         case CCID_UI_ROW:
-          drawCentreString(convertStringToChar(cstring, GPRS.CCID), tft_width / 2, ypos, textFontSize);
+          drawCentreString(convertStringToChar(GPRS.CCID), tft_width / 2, ypos, textFontSize);
           break;
         case WIFI_EN_UI_ROW:
           if (UI_var_1)
           {
-            drawRightString(convertStringToChar(cstring, "ON"),
+            drawRightString((char *)("ON"),
                             unitPosition, ypos, textFontSize);
             if (WiFi.status() == WL_CONNECTED)
             {
@@ -1034,7 +1034,7 @@ void graphics(uint8_t UI_page, uint8_t UI_language, uint8_t UI_print_text,
           }
           else
           {
-            drawRightString(convertStringToChar(cstring, "OFF"),
+            drawRightString((char *)("OFF"),
                             unitPosition, ypos, textFontSize);
           }
         }

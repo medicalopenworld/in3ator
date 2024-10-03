@@ -29,7 +29,7 @@
 extern TwoWire *wire;
 extern MAM_in3ator_Humidifier in3_hum;
 extern TFT_eSPI tft;
-extern SHTC3 mySHTC3;  // Declare an instance of the SHTC3 class
+extern SHTC3 mySHTC3; // Declare an instance of the SHTC3 class
 extern RotaryEncoder encoder;
 
 extern bool WIFI_EN;
@@ -44,13 +44,13 @@ extern double fineTuneSkinTemperature;
 extern double RawTemperatureLow[SENSOR_TEMP_QTY],
     RawTemperatureRange[SENSOR_TEMP_QTY];
 extern double provisionalRawTemperatureLow[SENSOR_TEMP_QTY];
-extern int temperature_array_pos;  // temperature sensor number turn to measure
+extern int temperature_array_pos; // temperature sensor number turn to measure
 extern float diffSkinTemperature,
-    diffAirTemperature;  // difference between measured temperature and user
-                         // input real temperaturee;
-extern int previousHumidity;  // previous sampled humidity
-extern float diffHumidity;    // difference between measured humidity and user
-                              // input real humidity
+    diffAirTemperature;      // difference between measured temperature and user
+                             // input real temperaturee;
+extern int previousHumidity; // previous sampled humidity
+extern float diffHumidity;   // difference between measured humidity and user
+                             // input real humidity
 
 extern byte autoCalibrationProcess;
 
@@ -68,24 +68,24 @@ extern bool WIFI_connection_status;
 extern bool roomSensorPresent;
 
 // room variables
-extern float minDesiredTemp[2];  // minimum allowed temperature to be set
-extern float maxDesiredTemp[2];  // maximum allowed temperature to be set
-extern int presetTemp[2];        // preset baby skin temperature
+extern float minDesiredTemp[2]; // minimum allowed temperature to be set
+extern float maxDesiredTemp[2]; // maximum allowed temperature to be set
+extern int presetTemp[2];       // preset baby skin temperature
 
 extern boolean A_set;
 extern boolean B_set;
-extern int encoderpinA;                  // pin  encoder A
-extern int encoderpinB;                  // pin  encoder B
-extern bool encPulsed, encPulsedBefore;  // encoder switch status
+extern int encoderpinA;                 // pin  encoder A
+extern int encoderpinB;                 // pin  encoder B
+extern bool encPulsed, encPulsedBefore; // encoder switch status
 extern bool updateUIData;
-extern volatile int EncMove;      // moved encoder
-extern volatile int lastEncMove;  // moved last encoder
+extern volatile int EncMove;     // moved encoder
+extern volatile int lastEncMove; // moved last encoder
 extern volatile int
-    EncMoveOrientation;             // set to -1 to increase values clockwise
-extern int last_encoder_move;       // moved encoder
-extern long encoder_debounce_time;  // in milliseconds, debounce time in encoder
-                                    // to filter signal bounces
-extern long last_encPulsed;         // last time encoder was pulsed
+    EncMoveOrientation;            // set to -1 to increase values clockwise
+extern int last_encoder_move;      // moved encoder
+extern long encoder_debounce_time; // in milliseconds, debounce time in encoder
+                                   // to filter signal bounces
+extern long last_encPulsed;        // last time encoder was pulsed
 
 // Text Graphic position variables
 extern int humidityX;
@@ -105,11 +105,10 @@ extern int barWidth, barHeight, tempBarPosX, tempBarPosY, humBarPosX,
 extern int screenTextColor, screenTextBackgroundColour;
 
 // User Interface display variables
-extern bool autoLock;  // setting that enables backlight switch OFF after a
-                       // given time of no user actions
+extern bool autoLock; // setting that enables backlight switch OFF after a
+                      // given time of no user actions
 extern long
-    lastbacklightHandler;  // last time there was a encoder movement or pulse
-
+    lastbacklightHandler; // last time there was a encoder movement or pulse
 
 extern bool selected;
 extern char cstring[128];
@@ -151,51 +150,48 @@ void UI_mainMenu() {
   }
   pos_text[START_UI_ROW] = CENTER;
   switch (in3.language) {
-    case SPANISH:
-      words[CONTROL_MODE_UI_ROW] =
-          convertStringToChar("Modo de control");
-      if (in3.controlMode) {
-        words[TEMPERATURE_UI_ROW] = convertStringToChar("Temp aire");
-      } else {
-        words[TEMPERATURE_UI_ROW] = convertStringToChar("Temp piel");
-      }
-      words[HUMIDITY_UI_ROW] = convertStringToChar("Humedad");
-      words[LED_UI_ROW] = convertStringToChar("Fototerapia");
-      break;
-    case ENGLISH:
-      words[CONTROL_MODE_UI_ROW] = convertStringToChar("Control mode");
-      if (in3.controlMode) {
-        words[TEMPERATURE_UI_ROW] = convertStringToChar("Air temp");
-      } else {
-        words[TEMPERATURE_UI_ROW] = convertStringToChar("Skin temp");
-      }
-      words[HUMIDITY_UI_ROW] = convertStringToChar("Humidity");
-      words[LED_UI_ROW] = convertStringToChar("Phototherapy");
-      break;
-    case FRENCH:
-      words[CONTROL_MODE_UI_ROW] =
-          convertStringToChar("Mode de controle");
-      if (in3.controlMode) {
-        words[TEMPERATURE_UI_ROW] = convertStringToChar("Temp air");
-      } else {
-        words[TEMPERATURE_UI_ROW] = convertStringToChar("Temp peau");
-      }
-      words[HUMIDITY_UI_ROW] = convertStringToChar("Humidite");
-      words[LED_UI_ROW] = convertStringToChar("Phototherapie");
-      break;
-    case PORTUGUESE:
-      words[CONTROL_MODE_UI_ROW] =
-          convertStringToChar("Modo de controle");
-      if (in3.controlMode) {
-        words[TEMPERATURE_UI_ROW] = convertStringToChar("Temp do ar");
-      } else {
-        words[TEMPERATURE_UI_ROW] = convertStringToChar("Temp pele");
-      }
-      words[HUMIDITY_UI_ROW] = convertStringToChar("Umidade");
-      words[LED_UI_ROW] = convertStringToChar("Fototerapia");
-      break;
+  case SPANISH:
+    words[CONTROL_MODE_UI_ROW] = (char *)("Modo de control");
+    if (in3.controlMode) {
+      words[TEMPERATURE_UI_ROW] = (char *)("Temp aire");
+    } else {
+      words[TEMPERATURE_UI_ROW] = (char *)("Temp piel");
+    }
+    words[HUMIDITY_UI_ROW] = (char *)("Humedad");
+    words[LED_UI_ROW] = (char *)("Fototerapia");
+    break;
+  case ENGLISH:
+    words[CONTROL_MODE_UI_ROW] = (char *)("Control mode");
+    if (in3.controlMode) {
+      words[TEMPERATURE_UI_ROW] = (char *)("Air temp");
+    } else {
+      words[TEMPERATURE_UI_ROW] = (char *)("Skin temp");
+    }
+    words[HUMIDITY_UI_ROW] = (char *)("Humidity");
+    words[LED_UI_ROW] = (char *)("Phototherapy");
+    break;
+  case FRENCH:
+    words[CONTROL_MODE_UI_ROW] = (char *)("Mode de controle");
+    if (in3.controlMode) {
+      words[TEMPERATURE_UI_ROW] = (char *)("Temp air");
+    } else {
+      words[TEMPERATURE_UI_ROW] = (char *)("Temp peau");
+    }
+    words[HUMIDITY_UI_ROW] = (char *)("Humidite");
+    words[LED_UI_ROW] = (char *)("Phototherapie");
+    break;
+  case PORTUGUESE:
+    words[CONTROL_MODE_UI_ROW] = (char *)("Modo de controle");
+    if (in3.controlMode) {
+      words[TEMPERATURE_UI_ROW] = (char *)("Temp do ar");
+    } else {
+      words[TEMPERATURE_UI_ROW] = (char *)("Temp pele");
+    }
+    words[HUMIDITY_UI_ROW] = (char *)("Umidade");
+    words[LED_UI_ROW] = (char *)("Fototerapia");
+    break;
   }
-  words[START_UI_ROW] = convertStringToChar("");
+  words[START_UI_ROW] = (char *)("");
   menu_rows = numWords;
   setSensorsGraphicPosition(page);
   graphics(page, in3.language, print_text, menu_rows, in3.controlMode,
@@ -213,6 +209,6 @@ void UI_mainMenu() {
     in3.desiredControlTemperature = presetTemp[in3.controlMode];
   }
   while (!GPIORead(ENC_SWITCH)) {
-  vTaskDelay(pdMS_TO_TICKS(SWITCH_DEBOUNCE_TIME_MS));    
+    vTaskDelay(pdMS_TO_TICKS(SWITCH_DEBOUNCE_TIME_MS));
   }
 }

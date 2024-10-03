@@ -107,7 +107,6 @@ extern bool autoLock; // setting that enables backlight switch OFF after a
 extern long
     lastbacklightHandler; // last time there was a encoder movement or pulse
 
-
 extern bool selected;
 extern char cstring[128];
 extern char *textToWrite;
@@ -137,67 +136,47 @@ extern PID humidityControlPID;
 
 extern in3ator_parameters in3;
 
-void UI_calibration()
-{
-    byte numWords = 4;
-    page = CALIBRATION_SENSORS_PAGE;
-    print_text = true;
-    tft.setTextSize(1);
-    setTextColor(COLOUR_MENU_TEXT);
-    for (int i = false; i < numWords; i++)
-    {
-        pos_text[i] = CENTER;
-    }
-    switch (in3.language)
-    {
-    case ENGLISH:
-        words[TWO_POINT_CALIB_UI_ROW] =
-            convertStringToChar("2-p calibration");
-        words[FINE_TUNE_UI_ROW] =
-            convertStringToChar("fine tune");
-        words[AUTO_CALIB_UI_ROW] =
-            convertStringToChar("auto calibration");
-        words[RESET_CALIB_UI_ROW] =
-            convertStringToChar("Reset values");
-        break;
-    case SPANISH:
-        words[TWO_POINT_CALIB_UI_ROW] =
-            convertStringToChar("2-p calibracion");
-        words[FINE_TUNE_UI_ROW] =
-            convertStringToChar("ajuste fino");
-        words[AUTO_CALIB_UI_ROW] =
-            convertStringToChar("auto calibracion");
-        words[RESET_CALIB_UI_ROW] =
-            convertStringToChar("Reiniciar valores");
-        break;
-    case FRENCH:
-        words[TWO_POINT_CALIB_UI_ROW] =
-            convertStringToChar("2-p calibrage");
-        words[FINE_TUNE_UI_ROW] =
-            convertStringToChar("affiner");
-        words[AUTO_CALIB_UI_ROW] =
-            convertStringToChar("calibrage auto");
-        words[RESET_CALIB_UI_ROW] =
-            convertStringToChar("Reinitialiser valeurs");
-        break;
-    case PORTUGUESE:
-        words[TWO_POINT_CALIB_UI_ROW] =
-            convertStringToChar("2-p calibracao");
-        words[FINE_TUNE_UI_ROW] =
-            convertStringToChar("sintonia fina");
-        words[AUTO_CALIB_UI_ROW] =
-            convertStringToChar("calibracao auto");
-        words[RESET_CALIB_UI_ROW] =
-            convertStringToChar("Redefinir valores");
-        break;
-    }
-    menu_rows = numWords;
-    graphics(page, in3.language, print_text, menu_rows, false, false);
-    drawHeading(page, in3.serialNumber);
-    bar_pos = true;
-    ypos = graphicHeight(bar_pos - 1);
-    while (!GPIORead(ENC_SWITCH))
-    {
-        vTaskDelay(pdMS_TO_TICKS(SWITCH_DEBOUNCE_TIME_MS));
-    }
+void UI_calibration() {
+  byte numWords = 4;
+  page = CALIBRATION_SENSORS_PAGE;
+  print_text = true;
+  tft.setTextSize(1);
+  setTextColor(COLOUR_MENU_TEXT);
+  for (int i = false; i < numWords; i++) {
+    pos_text[i] = CENTER;
+  }
+  switch (in3.language) {
+  case ENGLISH:
+    words[TWO_POINT_CALIB_UI_ROW] = (char *)("2-p calibration");
+    words[FINE_TUNE_UI_ROW] = (char *)("fine tune");
+    words[AUTO_CALIB_UI_ROW] = (char *)("auto calibration");
+    words[RESET_CALIB_UI_ROW] = (char *)("Reset values");
+    break;
+  case SPANISH:
+    words[TWO_POINT_CALIB_UI_ROW] = (char *)("2-p calibracion");
+    words[FINE_TUNE_UI_ROW] = (char *)("ajuste fino");
+    words[AUTO_CALIB_UI_ROW] = (char *)("auto calibracion");
+    words[RESET_CALIB_UI_ROW] = (char *)("Reiniciar valores");
+    break;
+  case FRENCH:
+    words[TWO_POINT_CALIB_UI_ROW] = (char *)("2-p calibrage");
+    words[FINE_TUNE_UI_ROW] = (char *)("affiner");
+    words[AUTO_CALIB_UI_ROW] = (char *)("calibrage auto");
+    words[RESET_CALIB_UI_ROW] = (char *)("Reinitialiser valeurs");
+    break;
+  case PORTUGUESE:
+    words[TWO_POINT_CALIB_UI_ROW] = (char *)("2-p calibracao");
+    words[FINE_TUNE_UI_ROW] = (char *)("sintonia fina");
+    words[AUTO_CALIB_UI_ROW] = (char *)("calibracao auto");
+    words[RESET_CALIB_UI_ROW] = (char *)("Redefinir valores");
+    break;
+  }
+  menu_rows = numWords;
+  graphics(page, in3.language, print_text, menu_rows, false, false);
+  drawHeading(page, in3.serialNumber);
+  bar_pos = true;
+  ypos = graphicHeight(bar_pos - 1);
+  while (!GPIORead(ENC_SWITCH)) {
+    vTaskDelay(pdMS_TO_TICKS(SWITCH_DEBOUNCE_TIME_MS));
+  }
 }

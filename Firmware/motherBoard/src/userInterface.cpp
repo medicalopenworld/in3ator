@@ -279,7 +279,7 @@ void userInterfaceHandler(int UI_page)
               {
                 in3.temperatureControl = true;
                 drawRightString(
-                    convertStringToChar(cstring, initialSensorsValue),
+                    (char *)(initialSensorsValue),
                     initialSensorPosition, temperatureY, textFontSize);
                 setTextColor(COLOUR_MENU_TEXT);
                 drawFloat(in3.desiredControlTemperature, 1,
@@ -332,7 +332,7 @@ void userInterfaceHandler(int UI_page)
                 in3.humidityControl = true;
                 setTextColor(COLOUR_MENU);
                 drawRightString(
-                    convertStringToChar(cstring, initialSensorsValue),
+                    (char *)(initialSensorsValue),
                     initialSensorPosition, humidityY, textFontSize);
                 setTextColor(COLOUR_MENU_TEXT);
                 drawCentreNumber(in3.desiredControlHumidity, humidityX - 65,
@@ -377,23 +377,23 @@ void userInterfaceHandler(int UI_page)
           setTextColor(COLOUR_MENU);
           if (in3.phototherapy)
           {
-            drawRightString(convertStringToChar(cstring, "OFF"),
+            drawRightString((char *)("OFF"),
                             unitPosition, ypos, textFontSize);
           }
           else
           {
-            drawRightString(convertStringToChar(cstring, "ON"),
+            drawRightString((char *)("ON"),
                             unitPosition, ypos, textFontSize);
           }
           setTextColor(COLOUR_MENU_TEXT);
           if (in3.phototherapy)
           {
-            drawRightString(convertStringToChar(cstring, "ON"),
+            drawRightString((char *)("ON"),
                             unitPosition, ypos, textFontSize);
           }
           else
           {
-            drawRightString(convertStringToChar(cstring, "OFF"),
+            drawRightString((char *)("OFF"),
                             unitPosition, ypos, textFontSize);
           }
           GPIOWrite(PHOTOTHERAPY, in3.phototherapy);
@@ -420,16 +420,16 @@ void userInterfaceHandler(int UI_page)
               switch (in3.language)
               {
               case SPANISH:
-                textToWrite = convertStringToChar(cstring, "SPA");
+                textToWrite = (char *)("SPA");
                 break;
               case ENGLISH:
-                textToWrite = convertStringToChar(cstring, "ENG");
+                textToWrite = (char *)("ENG");
                 break;
               case FRENCH:
-                textToWrite = convertStringToChar(cstring, "FRA");
+                textToWrite = (char *)("FRA");
                 break;
               case PORTUGUESE:
-                textToWrite = convertStringToChar(cstring, "POR");
+                textToWrite = (char *)("POR");
                 break;
               }
               drawRightString(textToWrite, unitPosition, ypos,
@@ -447,16 +447,16 @@ void userInterfaceHandler(int UI_page)
               switch (in3.language)
               {
               case SPANISH:
-                textToWrite = convertStringToChar(cstring, "SPA");
+                textToWrite = (char *)("SPA");
                 break;
               case ENGLISH:
-                textToWrite = convertStringToChar(cstring, "ENG");
+                textToWrite = (char *)("ENG");
                 break;
               case FRENCH:
-                textToWrite = convertStringToChar(cstring, "FRA");
+                textToWrite = (char *)("FRA");
                 break;
               case PORTUGUESE:
-                textToWrite = convertStringToChar(cstring, "POR");
+                textToWrite = (char *)("POR");
                 break;
               }
               drawRightString(textToWrite, unitPosition, ypos,
@@ -502,23 +502,23 @@ void userInterfaceHandler(int UI_page)
           setTextColor(COLOUR_MENU);
           if (WIFI_EN)
           {
-            drawRightString(convertStringToChar(cstring, "OFF"),
+            drawRightString((char *)("OFF"),
                             unitPosition, ypos, textFontSize);
           }
           else
           {
-            drawRightString(convertStringToChar(cstring, "ON"),
+            drawRightString((char *)("ON"),
                             unitPosition, ypos, textFontSize);
           }
           setTextColor(COLOUR_MENU_TEXT);
           if (WIFI_EN)
           {
-            drawRightString(convertStringToChar(cstring, "ON"),
+            drawRightString((char *)("ON"),
                             unitPosition, ypos, textFontSize);
           }
           else
           {
-            drawRightString(convertStringToChar(cstring, "OFF"),
+            drawRightString((char *)("OFF"),
                             unitPosition, ypos, textFontSize);
           }
           break;

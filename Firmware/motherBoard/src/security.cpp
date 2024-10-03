@@ -348,31 +348,31 @@ char *alarmIDtoString(byte alarmID)
   {
   case AIR_THERMAL_CUTOUT_ALARM:
   case SKIN_THERMAL_CUTOUT_ALARM:
-    return convertStringToChar(cstring, "THERMAL CUTOUT ALARM");
+    return (char *)("THERMAL CUTOUT ALARM");
     break;
   case TEMPERATURE_ALARM:
-    return convertStringToChar(cstring, "TEMPERATURE ALARM");
+    return (char *)("TEMPERATURE ALARM");
     break;
   case HUMIDITY_ALARM:
-    return convertStringToChar(cstring, "HUMIDITY ALARM");
+    return (char *)("HUMIDITY ALARM");
     break;
   case AIR_SENSOR_ISSUE_ALARM:
-    return convertStringToChar(cstring, "AIR SENSOR ALARM");
+    return (char *)("AIR SENSOR ALARM");
     break;
   case SKIN_SENSOR_ISSUE_ALARM:
-    return convertStringToChar(cstring, "SKIN SENSOR ALARM");
+    return (char *)("SKIN SENSOR ALARM");
     break;
   case FAN_ISSUE_ALARM:
-    return convertStringToChar(cstring, "FAN ALARM");
+    return (char *)("FAN ALARM");
     break;
   case HEATER_ISSUE_ALARM:
-    return convertStringToChar(cstring, "HEATER ALARM");
+    return (char *)("HEATER ALARM");
     break;
   case POWER_SUPPLY_ALARM:
-    return convertStringToChar(cstring, "POWER SUPPLY ALARM");
+    return (char *)("POWER SUPPLY ALARM");
     break;
   default:
-    return convertStringToChar(cstring, "ALARM");
+    return (char *)("ALARM");
     break;
   }
 }

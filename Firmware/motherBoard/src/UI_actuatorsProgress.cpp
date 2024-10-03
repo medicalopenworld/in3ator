@@ -226,16 +226,16 @@ void UIDrawProgressPage()
     switch (in3.language)
     {
     case SPANISH:
-      textToWrite = convertStringToChar(cstring, "Temperatura aire");
+      textToWrite = (char *)("Temperatura aire");
       break;
     case PORTUGUESE:
-      textToWrite = convertStringToChar(cstring, "Temperatura do ar");
+      textToWrite = (char *)("Temperatura do ar");
       break;
     case ENGLISH:
-      textToWrite = convertStringToChar(cstring, "Air temperature");
+      textToWrite = (char *)("Air temperature");
       break;
     case FRENCH:
-      textToWrite = convertStringToChar(cstring, "Temperature de l'air");
+      textToWrite = (char *)("Temperature de l'air");
       break;
     }
   }
@@ -244,16 +244,16 @@ void UIDrawProgressPage()
     switch (in3.language)
     {
     case SPANISH:
-      textToWrite = convertStringToChar(cstring, "Temperatura piel");
+      textToWrite = (char *)("Temperatura piel");
       break;
     case PORTUGUESE:
-      textToWrite = convertStringToChar(cstring, "temperatura da pele");
+      textToWrite = (char *)("temperatura da pele");
       break;
     case ENGLISH:
-      textToWrite = convertStringToChar(cstring, "Skin temperature");
+      textToWrite = (char *)("Skin temperature");
       break;
     case FRENCH:
-      textToWrite = convertStringToChar(cstring, "Temperature de la peau");
+      textToWrite = (char *)("Temperature de la peau");
       break;
     }
   }
@@ -264,16 +264,16 @@ void UIDrawProgressPage()
     switch (in3.language)
     {
     case SPANISH:
-      textToWrite = convertStringToChar(cstring, "Temperatura aire");
+      textToWrite = (char *)("Temperatura aire");
       break;
     case PORTUGUESE:
-      textToWrite = convertStringToChar(cstring, "Temperatura do ar");
+      textToWrite = (char *)("Temperatura do ar");
       break;
     case ENGLISH:
-      textToWrite = convertStringToChar(cstring, "Air temperature");
+      textToWrite = (char *)("Air temperature");
       break;
     case FRENCH:
-      textToWrite = convertStringToChar(cstring, "Temperature de l'air");
+      textToWrite = (char *)("Temperature de l'air");
       break;
     }
   }
@@ -282,16 +282,16 @@ void UIDrawProgressPage()
     switch (in3.language)
     {
     case SPANISH:
-      textToWrite = convertStringToChar(cstring, "Temperatura piel");
+      textToWrite = (char *)("Temperatura piel");
       break;
     case PORTUGUESE:
-      textToWrite = convertStringToChar(cstring, "temperatura da pele");
+      textToWrite = (char *)("temperatura da pele");
       break;
     case ENGLISH:
-      textToWrite = convertStringToChar(cstring, "Skin temperature");
+      textToWrite = (char *)("Skin temperature");
       break;
     case FRENCH:
-      textToWrite = convertStringToChar(cstring, "Temperature de la peau");
+      textToWrite = (char *)("Temperature de la peau");
       break;
     }
   }
@@ -301,16 +301,16 @@ void UIDrawProgressPage()
   switch (in3.language)
   {
   case SPANISH:
-    textToWrite = convertStringToChar(cstring, "Humedad");
+    textToWrite = (char *)("Humedad");
     break;
   case ENGLISH:
-    textToWrite = convertStringToChar(cstring, "Humidity");
+    textToWrite = (char *)("Humidity");
     break;
   case FRENCH:
-    textToWrite = convertStringToChar(cstring, "Humidite");
+    textToWrite = (char *)("Humidite");
     break;
   case PORTUGUESE:
-    textToWrite = convertStringToChar(cstring, "Umidade");
+    textToWrite = (char *)("Umidade");
     break;
   }
   drawCentreString(textToWrite, tft_width / 2,
