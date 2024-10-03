@@ -185,14 +185,10 @@ void GPRS_Task(void *pvParameters) {
     if (!WIFIIsConnected()) {
       GPRS_Handler();
     }
-    if (xSemaphoreTake(GPRS_monitor_mutex, portMAX_DELAY)) // Lock the mutex
-    {
-      // Modify the shared variable
-      GPRS_lastMillisTaskClear = millis();
-
-      // Unlock the mutex
-      xSemaphoreGive(GPRS_monitor_mutex);
-    }
+    // Modify the shared variable
+    GPRS_lastMillisTaskClear = millis();
+    // Unlock the mutex
+    xSemaphoreGive(GPRS_monitor_mutex);
     vTaskDelay(pdMS_TO_TICKS(GPRS_TASK_PERIOD_MS));
   }
 }
@@ -275,6 +271,7 @@ void setup() {
        String(HWversion) + ", SN: " + String(in3.serialNumber));
 
   // sharedSensorQueue = xQueueCreate(SENSOR_TEMP_QTY, sizeof(long));
+  GPRS_monitor_mutex = xSemaphoreCreateBinary();
   initGPIO();
   initEEPROM();
   initRoomSensor();
@@ -365,6 +362,5 @@ void loop() {
   watchdogReload();
   updateData();
   // in3.skinSensorCapacitance = touchRead(TOUCH_SENSOR);
-
   vTaskDelay(pdMS_TO_TICKS(LOOP_TASK_PERIOD_MS));
 }
