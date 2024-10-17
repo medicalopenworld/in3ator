@@ -303,13 +303,12 @@ void setup() {
   ;
   logI("sensors task successfully created!\n");
   // Task generation
-  // logI("Creating security task ...\n");
-  // while (xTaskCreatePinnedToCore(security_Task, (const char *)"SECURITY",
-  // 4096,
-  //                                NULL, SECURITY_TASK_PRIORITY, NULL,
-  //                                CORE_ID_FREERTOS) != pdPASS)
-  //   ;
-  // ;
+  logI("Creating security task ...\n");
+  while (xTaskCreatePinnedToCore(security_Task, (const char *)"SECURITY", 4096,
+                                 NULL, SECURITY_TASK_PRIORITY, NULL,
+                                 CORE_ID_FREERTOS) != pdPASS)
+    ;
+  ;
   logI("sensors task successfully created!\n");
   logI("Creating GPRS task ...\n");
   while (xTaskCreatePinnedToCore(GPRS_Task, (const char *)"GPRS", 8192, NULL,
@@ -340,6 +339,7 @@ void setup() {
   ;
   logI("Time track task successfully created!\n");
 
+#if HW_NUM < 15
   logI("Creating UI task ...\n");
   while (xTaskCreatePinnedToCore(UI_Task, (const char *)"UI", 4096, NULL,
                                  UI_TASK_PRIORITY, NULL,
@@ -347,7 +347,7 @@ void setup() {
     ;
   ;
   logI("UI task successfully created!\n");
-
+#endif
   // charger.reset();
   // delay(500); // give the charger time to reboot
   // charger.setChargeVoltageLimit(14.4);
@@ -362,8 +362,5 @@ void loop() {
   watchdogReload();
   updateData();
   // in3.skinSensorCapacitance = touchRead(TOUCH_SENSOR);
-  // Give amount of free heap memory (uncomment if you'd like to see it)
-  Serial.print("Free heap (bytes): ");
-  Serial.println(xPortGetFreeHeapSize());
   vTaskDelay(pdMS_TO_TICKS(LOOP_TASK_PERIOD_MS));
 }

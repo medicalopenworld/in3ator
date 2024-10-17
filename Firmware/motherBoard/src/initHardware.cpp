@@ -205,7 +205,7 @@ bool initI2C() {
   int clkSpeed = false;
   for (int i = 0; i < INIT_I2C_RETRIES; i++) {
     logI("[HW] -> Initializing i2c port");
-    Wire.begin(I2C_SDA, I2C_SCL);
+    Wire.begin(I2C_SDA, I2C_SCL, DEFAULT_I2C_SPEED);
     wire = &Wire;
     clkSpeed = Wire.getClock();
     if (clkSpeed) {
