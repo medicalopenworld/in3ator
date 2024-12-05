@@ -275,7 +275,6 @@ void setup() {
   initGPIO();
   initEEPROM();
   initRoomSensor();
-
   if (!GPIORead(ENC_SWITCH)) {
     goToSettings = true;
   }

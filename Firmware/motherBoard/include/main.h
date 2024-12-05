@@ -67,6 +67,8 @@
 
 #define ALARM_SYSTEM_ENABLED true
 #define FAN_MAX_CURRENT_OVERRIDE false
+#define SILENCED_ALARM false
+#define DEFAULT_SOUND_ALARM true
 
 #define UKRAINE_MODE false
 #define SENEGAL_MODE false
@@ -619,6 +621,7 @@ void timeTrackHandler();
 bool ongoingCriticalAlarm();
 bool ongoingCriticalWiringAlarm();
 void setAlarm(byte alarmID);
+void setAlarm(byte alarmID, bool alarmSound);
 void resetAlarm(byte alarmID);
 
 void PIDInit();
@@ -648,7 +651,7 @@ void printLoadingHumidityBar(int UI_desiredControlHumidity);
 void blinkGoBackMessage();
 bool ongoingAlarms();
 byte activeAlarm();
-void disableAllAlarms();
+void reestartOngoingAlarms();
 int alarmPendingToDisplay();
 int alarmPendingToClear();
 void clearDisplayedAlarm(byte alarm);

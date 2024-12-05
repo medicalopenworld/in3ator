@@ -170,7 +170,7 @@ void IRAM_ATTR encSwitchHandler()
       if (ongoingAlarms())
       {
         shutBuzzer();
-        disableAllAlarms();
+        reestartOngoingAlarms();
       }
       // logI"[ENCODER] -> Pushed");
     }

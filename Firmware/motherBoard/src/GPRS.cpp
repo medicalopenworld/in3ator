@@ -68,9 +68,12 @@ extern double RawTemperatureLow[SENSOR_TEMP_QTY],
 
 void progressCallback(const uint32_t &currentChunk,
                       const uint32_t &totalChuncks) {
-  if (LOG_GPRS)
-    logCon(String("Progress %.2f%%\n",
-                  static_cast<float>(currentChunk * 100U) / totalChuncks));
+  if (LOG_GPRS) {
+    char buffer[50]; // Create a buffer to hold the formatted string
+    snprintf(buffer, sizeof(buffer), "Progress %.2f%%",
+             static_cast<float>(currentChunk * 100U) / totalChuncks);
+    logCon(String(buffer)); // Pass the formatted string to logCon
+  }
   GPRS.OTAInProgress = true;
 }
 

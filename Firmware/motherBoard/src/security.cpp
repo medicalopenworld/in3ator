@@ -143,23 +143,23 @@ extern PID skinControlPID;
 extern PID humidityControlPID;
 
 #define TEMPERATURE_ERROR 1 // 1 degrees difference to trigger alarm
-#define HUMIDITY_ERROR 12   // 12 %RH to trigger alarm
+#define HUMIDITY_ERROR 12 // 12 %RH to trigger alarm
 
-#define TEMPERATURE_ERROR_HYSTERESIS \
-  0.05                              // 0.05 degrees difference to disable alarm
+#define TEMPERATURE_ERROR_HYSTERESIS                                           \
+  0.05 // 0.05 degrees difference to disable alarm
 #define HUMIDITY_ERROR_HYSTERESIS 5 // 5 %RH to disable alarm
 
-#define FAN_TEST_CURRENTDIF_MIN \
+#define FAN_TEST_CURRENTDIF_MIN                                                \
   0.2 // when the fan is spinning, heater cools down and consume less current
-#define FAN_TEST_PREHEAT_TIME \
+#define FAN_TEST_PREHEAT_TIME                                                  \
   30000 // when the fan is spinning, heater cools down and consume less current
 
 #define ALARM_TIME_DELAY 30 // in mins, time to check alarm
 // security config
-#define AIR_THERMAL_CUTOUT 38
-#define SKIN_THERMAL_CUTOUT 40
-#define AIR_THERMAL_CUTOUT_HYSTERESIS 1
-#define SKIN_THERMAL_CUTOUT_HYSTERESIS 1
+#define AIR_THERMAL_CUTOUT 36.8
+#define SKIN_THERMAL_CUTOUT 38.8
+#define AIR_THERMAL_CUTOUT_HYSTERESIS 0.2
+#define SKIN_THERMAL_CUTOUT_HYSTERESIS 0.2
 #define enableAlarms true
 
 #define MINIMUM_SUCCESSFULL_SENSOR_UPDATE 20000 // in millis
@@ -173,8 +173,7 @@ long lastPowerSupplyCheck;
 
 extern in3ator_parameters in3;
 
-void initAlarms()
-{
+void initAlarms() {
   lastAlarmTrigger[AIR_THERMAL_CUTOUT_ALARM] =
       -1 * minsToMillis(ALARM_TIME_DELAY);
   lastAlarmTrigger[SKIN_THERMAL_CUTOUT_ALARM] =
@@ -182,57 +181,41 @@ void initAlarms()
 }
 
 bool evaluateAlarm(byte alarmID, float setPoint, float measuredValue,
-                   float errorMargin, float hysteresisValue, long alarmTime)
-{
-  if (millis() - alarmTime > minsToMillis(ALARM_TIME_DELAY) ||
-      alarmOnGoing[alarmID])
-  { // min to millis
-    if (errorMargin)
-    {
-      if ((abs(setPoint - measuredValue) + hysteresisValue) > errorMargin)
-      {
-        in3.alarmToReport[alarmID] = true;
-        if (!alarmOnGoing[alarmID])
-        {
-          setAlarm(alarmID);
-          return true;
-        }
-      }
-      else
-      {
-        in3.alarmToReport[alarmID] = false;
-        if (alarmOnGoing[alarmID])
-        {
-          resetAlarm(alarmID);
-        }
-      }
+                   float errorMargin, float hysteresisValue, long alarmTime) {
+  bool alarmSound = DEFAULT_SOUND_ALARM;
+  if (millis() - alarmTime < minsToMillis(ALARM_TIME_DELAY)) {
+    alarmSound = SILENCED_ALARM;
+  }
+  // Alarm triggering condition
+  if (errorMargin) {
+    if (!alarmOnGoing[alarmID] &&
+        (measuredValue > (setPoint + errorMargin + hysteresisValue))) {
+      in3.alarmToReport[alarmID] = true;
+      setAlarm(alarmID, alarmSound);
+      return true;
     }
-    else
-    {
-      if ((measuredValue + hysteresisValue) > setPoint)
-      {
-        in3.alarmToReport[alarmID] = true;
-        if (!alarmOnGoing[alarmID])
-        {
-          setAlarm(alarmID);
-          return true;
-        }
-      }
-      else
-      {
-        in3.alarmToReport[alarmID] = false;
-        if (alarmOnGoing[alarmID])
-        {
-          resetAlarm(alarmID);
-        }
-      }
+    // Alarm reset condition
+    else if (alarmOnGoing[alarmID] &&
+             (measuredValue < (setPoint + errorMargin - hysteresisValue))) {
+      in3.alarmToReport[alarmID] = false;
+      resetAlarm(alarmID);
+    }
+  } else {
+    if (!alarmOnGoing[alarmID] &&
+        (measuredValue > (setPoint + hysteresisValue))) {
+      in3.alarmToReport[alarmID] = true;
+      setAlarm(alarmID, alarmSound);
+      return true;
+    } else if (alarmOnGoing[alarmID] &&
+               (measuredValue < (setPoint - hysteresisValue))) {
+      in3.alarmToReport[alarmID] = false;
+      resetAlarm(alarmID);
     }
   }
   return false;
 }
 
-void checkThermalCutOuts()
-{
+void checkThermalCutOuts() {
   evaluateAlarm(AIR_THERMAL_CUTOUT_ALARM, AIR_THERMAL_CUTOUT,
                 in3.temperature[ROOM_DIGITAL_TEMP_SENSOR], false,
                 AIR_THERMAL_CUTOUT_HYSTERESIS,
@@ -243,11 +226,9 @@ void checkThermalCutOuts()
                 lastAlarmTrigger[SKIN_THERMAL_CUTOUT_ALARM]);
 }
 
-void checkStatusOfSensor(byte sensor)
-{
+void checkStatusOfSensor(byte sensor) {
   byte alarmID = false;
-  switch (sensor)
-  {
+  switch (sensor) {
   case ROOM_DIGITAL_TEMP_SENSOR:
     alarmID = AIR_SENSOR_ISSUE_ALARM;
     break;
@@ -255,24 +236,19 @@ void checkStatusOfSensor(byte sensor)
     alarmID = SKIN_SENSOR_ISSUE_ALARM;
     break;
   }
-  if (alarmID)
-  {
-    // if (xQueueReceive(sharedSensorQueue, &lastSuccesfullSensorUpdate[sensor], portMAX_DELAY))
+  if (alarmID) {
+    // if (xQueueReceive(sharedSensorQueue, &lastSuccesfullSensorUpdate[sensor],
+    // portMAX_DELAY))
     // {
     if (millis() - lastSuccesfullSensorUpdate[sensor] >
-        MINIMUM_SUCCESSFULL_SENSOR_UPDATE)
-    {
+        MINIMUM_SUCCESSFULL_SENSOR_UPDATE) {
       in3.alarmToReport[alarmID] = true;
-      if (!alarmOnGoing[alarmID])
-      {
+      if (!alarmOnGoing[alarmID]) {
         setAlarm(alarmID);
       }
-    }
-    else
-    {
+    } else {
       in3.alarmToReport[alarmID] = false;
-      if (alarmOnGoing[alarmID])
-      {
+      if (alarmOnGoing[alarmID]) {
         resetAlarm(alarmID);
       }
     }
@@ -280,22 +256,18 @@ void checkStatusOfSensor(byte sensor)
   }
 }
 
-void sensorHealthMonitor()
-{
+void sensorHealthMonitor() {
   checkStatusOfSensor(ROOM_DIGITAL_TEMP_SENSOR);
   checkStatusOfSensor(SKIN_SENSOR);
 }
 
-void powerMonitor()
-{
+void powerMonitor() {
   currentMonitor();
   voltageMonitor();
 }
 
-void alarmTimerStart()
-{
-  for (int i = 0; i < NUM_ALARMS; i++)
-  {
+void alarmTimerStart() {
+  for (int i = 0; i < NUM_ALARMS; i++) {
     lastAlarmTrigger[i] = millis();
   }
   lastAlarmTrigger[AIR_THERMAL_CUTOUT_ALARM] =
@@ -304,30 +276,26 @@ void alarmTimerStart()
       -1 * minsToMillis(ALARM_TIME_DELAY);
 }
 
-byte activeAlarm()
-{
-  for (int i = 0; i < NUM_ALARMS; i++)
-  {
-    if (alarmOnGoing[i])
-    {
+byte activeAlarm() {
+  for (int i = 0; i < NUM_ALARMS; i++) {
+    if (alarmOnGoing[i]) {
       return (i);
     }
   }
   return false;
 }
 
-bool ongoingAlarms()
-{
+bool ongoingAlarms() {
   return (alarmOnGoing[TEMPERATURE_ALARM] || alarmOnGoing[HUMIDITY_ALARM] ||
           alarmOnGoing[AIR_THERMAL_CUTOUT_ALARM] ||
           alarmOnGoing[SKIN_THERMAL_CUTOUT_ALARM] ||
           alarmOnGoing[AIR_SENSOR_ISSUE_ALARM] ||
           alarmOnGoing[SKIN_SENSOR_ISSUE_ALARM] ||
-          alarmOnGoing[HEATER_ISSUE_ALARM] || alarmOnGoing[FAN_ISSUE_ALARM] || alarmOnGoing[POWER_SUPPLY_ALARM]);
+          alarmOnGoing[HEATER_ISSUE_ALARM] || alarmOnGoing[FAN_ISSUE_ALARM] ||
+          alarmOnGoing[POWER_SUPPLY_ALARM]);
 }
 
-bool ongoingCriticalAlarm()
-{
+bool ongoingCriticalAlarm() {
   return (alarmOnGoing[AIR_THERMAL_CUTOUT_ALARM] ||
           alarmOnGoing[SKIN_THERMAL_CUTOUT_ALARM] ||
           alarmOnGoing[AIR_SENSOR_ISSUE_ALARM] ||
@@ -336,16 +304,13 @@ bool ongoingCriticalAlarm()
   // return (true);
 }
 
-bool ongoingCriticalWiringAlarm()
-{
+bool ongoingCriticalWiringAlarm() {
   return (alarmOnGoing[HEATER_ISSUE_ALARM] || alarmOnGoing[POWER_SUPPLY_ALARM]);
   // return (true);
 }
 
-char *alarmIDtoString(byte alarmID)
-{
-  switch (alarmID)
-  {
+char *alarmIDtoString(byte alarmID) {
+  switch (alarmID) {
   case AIR_THERMAL_CUTOUT_ALARM:
   case SKIN_THERMAL_CUTOUT_ALARM:
     return (char *)("THERMAL CUTOUT ALARM");
@@ -377,78 +342,68 @@ char *alarmIDtoString(byte alarmID)
   }
 }
 
-int alarmPendingToDisplay()
-{
-  for (int i = 0; i < NUM_ALARMS; i++)
-  {
+int alarmPendingToDisplay() {
+  for (int i = 0; i < NUM_ALARMS; i++) {
     if (displayAlarm[i])
       return i;
   }
   return false;
 }
 
-void clearDisplayedAlarm(byte alarm)
-{
-  displayAlarm[alarm] = false;
-}
+void clearDisplayedAlarm(byte alarm) { displayAlarm[alarm] = false; }
 
-void clearAlarmPendingToClear(byte alarm)
-{
-  clearedAlarm[alarm] = false;
-}
+void clearAlarmPendingToClear(byte alarm) { clearedAlarm[alarm] = false; }
 
-int alarmPendingToClear()
-{
-  for (int i = 0; i < NUM_ALARMS; i++)
-  {
+int alarmPendingToClear() {
+  for (int i = 0; i < NUM_ALARMS; i++) {
     if (clearedAlarm[i])
       return i;
   }
   return false;
 }
 
-void setAlarm(byte alarmID)
-{
-  logAlarm("[ALARM] ->" + String(alarmIDtoString(alarmID)) + " has been triggered");
+void setAlarm(byte alarmID) {
+  logAlarm("[ALARM] ->" + String(alarmIDtoString(alarmID)) +
+           " has been triggered");
   alarmOnGoing[alarmID] = true;
   displayAlarm[alarmID] = true;
   buzzerConstantTone(buzzerAlarmTone);
 }
 
-void resetAlarm(byte alarmID)
-{
-  logAlarm("[ALARM] ->" + String(alarmIDtoString(alarmID)) + " has been disable");
+void setAlarm(byte alarmID, bool alarmSound) {
+  logAlarm("[ALARM] ->" + String(alarmIDtoString(alarmID)) +
+           " has been triggered");
+  alarmOnGoing[alarmID] = true;
+  displayAlarm[alarmID] = true;
+  if (alarmSound) {
+    buzzerConstantTone(buzzerAlarmTone);
+  }
+}
+
+void resetAlarm(byte alarmID) {
+  logAlarm("[ALARM] ->" + String(alarmIDtoString(alarmID)) +
+           " has been disable");
   alarmOnGoing[alarmID] = false;
   clearedAlarm[alarmID] = true;
-  if (!ongoingAlarms())
-  {
+  if (!ongoingAlarms()) {
     shutBuzzer();
   }
 }
 
-void disableAllAlarms()
-{
-  for (int i = 0; i < NUM_ALARMS; i++)
-  {
-    if (alarmOnGoing[i])
-    {
+void reestartOngoingAlarms() {
+  for (int i = 0; i < NUM_ALARMS; i++) {
+    if (alarmOnGoing[i]) {
       lastAlarmTrigger[i] = millis();
     }
   }
 }
 
-void checkAlarms()
-{
-  if (page == ACTUATORS_PROGRESS_PAGE)
-  {
-    if (in3.temperatureControl)
-    {
-      if (in3.controlMode)
-      {
+void checkAlarms() {
+  if (page == ACTUATORS_PROGRESS_PAGE) {
+    if (in3.temperatureControl) {
+      if (in3.controlMode) {
         alarmSensedValue = in3.temperature[ROOM_DIGITAL_TEMP_SENSOR];
-      }
-      else
-      {
+      } else {
         alarmSensedValue = in3.temperature[SKIN_SENSOR];
       }
       evaluateAlarm(TEMPERATURE_ALARM, in3.desiredControlTemperature,
@@ -456,8 +411,7 @@ void checkAlarms()
                     TEMPERATURE_ERROR_HYSTERESIS,
                     lastAlarmTrigger[TEMPERATURE_ALARM]);
     }
-    if (in3.humidityControl)
-    {
+    if (in3.humidityControl) {
       evaluateAlarm(HUMIDITY_ALARM, in3.humidity[ROOM_DIGITAL_HUM_SENSOR],
                     in3.desiredControlHumidity, HUMIDITY_ERROR,
                     HUMIDITY_ERROR_HYSTERESIS,
@@ -470,21 +424,18 @@ void checkAlarms()
   // }
 }
 
-void powerSupplyCheck()
-{
+void powerSupplyCheck() {
 #if (HW_NUM >= 13)
   {
-    if (millis() - lastPowerSupplyCheck > POWER_SUPPLY_CHECK_PERIOD)
-    {
+    if (millis() - lastPowerSupplyCheck > POWER_SUPPLY_CHECK_PERIOD) {
       lastPowerSupplyCheck = millis();
-      if (digitalCurrentSensorPresent[MAIN] && in3.system_voltage > MIN_SYSTEM_VOLTAGE_TRIGGER && in3.system_voltage < MAX_SYSTEM_VOLTAGE_TRIGGER)
-      {
+      if (digitalCurrentSensorPresent[MAIN] &&
+          in3.system_voltage > MIN_SYSTEM_VOLTAGE_TRIGGER &&
+          in3.system_voltage < MAX_SYSTEM_VOLTAGE_TRIGGER) {
         in3.alarmToReport[POWER_SUPPLY_ALARM] = true;
         if (!alarmOnGoing[POWER_SUPPLY_ALARM])
           setAlarm(POWER_SUPPLY_ALARM);
-      }
-      else
-      {
+      } else {
         in3.alarmToReport[POWER_SUPPLY_ALARM] = false;
         if (alarmOnGoing[POWER_SUPPLY_ALARM])
           resetAlarm(POWER_SUPPLY_ALARM);
@@ -494,9 +445,10 @@ void powerSupplyCheck()
 #endif
 }
 
-void securityCheck()
-{
-  checkThermalCutOuts();
+void securityCheck() {
+  if (in3.actuation) {
+    checkThermalCutOuts();
+  }
   checkAlarms();
   sensorHealthMonitor();
   powerSupplyCheck();
