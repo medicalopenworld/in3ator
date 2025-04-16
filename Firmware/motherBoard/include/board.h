@@ -23,10 +23,10 @@
 
 */
 
-#define HW_NUM 11
+#define HW_NUM 14
 #define HW_REVISION 'A'
 #define HWversion String(HW_NUM) + "." + String(HW_REVISION)
-#define FWversion "14.1"
+#define FWversion "14.2"
 #define WIFI_NAME "In3ator"
 #define CURRENT_FIRMWARE_TITLE "in3ator"
 
@@ -292,6 +292,7 @@
 #define BUZZER_PWM_CHANNEL 1
 #define HEATER_PWM_CHANNEL 2
 #define FAN_PWM_CHANNEL 3
+#define PHOTOTHERAPY_PWM_CHANNEL 4
 
 #define HUMIDIFIER_PWM_CHANNEL 4
 #define DEFAULT_PWM_RESOLUTION 8

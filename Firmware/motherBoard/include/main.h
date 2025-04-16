@@ -248,6 +248,7 @@ typedef enum
 #define DESIRED_HUMIDITY_ROOM_KEY "Hum_desired"
 #define HUMIDIFIER_CURRENT_KEY "Humidifier_current"
 #define HUMIDIFIER_VOLTAGE_KEY "Humidifier_voltage"
+#define PHOTOTHERAPY_PWM_KEY "PH_PWM"
 #define PHOTOTHERAPY_CURRENT_KEY "Phototherapy_current"
 #define PHOTOTHERAPY_ACTIVE_KEY "Phototherapy_active"
 #define CALIBRATED_SENSOR_KEY "Calibrated_sensor"
@@ -553,6 +554,7 @@ typedef struct
   bool temperatureControl = false;
   bool humidityControl = false;
   bool phototherapy = false;
+  byte phototherapy_intensity = PWM_MAX_VALUE;
 
   bool calibrationError = false;
 

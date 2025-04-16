@@ -164,6 +164,7 @@ extern int ScreenBacklightMode;
 
 #define HEATER_CONSUMPTION_MAX 20
 #define FAN_CONSUMPTION_MAX 0.8
+#define PHOTOTHERAPY_CONSUMPTION_DEFAULT 0.6
 #define PHOTOTHERAPY_CONSUMPTION_MAX 3
 #define HUMIDIFIER_CONSUMPTION_MAX 0.8
 
@@ -224,12 +225,16 @@ void initPWMGPIO() {
   ledcSetup(BUZZER_PWM_CHANNEL, DEFAULT_PWM_FREQUENCY, DEFAULT_PWM_RESOLUTION);
   ledcSetup(SCREENBACKLIGHT_PWM_CHANNEL, DEFAULT_PWM_FREQUENCY,
             DEFAULT_PWM_RESOLUTION);
+  ledcSetup(PHOTOTHERAPY_PWM_CHANNEL, DEFAULT_PWM_FREQUENCY,
+            DEFAULT_PWM_RESOLUTION);
   ledcAttachPin(SCREENBACKLIGHT, SCREENBACKLIGHT_PWM_CHANNEL);
   ledcAttachPin(HEATER, HEATER_PWM_CHANNEL);
   ledcAttachPin(BUZZER, BUZZER_PWM_CHANNEL);
+  ledcAttachPin(PHOTOTHERAPY, PHOTOTHERAPY_PWM_CHANNEL);
   ledcWrite(SCREENBACKLIGHT_PWM_CHANNEL, false);
   ledcWrite(HEATER_PWM_CHANNEL, false);
   ledcWrite(BUZZER_PWM_CHANNEL, false);
+  ledcWrite(PHOTOTHERAPY_PWM_CHANNEL, false);
 #if (HW_NUM >= 6)
   ledcSetup(FAN_PWM_CHANNEL, LOW_PWM_FREQUENCY, DEFAULT_PWM_RESOLUTION);
   ledcAttachPin(FAN, FAN_PWM_CHANNEL);
@@ -273,10 +278,11 @@ void initGPIO() {
   initPin(FAN_SPEED_FEEDBACK, INPUT_PULLUP);
 #endif
 #if (HW_NUM >= 14)
+  initPin(TOUCH_SENSOR, OUTPUT);
+  GPIOWrite(TOUCH_SENSOR, LOW);
   initPin(TOUCH_SENSOR_SEL, OUTPUT);
-  GPIOWrite(TOUCH_SENSOR_SEL, HIGH);
+  GPIOWrite(TOUCH_SENSOR_SEL, LOW);
 #endif
-  initPin(PHOTOTHERAPY, OUTPUT);
 #if (GPRS_PWRKEY)
   initPin(GPRS_PWRKEY, OUTPUT);
 #endif
@@ -285,13 +291,11 @@ void initGPIO() {
   initPin(ENC_SWITCH, INPUT_PULLUP);
   initPin(TFT_CS, OUTPUT);
   initPin(PHOTOTHERAPY, OUTPUT);
-  GPIOWrite(PHOTOTHERAPY, LOW);
   initPin(FAN, OUTPUT);
   initPin(HEATER, OUTPUT);
   initPin(BUZZER, OUTPUT);
   initPin(SCREENBACKLIGHT, OUTPUT);
   initPin(ACTUATORS_EN, OUTPUT);
-  GPIOWrite(PHOTOTHERAPY, LOW);
   // GPIOWrite(FAN, LOW);
   //  initPin(ON_OFF_SWITCH, INPUT);
   initPWMGPIO();
@@ -575,11 +579,11 @@ bool actuatorsTest() {
   // }
   vTaskDelay(pdMS_TO_TICKS(CURRENT_STABILIZE_TIME_DEFAULT));
   offsetCurrent = measureMeanConsumption(MAIN, PHOTOTHERAPY_SHUNT_CHANNEL);
-  GPIOWrite(PHOTOTHERAPY, HIGH);
+  ledcWrite(PHOTOTHERAPY_PWM_CHANNEL, PWM_MAX_VALUE);
   vTaskDelay(pdMS_TO_TICKS(CURRENT_STABILIZE_TIME_DEFAULT));
   testCurrent =
       measureMeanConsumption(MAIN, PHOTOTHERAPY_SHUNT_CHANNEL) - offsetCurrent;
-  GPIOWrite(PHOTOTHERAPY, LOW);
+  ledcWrite(PHOTOTHERAPY_PWM_CHANNEL, false);
   logI("[HW] -> Phototherapy current consumption: " + String(testCurrent) +
        " Amps");
   in3.phototherapy_current_test = testCurrent;
@@ -592,6 +596,11 @@ bool actuatorsTest() {
     logE("[HW] -> Fail -> PHOTOTHERAPY current consumption is too high");
     GPIOWrite(ACTUATORS_EN, LOW);
     return (true);
+  } else if (testCurrent > PHOTOTHERAPY_CONSUMPTION_DEFAULT) {
+    in3.phototherapy_intensity =
+        PHOTOTHERAPY_CONSUMPTION_DEFAULT * PWM_MAX_VALUE / testCurrent;
+    logI("[HW] -> Phototherapy regulated to: " +
+         String(float(in3.phototherapy_intensity) * 100 / PWM_MAX_VALUE) + " %");
   }
   offsetCurrent = measureMeanConsumption(
       SECUNDARY, USB_SHUNT_CHANNEL); // <- UPDATE THIS CODE TO ASK I2C DATA

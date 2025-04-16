@@ -396,7 +396,7 @@ void userInterfaceHandler(int UI_page)
             drawRightString((char *)("OFF"),
                             unitPosition, ypos, textFontSize);
           }
-          GPIOWrite(PHOTOTHERAPY, in3.phototherapy);
+          ledcWrite(PHOTOTHERAPY_PWM_CHANNEL, in3.phototherapy * in3.phototherapy_intensity);
           turnFans(in3.phototherapy);
           break;
         case SETTINGS_UI_ROW:

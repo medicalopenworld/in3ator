@@ -409,7 +409,7 @@ void drawStop()
     textToWrite = (char *)("Press 2 sec to go back");
     break;
   case FRENCH:
-    textToWrite = (char *)("appuyez 2 sec pour voler");
+    textToWrite = (char *)("Appuyez 2 sec pour finir");
     break;
   case PORTUGUESE:
     textToWrite =
@@ -773,11 +773,6 @@ void loadlogo()
     tft.fillRect(tft_width / 3, 0, tft_width / 3, tft_height, YELLOW);
     tft.fillRect(2 * tft_width / 3, 0, tft_width / 3, tft_height, RED);
     setTextColor(WHITE);
-    // GPIOWrite(PHOTOTHERAPY, true);
-    // ledcWrite(SCREENBACKLIGHT_PWM_CHANNEL, BACKLIGHT_POWER_DEFAULT);
-    // // turnFans(in3.phototherapy);
-    // while (digitalRead(ENC_SWITCH))
-    //   ;
   }
   else
   {
