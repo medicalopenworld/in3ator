@@ -37,18 +37,14 @@ extern double fineTuneSkinTemperature, fineTuneAirTemperature;
 
 extern in3ator_parameters in3;
 
-void resetFlash()
-{
-  for (int i = false; i < EEPROM_SIZE; i++)
-  {
+void resetFlash() {
+  for (int i = false; i < EEPROM_SIZE; i++) {
     EEPROM.write(i, 0);
   }
 }
 
-void initEEPROM()
-{
-  if (!EEPROM.begin(EEPROM_SIZE))
-  {
+void initEEPROM() {
+  if (!EEPROM.begin(EEPROM_SIZE)) {
     logE("failed to initialise EEPROM");
   }
   // if (EEPROM.read(EEPROM_CHECK_STATUS))
@@ -64,22 +60,18 @@ void initEEPROM()
   //   vTaskDelay(30);
   // }
   firstTurnOn = EEPROM.read(EEPROM_FIRST_TURN_ON);
-  if (firstTurnOn)
-  { // firstTimePowerOn
+  if (firstTurnOn) { // firstTimePowerOn
     resetFlash();
     loaddefaultValues();
     logI("[FLASH] -> First turn on, loading default values");
-  }
-  else
-  {
+  } else {
     logI("[FLASH] -> Loading variables stored in flash");
     recapVariables();
   }
   logI("[FLASH] -> Variables loaded");
 }
 
-void loaddefaultValues()
-{
+void loaddefaultValues() {
   autoLock = DEFAULT_AUTOLOCK;
   WIFI_EN = DEFAULT_WIFI_EN;
   in3.language = defaultLanguage;
@@ -90,12 +82,12 @@ void loaddefaultValues()
   EEPROM.write(EEPROM_WIFI_EN, WIFI_EN);
   EEPROM.write(EEPROM_LANGUAGE, in3.language);
   EEPROM.write(EEPROM_CONTROL_MODE, in3.controlMode);
-  EEPROM.writeFloat(EEPROM_DESIRED_CONTROL_TEMPERATURE, in3.desiredControlTemperature);
+  EEPROM.writeFloat(EEPROM_DESIRED_CONTROL_TEMPERATURE,
+                    in3.desiredControlTemperature);
   EEPROM.commit();
 }
 
-void resetCalibration()
-{
+void resetCalibration() {
   RawTemperatureLow[SKIN_SENSOR] = false;
   RawTemperatureRange[SKIN_SENSOR] = false;
   ReferenceTemperatureRange = false;
@@ -104,8 +96,7 @@ void resetCalibration()
   fineTuneAirTemperature = false;
 }
 
-void recapVariables()
-{
+void recapVariables() {
   autoLock = EEPROM.read(EEPROM_AUTO_LOCK);
   in3.language = EEPROM.read(EEPROM_LANGUAGE);
   RawTemperatureLow[SKIN_SENSOR] =
@@ -124,38 +115,34 @@ void recapVariables()
   in3.phototherapy_active_time =
       EEPROM.readFloat(EEPROM_PHOTOTHERAPY_ACTIVE_TIME);
 
-  for (int i = 0; i < SENSOR_TEMP_QTY; i++)
-  {
+  for (int i = 0; i < SENSOR_TEMP_QTY; i++) {
     logI("calibration factors: " + String(RawTemperatureLow[i]) + "," +
          String(RawTemperatureRange[i]) + "," +
          String(ReferenceTemperatureRange) + "," +
          String(ReferenceTemperatureLow));
   }
 
-  if (!ReferenceTemperatureRange)
-  {
+  if (!ReferenceTemperatureRange) {
     in3.calibrationError = true;
     logE("[HW] -> Fail -> temperature sensor is not calibrated");
   }
 
-  for (int i = 0; i < SENSOR_TEMP_QTY; i++)
-  {
-    if (RawTemperatureLow[i] > 100)
-    {
+  for (int i = 0; i < SENSOR_TEMP_QTY; i++) {
+    if (RawTemperatureLow[i] > 100) {
       // critical error
     }
   }
   in3.serialNumber = EEPROM.read(EEPROM_SERIAL_NUMBER);
   WIFI_EN = EEPROM.read(EEPROM_WIFI_EN);
   in3.controlMode = EEPROM.read(EEPROM_CONTROL_MODE);
-  in3.desiredControlTemperature = EEPROM.readFloat(EEPROM_DESIRED_CONTROL_TEMPERATURE);
+  in3.desiredControlTemperature =
+      EEPROM.readFloat(EEPROM_DESIRED_CONTROL_TEMPERATURE);
   in3.desiredControlHumidity = EEPROM.read(EEPROM_DESIRED_CONTROL_HUMIDITY);
 
-  if (in3.restoreState)
-  {
+  if (in3.restoreState) {
     in3.actuation = EEPROM.read(EEPROM_CONTROL_ACTIVE);
-    switch (in3.actuation)
-    {
+    in3.phototherapy = EEPROM.read(EEPROM_PHOTOTHERAPY_ACTIVE);
+    switch (in3.actuation) {
     case CONTROL_TEMPERATURE:
       in3.temperatureControl = true;
       in3.humidityControl = false;
@@ -174,11 +161,13 @@ void recapVariables()
       in3.restoreState = false;
       break;
     }
+  } else {
+    EEPROM.write(EEPROM_CONTROL_ACTIVE, false);
+    EEPROM.commit();
   }
 }
 
-void saveCalibrationToEEPROM()
-{
+void saveCalibrationToEEPROM() {
   EEPROM.writeFloat(EEPROM_RAW_SKIN_TEMP_LOW_CORRECTION,
                     RawTemperatureLow[SKIN_SENSOR]);
   EEPROM.writeFloat(EEPROM_RAW_SKIN_TEMP_RANGE_CORRECTION,

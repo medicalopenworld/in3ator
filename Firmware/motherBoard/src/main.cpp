@@ -272,6 +272,7 @@ void setup() {
 
   // sharedSensorQueue = xQueueCreate(SENSOR_TEMP_QTY, sizeof(long));
   GPRS_monitor_mutex = xSemaphoreCreateBinary();
+  security_check_reboot_cause();
   initGPIO();
   initEEPROM();
   initRoomSensor();

@@ -191,7 +191,7 @@ void turnActuators(bool mode)
   {
     in3_hum.turn(OFF);
   }
-  turnFans(mode);
+  turnFans(mode || in3.phototherapy);
 }
 
 void stopActuation()

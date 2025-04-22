@@ -114,6 +114,21 @@ int checkSerial(const char *success, const char *error) {
 }
 
 void initGPRS() {
+  esp_reset_reason_t reason = esp_reset_reason();
+  if (reason == ESP_RST_SW    ||
+      reason == ESP_RST_WDT   ||
+      reason == ESP_RST_TASK_WDT ||
+      reason == ESP_RST_INT_WDT  ||
+      reason == ESP_RST_PANIC) 
+  {
+    logCon("[GPRS] -> Abnormal reset detected (" + String(reason) +
+           "), deleting GPRS task this session");
+    // Delete the *current* task (i.e. GPRS_Task)
+    vTaskDelete(NULL);
+    // Note: control never returns here
+  }
+
+  // Normal power‑up path:
   Serial2.begin(MODEM_BAUD, SERIAL_8N1, SERIAL2_RX_PIN, SERIAL2_TX_PIN);
   GPRS.powerUp = true;
 #if (GPRS_PWRKEY)
@@ -469,8 +484,7 @@ void addConfigTelemetriesToGPRSJSON() {
       roundSignificantDigits(in3.phototherapy_current_test,
                              TELEMETRIES_DECIMALS);
   addVariableToTelemetryGPRSJSON[PHOTOTHERAPY_PWM_KEY] =
-      roundSignificantDigits(in3.phototherapy_intensity,
-                             TELEMETRIES_DECIMALS);
+      roundSignificantDigits(in3.phototherapy_intensity, TELEMETRIES_DECIMALS);
   addVariableToTelemetryGPRSJSON[HUMIDIFIER_CURR_KEY] =
       roundSignificantDigits(in3.humidifier_current_test, TELEMETRIES_DECIMALS);
   addVariableToTelemetryGPRSJSON[DISPLAY_CURR_TEST_KEY] =

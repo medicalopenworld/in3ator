@@ -142,69 +142,51 @@ extern PID humidityControlPID;
 
 extern in3ator_parameters in3;
 
-void updateDisplayHeader()
-{
-  if (millis() - lastGraphicSensorsUpdate > UI_SENSOR_UPDATE_PERIOD_MS)
-  {
-    if (page == MAIN_MENU_PAGE)
-    {
+void updateDisplayHeader() {
+  if (millis() - lastGraphicSensorsUpdate > UI_SENSOR_UPDATE_PERIOD_MS) {
+    if (page == MAIN_MENU_PAGE) {
       UI_updateConnectivityEvents();
     }
-    if (page == MAIN_MENU_PAGE || page == ACTUATORS_PROGRESS_PAGE)
-    {
+    if (page == MAIN_MENU_PAGE || page == ACTUATORS_PROGRESS_PAGE) {
       updateDisplaySensors();
     }
     lastGraphicSensorsUpdate = millis();
   }
 }
 
-void checkAlarmsToDisplay()
-{
+void checkAlarmsToDisplay() {
   byte alarmToDisplay = alarmPendingToDisplay();
   byte alarmToClear = alarmPendingToClear();
-  if (alarmToDisplay)
-  {
+  if (alarmToDisplay) {
     drawAlarmMessage(alarmIDtoString(alarmToDisplay));
     clearDisplayedAlarm(alarmToDisplay);
   }
-  if (alarmToClear)
-  {
+  if (alarmToClear) {
     clearAlarmPendingToClear(alarmToClear);
     drawHeading(page, in3.serialNumber);
-    if (ongoingAlarms())
-    {
+    if (ongoingAlarms()) {
       drawAlarmMessage(alarmIDtoString(activeAlarm()));
     }
   }
 }
 
-void bar_pos_handler(int UI_page)
-{
-  if (EncMove && !selected)
-  {
-    if (EncMove < 0)
-    {
+void bar_pos_handler(int UI_page) {
+  if (EncMove && !selected) {
+    if (EncMove < 0) {
       EncMove++;
-      if (UI_page == MAIN_MENU_PAGE)
-      {
+      if (UI_page == MAIN_MENU_PAGE) {
         enableSetProcess = enableSet;
-      }
-      else
-      {
+      } else {
         enableSetProcess = true;
       }
-      if (bar_pos < menu_rows - !enableSetProcess)
-      {
+      if (bar_pos < menu_rows - !enableSetProcess) {
         eraseBar(menu_rows, bar_pos);
         bar_pos++;
         updateBar(menu_rows, bar_pos);
       }
-    }
-    else
-    {
+    } else {
       EncMove--;
-      if (bar_pos > 1)
-      {
+      if (bar_pos > 1) {
         eraseBar(menu_rows, bar_pos);
         bar_pos--;
         updateBar(menu_rows, bar_pos);
@@ -214,29 +196,23 @@ void bar_pos_handler(int UI_page)
   }
 }
 
-void bar_highlight()
-{
-  if (menu_rows)
-  {
-    if (selected)
-    {
-      tft.fillRect(
-          0,
-          (tft_height - TFT_HEIGHT_HEADING) * (bar_pos - 1) / menu_rows +
-              TFT_HEIGHT_HEADING,
-          width_select, (tft_height - TFT_HEIGHT_HEADING) / menu_rows,
-          COLOUR_CHOSEN);
-    }
-    else
-    {
+void bar_highlight() {
+  if (menu_rows) {
+    if (selected) {
+      tft.fillRect(0,
+                   (tft_height - TFT_HEIGHT_HEADING) * (bar_pos - 1) /
+                           menu_rows +
+                       TFT_HEIGHT_HEADING,
+                   width_select, (tft_height - TFT_HEIGHT_HEADING) / menu_rows,
+                   COLOUR_CHOSEN);
+    } else {
       tft.fillRect(
           0,
           (tft_height - TFT_HEIGHT_HEADING) * (bar_pos - 1) / menu_rows +
               TFT_HEIGHT_HEADING,
           width_select, (tft_height - TFT_HEIGHT_HEADING) / menu_rows, WHITE);
     }
-    for (int i = 2; i <= menu_rows; i++)
-    {
+    for (int i = 2; i <= menu_rows; i++) {
       tft.fillRect(0,
                    (tft_height - TFT_HEIGHT_HEADING) * (i - 1) / menu_rows +
                        TFT_HEIGHT_HEADING - 1,
@@ -245,24 +221,19 @@ void bar_highlight()
   }
 }
 
-void userInterfaceHandler(int UI_page)
-{
+void userInterfaceHandler(int UI_page) {
   updateDisplayHeader();
   checkSetMessage(UI_page, menu_rows);
   checkAlarmsToDisplay();
   bar_pos_handler(UI_page);
 
-  if (!GPIORead(ENC_SWITCH))
-  {
+  if (!GPIORead(ENC_SWITCH)) {
     selected = !selected;
     bar_highlight();
-    if (!encoderContinuousPress(UI_page))
-    {
-      switch (UI_page)
-      {
+    if (!encoderContinuousPress(UI_page)) {
+      switch (UI_page) {
       case MAIN_MENU_PAGE:
-        switch (bar_pos - graphicTextOffset)
-        {
+        switch (bar_pos - graphicTextOffset) {
         case CONTROL_MODE_UI_ROW:
           in3.controlMode = !in3.controlMode;
           EEPROM.write(EEPROM_CONTROL_MODE, in3.controlMode);
@@ -270,96 +241,76 @@ void userInterfaceHandler(int UI_page)
           UI_mainMenu();
           break;
         case TEMPERATURE_UI_ROW:
-          while (GPIORead(ENC_SWITCH))
-          {
+          while (GPIORead(ENC_SWITCH)) {
             vTaskDelay(pdMS_TO_TICKS(WHILE_LOOP_DELAY));
-            if (EncMove)
-            {
-              if (!in3.temperatureControl)
-              {
+            if (EncMove) {
+              if (!in3.temperatureControl) {
                 in3.temperatureControl = true;
-                drawRightString(
-                    (char *)(initialSensorsValue),
-                    initialSensorPosition, temperatureY, textFontSize);
+                drawRightString((char *)(initialSensorsValue),
+                                initialSensorPosition, temperatureY,
+                                textFontSize);
                 setTextColor(COLOUR_MENU_TEXT);
-                drawFloat(in3.desiredControlTemperature, 1,
-                          temperatureX - 65, temperatureY, textFontSize);
+                drawFloat(in3.desiredControlTemperature, 1, temperatureX - 65,
+                          temperatureY, textFontSize);
                 enableSet = true;
               }
-              if (EncMove > 0)
-              {
+              if (EncMove > 0) {
                 if (in3.desiredControlTemperature >
-                    minDesiredTemp[in3.controlMode])
-                {
+                    minDesiredTemp[in3.controlMode]) {
                   updateUIData = true;
                 }
-              }
-              else
-              {
+              } else {
                 if (in3.desiredControlTemperature <
-                    maxDesiredTemp[in3.controlMode])
-                {
+                    maxDesiredTemp[in3.controlMode]) {
                   updateUIData = true;
                 }
               }
-              if (updateUIData)
-              {
+              if (updateUIData) {
                 setTextColor(COLOUR_MENU);
-                drawFloat(in3.desiredControlTemperature, 1,
-                          temperatureX - 65, temperatureY, textFontSize);
+                drawFloat(in3.desiredControlTemperature, 1, temperatureX - 65,
+                          temperatureY, textFontSize);
                 in3.desiredControlTemperature -=
                     float(EncMove) * stepTemperatureIncrement;
                 setTextColor(COLOUR_MENU_TEXT);
-                drawFloat(in3.desiredControlTemperature, 1,
-                          temperatureX - 65, temperatureY, textFontSize);
+                drawFloat(in3.desiredControlTemperature, 1, temperatureX - 65,
+                          temperatureY, textFontSize);
               }
               EncMove = false;
               updateUIData = false;
             }
           }
           EEPROM.writeFloat(EEPROM_DESIRED_CONTROL_TEMPERATURE,
-                       in3.desiredControlTemperature);
+                            in3.desiredControlTemperature);
           EEPROM.commit();
           break;
         case HUMIDITY_UI_ROW:
-          while (GPIORead(ENC_SWITCH))
-          {
+          while (GPIORead(ENC_SWITCH)) {
             vTaskDelay(pdMS_TO_TICKS(WHILE_LOOP_DELAY));
-            if (EncMove)
-            {
-              if (!in3.humidityControl)
-              {
+            if (EncMove) {
+              if (!in3.humidityControl) {
                 in3.humidityControl = true;
                 setTextColor(COLOUR_MENU);
-                drawRightString(
-                    (char *)(initialSensorsValue),
-                    initialSensorPosition, humidityY, textFontSize);
+                drawRightString((char *)(initialSensorsValue),
+                                initialSensorPosition, humidityY, textFontSize);
                 setTextColor(COLOUR_MENU_TEXT);
                 drawCentreNumber(in3.desiredControlHumidity, humidityX - 65,
                                  humidityY);
                 enableSet = true;
               }
-              if (EncMove > 0)
-              {
-                if (in3.desiredControlHumidity > minHum)
-                {
+              if (EncMove > 0) {
+                if (in3.desiredControlHumidity > minHum) {
+                  updateUIData = true;
+                }
+              } else {
+                if (in3.desiredControlHumidity < maxHum) {
                   updateUIData = true;
                 }
               }
-              else
-              {
-                if (in3.desiredControlHumidity < maxHum)
-                {
-                  updateUIData = true;
-                }
-              }
-              if (updateUIData)
-              {
+              if (updateUIData) {
                 setTextColor(COLOUR_MENU);
                 drawCentreNumber(in3.desiredControlHumidity, humidityX - 65,
                                  humidityY);
-                in3.desiredControlHumidity -=
-                    (EncMove)*stepHumidityIncrement;
+                in3.desiredControlHumidity -= (EncMove)*stepHumidityIncrement;
                 setTextColor(COLOUR_MENU_TEXT);
                 drawCentreNumber(in3.desiredControlHumidity, humidityX - 65,
                                  humidityY);
@@ -374,29 +325,22 @@ void userInterfaceHandler(int UI_page)
           break;
         case LED_UI_ROW:
           in3.phototherapy = !in3.phototherapy;
+          EEPROM.write(EEPROM_PHOTOTHERAPY_ACTIVE, in3.phototherapy);
+          EEPROM.commit();
           setTextColor(COLOUR_MENU);
-          if (in3.phototherapy)
-          {
-            drawRightString((char *)("OFF"),
-                            unitPosition, ypos, textFontSize);
-          }
-          else
-          {
-            drawRightString((char *)("ON"),
-                            unitPosition, ypos, textFontSize);
+          if (in3.phototherapy) {
+            drawRightString((char *)("OFF"), unitPosition, ypos, textFontSize);
+          } else {
+            drawRightString((char *)("ON"), unitPosition, ypos, textFontSize);
           }
           setTextColor(COLOUR_MENU_TEXT);
-          if (in3.phototherapy)
-          {
-            drawRightString((char *)("ON"),
-                            unitPosition, ypos, textFontSize);
+          if (in3.phototherapy) {
+            drawRightString((char *)("ON"), unitPosition, ypos, textFontSize);
+          } else {
+            drawRightString((char *)("OFF"), unitPosition, ypos, textFontSize);
           }
-          else
-          {
-            drawRightString((char *)("OFF"),
-                            unitPosition, ypos, textFontSize);
-          }
-          ledcWrite(PHOTOTHERAPY_PWM_CHANNEL, in3.phototherapy * in3.phototherapy_intensity);
+          ledcWrite(PHOTOTHERAPY_PWM_CHANNEL,
+                    in3.phototherapy * in3.phototherapy_intensity);
           turnFans(in3.phototherapy);
           break;
         case SETTINGS_UI_ROW:
@@ -408,17 +352,13 @@ void userInterfaceHandler(int UI_page)
         }
         break;
       case SETTINGS_PAGE:
-        switch (bar_pos - graphicTextOffset)
-        {
+        switch (bar_pos - graphicTextOffset) {
         case LANGUAGE_UI_ROW:
-          while (GPIORead(ENC_SWITCH))
-          {
+          while (GPIORead(ENC_SWITCH)) {
             vTaskDelay(pdMS_TO_TICKS(WHILE_LOOP_DELAY));
-            if (EncMove)
-            {
+            if (EncMove) {
               setTextColor(COLOUR_MENU);
-              switch (in3.language)
-              {
+              switch (in3.language) {
               case SPANISH:
                 textToWrite = (char *)("SPA");
                 break;
@@ -432,20 +372,16 @@ void userInterfaceHandler(int UI_page)
                 textToWrite = (char *)("POR");
                 break;
               }
-              drawRightString(textToWrite, unitPosition, ypos,
-                              textFontSize);
+              drawRightString(textToWrite, unitPosition, ypos, textFontSize);
               in3.language -= EncMove;
-              if (in3.language < 0)
-              {
+              if (in3.language < 0) {
                 in3.language = NUM_LANGUAGES - 1;
               }
-              if (in3.language >= NUM_LANGUAGES)
-              {
+              if (in3.language >= NUM_LANGUAGES) {
                 in3.language = false;
               }
               setTextColor(COLOUR_MENU_TEXT);
-              switch (in3.language)
-              {
+              switch (in3.language) {
               case SPANISH:
                 textToWrite = (char *)("SPA");
                 break;
@@ -459,8 +395,7 @@ void userInterfaceHandler(int UI_page)
                 textToWrite = (char *)("POR");
                 break;
               }
-              drawRightString(textToWrite, unitPosition, ypos,
-                              textFontSize);
+              drawRightString(textToWrite, unitPosition, ypos, textFontSize);
               EncMove = false;
             }
           }
@@ -469,11 +404,9 @@ void userInterfaceHandler(int UI_page)
           UI_settings();
           break;
         case SERIAL_NUMBER_UI_ROW:
-          while (GPIORead(ENC_SWITCH))
-          {
+          while (GPIORead(ENC_SWITCH)) {
             vTaskDelay(pdMS_TO_TICKS(WHILE_LOOP_DELAY));
-            if (EncMove)
-            {
+            if (EncMove) {
               setTextColor(COLOUR_MENU);
               drawRightNumber(in3.serialNumber, unitPosition, ypos);
               in3.serialNumber -= EncMove;
@@ -489,47 +422,31 @@ void userInterfaceHandler(int UI_page)
           break;
         case WIFI_EN_UI_ROW:
           WIFI_EN = !WIFI_EN;
-          if (WIFI_EN)
-          {
+          if (WIFI_EN) {
             wifiInit();
-          }
-          else
-          {
+          } else {
             wifiDisable();
           }
           EEPROM.write(EEPROM_WIFI_EN, WIFI_EN);
           EEPROM.commit();
           setTextColor(COLOUR_MENU);
-          if (WIFI_EN)
-          {
-            drawRightString((char *)("OFF"),
-                            unitPosition, ypos, textFontSize);
-          }
-          else
-          {
-            drawRightString((char *)("ON"),
-                            unitPosition, ypos, textFontSize);
+          if (WIFI_EN) {
+            drawRightString((char *)("OFF"), unitPosition, ypos, textFontSize);
+          } else {
+            drawRightString((char *)("ON"), unitPosition, ypos, textFontSize);
           }
           setTextColor(COLOUR_MENU_TEXT);
-          if (WIFI_EN)
-          {
-            drawRightString((char *)("ON"),
-                            unitPosition, ypos, textFontSize);
-          }
-          else
-          {
-            drawRightString((char *)("OFF"),
-                            unitPosition, ypos, textFontSize);
+          if (WIFI_EN) {
+            drawRightString((char *)("ON"), unitPosition, ypos, textFontSize);
+          } else {
+            drawRightString((char *)("OFF"), unitPosition, ypos, textFontSize);
           }
           break;
         case DEFAULT_VALUES_UI_ROW:
           loaddefaultValues();
-          if (WIFI_EN)
-          {
+          if (WIFI_EN) {
             wifiInit();
-          }
-          else
-          {
+          } else {
             wifiDisable();
           }
           UI_settings();
@@ -544,8 +461,7 @@ void userInterfaceHandler(int UI_page)
         }
         break;
       case CALIBRATION_SENSORS_PAGE:
-        switch (bar_pos - graphicTextOffset)
-        {
+        switch (bar_pos - graphicTextOffset) {
         case TWO_POINT_CALIB_UI_ROW:
           firstPointCalibration();
           break;
@@ -562,17 +478,14 @@ void userInterfaceHandler(int UI_page)
         }
         break;
       case FINE_TUNE_CALIBRATION_PAGE:
-        switch (bar_pos - graphicTextOffset)
-        {
+        switch (bar_pos - graphicTextOffset) {
         case TEMP_CALIB_UI_ROW:
           errorTemperature[SKIN_SENSOR] = false;
           diffSkinTemperature = in3.temperature[SKIN_SENSOR];
           diffAirTemperature = in3.temperature[ROOM_DIGITAL_TEMP_SENSOR];
-          while (GPIORead(ENC_SWITCH))
-          {
+          while (GPIORead(ENC_SWITCH)) {
             vTaskDelay(pdMS_TO_TICKS(WHILE_LOOP_DELAY));
-            if (EncMove)
-            {
+            if (EncMove) {
               setTextColor(COLOUR_MENU);
               drawFloat(diffSkinTemperature, 1, valuePosition, ypos,
                         textFontSize);
@@ -589,16 +502,14 @@ void userInterfaceHandler(int UI_page)
           fineTuneSkinTemperature =
               diffSkinTemperature - in3.temperature[SKIN_SENSOR];
           fineTuneAirTemperature =
-              diffAirTemperature -
-              in3.temperature[ROOM_DIGITAL_TEMP_SENSOR];
+              diffAirTemperature - in3.temperature[ROOM_DIGITAL_TEMP_SENSOR];
           logI("[CALIBRATION] -> Fine tune Skin value is " +
                String(fineTuneSkinTemperature));
           logI("[CALIBRATION] -> Fine tune Air value is " +
                String(fineTuneAirTemperature));
           EEPROM.writeFloat(EEPROM_FINE_TUNE_TEMP_SKIN,
                             fineTuneSkinTemperature);
-          EEPROM.writeFloat(EEPROM_FINE_TUNE_TEMP_AIR,
-                            fineTuneAirTemperature);
+          EEPROM.writeFloat(EEPROM_FINE_TUNE_TEMP_AIR, fineTuneAirTemperature);
           EEPROM.commit();
           UI_mainMenu();
           break;
@@ -606,17 +517,14 @@ void userInterfaceHandler(int UI_page)
         break;
       case FIRST_POINT_CALIBRATION_PAGE:
         clearCalibrationValues();
-        switch (bar_pos - graphicTextOffset)
-        {
+        switch (bar_pos - graphicTextOffset) {
         case TEMP_CALIB_UI_ROW:
           errorTemperature[SKIN_SENSOR] = false;
           diffSkinTemperature = in3.temperature[SKIN_SENSOR];
           diffAirTemperature = in3.temperature[ROOM_DIGITAL_TEMP_SENSOR];
-          while (GPIORead(ENC_SWITCH))
-          {
+          while (GPIORead(ENC_SWITCH)) {
             vTaskDelay(pdMS_TO_TICKS(WHILE_LOOP_DELAY));
-            if (EncMove)
-            {
+            if (EncMove) {
               setTextColor(COLOUR_MENU);
               drawFloat(diffSkinTemperature, 1, valuePosition, ypos,
                         textFontSize);
@@ -642,15 +550,12 @@ void userInterfaceHandler(int UI_page)
         }
         break;
       case SECOND_POINT_CALIBRATION_PAGE:
-        switch (bar_pos - graphicTextOffset)
-        {
+        switch (bar_pos - graphicTextOffset) {
         case TEMP_CALIB_UI_ROW:
           diffSkinTemperature = in3.temperature[SKIN_SENSOR];
-          while (GPIORead(ENC_SWITCH))
-          {
+          while (GPIORead(ENC_SWITCH)) {
             vTaskDelay(pdMS_TO_TICKS(WHILE_LOOP_DELAY));
-            if (EncMove)
-            {
+            if (EncMove) {
               setTextColor(COLOUR_MENU);
               drawFloat(diffSkinTemperature, 1, valuePosition, ypos,
                         textFontSize);
@@ -669,20 +574,16 @@ void userInterfaceHandler(int UI_page)
               provisionalRawTemperatureLow[SKIN_SENSOR];
           ReferenceTemperatureRange =
               diffSkinTemperature - ReferenceTemperatureLow;
-          if (RawTemperatureRange[SKIN_SENSOR])
-          {
+          if (RawTemperatureRange[SKIN_SENSOR]) {
             RawTemperatureRange[SKIN_SENSOR] =
-                (in3.temperature[SKIN_SENSOR] -
-                 RawTemperatureLow[SKIN_SENSOR]);
+                (in3.temperature[SKIN_SENSOR] - RawTemperatureLow[SKIN_SENSOR]);
             logI("calibration factors: " +
                  String(RawTemperatureLow[SKIN_SENSOR]) + "," +
                  String(RawTemperatureRange[SKIN_SENSOR]) + "," +
                  String(ReferenceTemperatureRange) + "," +
                  String(ReferenceTemperatureLow));
             saveCalibrationToEEPROM();
-          }
-          else
-          {
+          } else {
             logI("[CALIBRATION] -> ERROR -> DIVIDE BY ZERO");
           }
           UI_settings();
@@ -693,8 +594,7 @@ void userInterfaceHandler(int UI_page)
         break;
       }
       selected = false;
-      if (menu_rows)
-      {
+      if (menu_rows) {
         tft.fillRect(
             0,
             (tft_height - TFT_HEIGHT_HEADING) * (bar_pos - 1) / menu_rows +
@@ -707,34 +607,27 @@ void userInterfaceHandler(int UI_page)
   }
 }
 
-bool encoderContinuousPress(int UI_page)
-{
+bool encoderContinuousPress(int UI_page) {
 
-  if (UI_page == MAIN_MENU_PAGE)
-  {
+  if (UI_page == MAIN_MENU_PAGE) {
     long timePressed = millis();
-    while (!GPIORead(ENC_SWITCH))
-    {
+    while (!GPIORead(ENC_SWITCH)) {
       vTaskDelay(pdMS_TO_TICKS(WHILE_LOOP_DELAY));
-      if (HOLD_PRESS_TO_GO_TO_SETTINGS && millis() - timePressed > timePressToSettings)
-      {
+      if (HOLD_PRESS_TO_GO_TO_SETTINGS &&
+          millis() - timePressed > timePressToSettings) {
         UI_settings();
         return (true);
       }
     }
-  }
-  else
-  {
+  } else {
     return (back_mode());
   }
   return false;
 }
 
-int getYpos(int UI_menu_rows, byte row)
-{
+int getYpos(int UI_menu_rows, byte row) {
   row++; // because it starts at zero
-  if (UI_menu_rows)
-  {
+  if (UI_menu_rows) {
     return ((tft_height - TFT_HEIGHT_HEADING) / (2 * UI_menu_rows) +
             (row - 1) * (tft_height - TFT_HEIGHT_HEADING) / (menu_rows) +
             letter_height);
@@ -742,29 +635,20 @@ int getYpos(int UI_menu_rows, byte row)
   return false;
 }
 
-void checkSetMessage(int UI_page, int UI_menu_rows)
-{
-  if ((UI_page == MAIN_MENU_PAGE))
-  {
+void checkSetMessage(int UI_page, int UI_menu_rows) {
+  if ((UI_page == MAIN_MENU_PAGE)) {
     int compareTime;
-    if (blinkSetMessageState)
-    {
+    if (blinkSetMessageState) {
       compareTime = blinkTimeON;
-    }
-    else
-    {
+    } else {
       compareTime = blinkTimeOFF;
     }
-    if (millis() - lastBlinkSetMessage > compareTime)
-    {
+    if (millis() - lastBlinkSetMessage > compareTime) {
       lastBlinkSetMessage = millis();
       blinkSetMessageState = !blinkSetMessageState;
-      if (enableSet)
-      {
+      if (enableSet) {
         drawStartMessage(enableSet, UI_menu_rows);
-      }
-      else
-      {
+      } else {
         drawHelpMessage(in3.language);
         drawCentreString(helpMessage,
                          width_select + (tft_width - width_select) / 2,
@@ -774,35 +658,27 @@ void checkSetMessage(int UI_page, int UI_menu_rows)
   }
 }
 
-bool back_mode()
-{
+bool back_mode() {
   vTaskDelay(pdMS_TO_TICKS(SWITCH_DEBOUNCE_TIME_MS));
   last_encPulsed = millis();
   byte back_bar = false;
-  while (!GPIORead(ENC_SWITCH))
-  {
-    if (millis() - last_encPulsed > time_back_wait)
-    {
+  while (!GPIORead(ENC_SWITCH)) {
+    if (millis() - last_encPulsed > time_back_wait) {
       back_bar++;
       tft.drawLine(width_back - back_bar, 0, width_back - back_bar,
                    TFT_HEIGHT_HEADING, COLOUR_MENU);
     }
-    if (back_bar == width_back)
-    {
-      if (page == CALIBRATION_SENSORS_PAGE)
-      {
+    if (back_bar == width_back) {
+      if (page == CALIBRATION_SENSORS_PAGE) {
         UI_settings();
-      }
-      else
-      {
+      } else {
         UI_mainMenu();
       }
       return true;
     }
     vTaskDelay(pdMS_TO_TICKS(((time_back_draw + time_back_wait) / width_back)));
   }
-  if (millis() - last_encPulsed > time_back_wait)
-  {
+  if (millis() - last_encPulsed > time_back_wait) {
     drawBack();
   }
   vTaskDelay(pdMS_TO_TICKS(SWITCH_DEBOUNCE_TIME_MS));

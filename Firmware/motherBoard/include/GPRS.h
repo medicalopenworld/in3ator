@@ -48,6 +48,7 @@ struct GPRSstruct {
   bool serverConnectionStatus = false;
   bool lastServerConnectionStatus = false;
   bool OTAInProgress = false;
+  bool thingsboardConnection = true;
   bool lastOTAInProgress = false;
   bool enable = false;
   long sendPeriod = false;

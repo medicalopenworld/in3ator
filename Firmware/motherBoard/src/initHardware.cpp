@@ -600,7 +600,8 @@ bool actuatorsTest() {
     in3.phototherapy_intensity =
         PHOTOTHERAPY_CONSUMPTION_DEFAULT * PWM_MAX_VALUE / testCurrent;
     logI("[HW] -> Phototherapy regulated to: " +
-         String(float(in3.phototherapy_intensity) * 100 / PWM_MAX_VALUE) + " %");
+         String(float(in3.phototherapy_intensity) * 100 / PWM_MAX_VALUE) +
+         " %");
   }
   offsetCurrent = measureMeanConsumption(
       SECUNDARY, USB_SHUNT_CHANNEL); // <- UPDATE THIS CODE TO ASK I2C DATA
@@ -744,7 +745,6 @@ void security_check_reboot_cause() {
 
 void initHardware(bool printOutputTest) {
   logI("[HW] -> Initialiting hardware");
-  security_check_reboot_cause();
   initSensors();
   initTFT();
   initInterrupts();
@@ -775,6 +775,11 @@ void initHardware(bool printOutputTest) {
   }
   if (!in3.restoreState) {
     buzzerTone(2, buzzerStandbyToneDuration, buzzerStandbyTone);
+  }
+  if (in3.phototherapy) {
+    ledcWrite(PHOTOTHERAPY_PWM_CHANNEL,
+              in3.phototherapy * in3.phototherapy_intensity);
+    turnFans(in3.phototherapy);
   }
   watchdogInit(WDT_TIMEOUT);
   initAlarms();
