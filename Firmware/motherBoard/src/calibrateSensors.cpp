@@ -284,7 +284,7 @@ void autoCalibration()
             in3.temperature[ROOM_DIGITAL_TEMP_SENSOR] -
             ReferenceTemperatureLow;
         RawTemperatureRange[SKIN_SENSOR] =
-            (in3.temperature[SKIN_SENSOR] - RawTemperatureLow[SKIN_SENSOR]);
+            (in3.temperature[SKIN_SENSOR] - RawTemperatureLow[SKIN_SENSOR] + SKIN_CALIBRATION_CORRECTION_FACTOR);
         logI("calibration factors: " + String(RawTemperatureLow[SKIN_SENSOR]) +
              "," + String(RawTemperatureRange[SKIN_SENSOR]) + "," +
              String(ReferenceTemperatureRange) + "," +

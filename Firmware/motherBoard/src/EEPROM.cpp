@@ -28,7 +28,6 @@
 
 extern bool autoLock;
 extern bool WIFI_EN;
-bool firstTurnOn;
 extern int presetTemp[2]; // preset baby skin temperature
 extern double RawTemperatureLow[SENSOR_TEMP_QTY],
     RawTemperatureRange[SENSOR_TEMP_QTY];
@@ -40,6 +39,7 @@ extern in3ator_parameters in3;
 void resetFlash() {
   for (int i = false; i < EEPROM_SIZE; i++) {
     EEPROM.write(i, 0);
+    EEPROM.commit();
   }
 }
 
@@ -47,8 +47,11 @@ void initEEPROM() {
   if (!EEPROM.begin(EEPROM_SIZE)) {
     logE("failed to initialise EEPROM");
   }
-  // if (EEPROM.read(EEPROM_CHECK_STATUS))
-  // {
+  // if (!EEPROM.read(EEPROM_PANIC_OTA_CHANGE)) {
+  //   EEPROM.write(EEPROM_PANIC_OTA_CHANGE, true);
+  //   EEPROM.writeFloat(EEPROM_RAW_SKIN_TEMP_RANGE_CORRECTION, 20.23);
+  //   EEPROM.commit();
+  // }
   //   EEPROM.write(EEPROM_CHECK_STATUS, 0);
   //   EEPROM.commit();
   //   vTaskDelay(30);
@@ -59,8 +62,7 @@ void initEEPROM() {
   //   EEPROM.commit();
   //   vTaskDelay(30);
   // }
-  firstTurnOn = EEPROM.read(EEPROM_FIRST_TURN_ON);
-  if (firstTurnOn) { // firstTimePowerOn
+  if (EEPROM.read(EEPROM_FIRST_TURN_ON)) { // firstTimePowerOn
     resetFlash();
     loaddefaultValues();
     logI("[FLASH] -> First turn on, loading default values");

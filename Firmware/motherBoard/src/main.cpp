@@ -136,6 +136,7 @@ long lastBlinkSetMessage;
 long lastSuccesfullSensorUpdate[SENSOR_TEMP_QTY];
 
 int ScreenBacklightMode;
+long lastSkinAttachedSensorUpdate;
 long lastRoomSensorUpdate, lastCurrentSensorUpdate;
 
 in3ator_parameters in3;
@@ -201,9 +202,31 @@ void Backlight_Task(void *pvParameters) {
 }
 
 void sensors_Task(void *pvParameters) {
+  int touchValue, touchValueMean, touchValueOK;
   for (;;) {
     fanSpeedHandler();
     measureNTCTemperature();
+    if (millis() - lastSkinAttachedSensorUpdate >
+        SKIN_CAPACITANCE_UPDATE_PERIOD_MS) {
+      lastSkinAttachedSensorUpdate = millis();
+      GPIOWrite(TOUCH_SENSOR_SEL, HIGH);
+      initPin(TOUCH_SENSOR, INPUT);
+      touchValueOK = false;
+      touchValueMean = false;
+      for (int i = 0; i < TOUCH_MEAN_TIMES; i++) {
+        vTaskDelay(pdMS_TO_TICKS(TOUCH_DELAY_BETWEEN_MEASURES_MS));
+        touchValue = touchRead(TOUCH_SENSOR);
+        touchValueMean += touchValue;
+        if (touchValue) {
+          touchValueOK++;
+        }
+      }
+      if (touchValueOK) {
+        in3.skinSensorCapacitance = touchValueMean / touchValueOK;
+      }
+      initPin(TOUCH_SENSOR, OUTPUT);
+      GPIOWrite(TOUCH_SENSOR_SEL, LOW);
+    }
     if (millis() - lastRoomSensorUpdate > ROOM_SENSOR_UPDATE_PERIOD_MS) {
       updateRoomSensor();
       updateAmbientSensor();
@@ -284,7 +307,7 @@ void setup() {
   if (WIFI_EN) {
     wifiInit();
   }
-  // EEPROM.writeString(EEPROM_THINGSBOARD_TOKEN, "x0Tu1UQDIyLr5Owedmy4");
+  // EEPROM.writeString(EEPROM_THINGSBOARD_TOKEN, "z3cn19kle705ndm10yz8");
   // //8944477200000012865 EEPROM.write(EEPROM_THINGSBOARD_PROVISIONED, true);
   // EEPROM.commit();
 
@@ -361,6 +384,5 @@ void setup() {
 void loop() {
   watchdogReload();
   updateData();
-  // in3.skinSensorCapacitance = touchRead(TOUCH_SENSOR);
   vTaskDelay(pdMS_TO_TICKS(LOOP_TASK_PERIOD_MS));
 }

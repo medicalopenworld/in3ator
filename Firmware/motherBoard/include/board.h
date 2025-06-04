@@ -26,7 +26,7 @@
 #define HW_NUM 14
 #define HW_REVISION 'A'
 #define HWversion String(HW_NUM) + "." + String(HW_REVISION)
-#define FWversion "14.2"
+#define FWversion "14.9"
 #define WIFI_NAME "In3ator"
 #define CURRENT_FIRMWARE_TITLE "in3ator"
 
@@ -133,6 +133,8 @@
 #define ENC_B 32
 #define FAN_SPEED_FEEDBACK 35
 #define BABY_NTC_PIN 39
+#define TOUCH_SENSOR_SEL NULL
+#define TOUCH_SENSOR NULL
 #define AFE4490_ADC_READY NULL
 #define ON_OFF_SWITCH NULL
 #define AFE44XX_PWDN_PIN NULL

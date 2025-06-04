@@ -49,11 +49,11 @@
 #include <Espressif_MQTT_Client.h>
 #include <Arduino_MQTT_Client.h>
 
-#define LOG_GPRS false
-#define LOG_MODEM_DATA false
-#define LOG_INFORMATION false
-#define LOG_ERRORS false
-#define LOG_ALARMS false
+#define LOG_GPRS true
+#define LOG_MODEM_DATA true
+#define LOG_INFORMATION true
+#define LOG_ERRORS true
+#define LOG_ALARMS true
 
 #define USE_SYSTEM_WITHOUT_ACTUATORS_TEST true //only if previous test was OK and that fail cause is not being able to read current measurements
 #define WDT_TIMEOUT 75
@@ -79,6 +79,9 @@
 #define HOLD_PRESS_TO_GO_TO_SETTINGS 0
 
 #define UI_MENU_OLD false
+
+#define TOUCH_MEAN_TIMES 20
+#define TOUCH_DELAY_BETWEEN_MEASURES_MS 5
 
 #define BROWN_OUT_BATTERY_MODE 0
 #define BROWN_OUT_NORMAL_MODE 0
@@ -307,6 +310,7 @@ typedef enum
 #define OTA_TASK_PERIOD_MS 1
 #define SENSORS_TASK_PERIOD_MS 1
 #define ROOM_SENSOR_UPDATE_PERIOD_MS 500
+#define SKIN_CAPACITANCE_UPDATE_PERIOD_MS 2000
 #define DIGITAL_CURRENT_SENSOR_PERIOD_MS 5
 #define BUZZER_TASK_PERIOD_MS 10
 #define UI_TASK_PERIOD_MS 10
@@ -366,6 +370,9 @@ typedef enum
 #define EEPROM_FAN_ACTIVE_TIME 238
 #define EEPROM_PHOTOTHERAPY_ACTIVE_TIME 242
 #define EEPROM_HUMIDIFIER_ACTIVE_TIME 246
+#define EEPROM_PANIC_OTA_CHANGE 250
+
+#define SKIN_CALIBRATION_CORRECTION_FACTOR -0.53
 
 // configuration variables
 #define SWITCH_DEBOUNCE_TIME_MS 30 // encoder debouncing time
